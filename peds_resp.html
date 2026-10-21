@@ -59,6 +59,22 @@ input[type=range]{width:100%}
 .slot.f{border-style:solid;border-color:var(--ac2)}
 .foot{position:fixed;bottom:0;left:0;right:0;z-index:30;display:flex;justify-content:center;gap:8px;padding:10px;background:rgba(6,20,43,.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line)}
 .flip{font-size:12px;color:var(--sub)}
+
+.anat-coach{margin:10px 14px;padding:12px 14px;border-radius:14px;background:linear-gradient(135deg,rgba(255,181,71,.22),rgba(79,209,255,.12));border:1px solid rgba(255,181,71,.45);font-size:13px;display:flex;gap:10px;align-items:flex-start;line-height:1.5}
+.anat-coach .btn{flex:none;margin-top:2px}
+.anat-card .anat-block{margin:10px 0;padding:10px 12px;border-radius:12px;background:rgba(0,0,0,.22);border-left:3px solid var(--ac)}
+.anat-card .anat-block.clin{border-left-color:var(--ac2)}
+.anat-card .anat-block.see{border-left-color:var(--warn);background:rgba(255,181,71,.1)}
+.anat-k{font-size:12px;font-weight:700;color:var(--ac);margin-bottom:4px;letter-spacing:.5px}
+.anat-block.clin .anat-k{color:var(--ac2)}
+.anat-block.see .anat-k{color:var(--warn)}
+#legend3d{position:absolute;left:10px;bottom:8px;z-index:3;font-size:11px;color:var(--sub);background:rgba(0,0,0,.4);padding:4px 8px;border-radius:10px;display:flex;gap:8px;align-items:center}
+#legend3d i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:3px;vertical-align:middle}
+#legend3d .lg-hi{background:#ff6a1a;box-shadow:0 0 8px #ff6a1a}
+#legend3d .lg-dim{background:rgba(140,180,220,.25);border:1px solid rgba(140,180,220,.4)}
+#callout3d{position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:3;display:none;max-width:86%;padding:5px 12px;border-radius:14px;background:rgba(255,106,26,.92);color:#fff;font-size:12px;font-weight:600;text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.35);pointer-events:none}
+#fxBadge{position:absolute;right:10px;top:36px;z-index:3;display:none;padding:6px 10px;border-radius:12px;background:rgba(0,0,0,.55);border:1px solid rgba(255,224,102,.5);color:#ffe066;font-size:12px;font-weight:600;pointer-events:none}
+#hint3d{right:10px;bottom:28px}
 </style></head><body><div id="app"></div><div id="modal" onclick="if(event.target==this)closeModal()"></div><span class="btn pri" id="back2case" onclick="back2case()">↩ 返回病例</span>
 <script>0,
 /**
@@ -88,15 +104,52 @@ const W=id=>`<span class="tag">⚠${id}</span>`;
 
 // ===== 解剖馆 =====
 const ANAT=[
-{id:'nose',name:'鼻腔短、无鼻毛',mesh:['nose'],txt:'婴幼儿鼻腔短小、鼻道狭窄，几乎没有鼻毛，黏膜柔嫩、血管丰富。一感染就充血肿胀，鼻塞明显，吃奶时还会呼吸困难。',clin:'上感时鼻塞重 → 婴儿拒奶、烦躁'},
-{id:'sinus',name:'鼻窦/咽鼓管',mesh:['nose'],txt:'咽鼓管宽、短、直、平，鼻咽部感染容易上行引起中耳炎。',clin:'上感并发中耳炎多见'},
-{id:'pharynx',name:'咽部与扁桃体',mesh:['pharynx'],txt:'咽部狭窄而垂直；腭扁桃体 1 岁末才逐渐增大，4–10 岁发育达高峰，所以扁桃体炎多见于年长儿，婴儿少见。',clin:'疱疹性咽峡炎、咽结合膜热病变都在这里'},
-{id:'larynx',name:'喉腔窄、声门下黏膜疏松',mesh:['larynx','subglottic'],txt:'小儿喉部呈漏斗形，喉腔窄，软骨柔软，声门下区黏膜下组织疏松、富含血管和淋巴组织。轻度炎症就会水肿，使本来就窄的气道明显变窄。',clin:'急性喉炎 → 吸气性呼吸困难、犬吠样咳嗽、喉梗阻'},
-{id:'trachea',name:'气管支气管窄、软',mesh:['trachea','bronchi'],txt:'气管、支气管管腔相对狭窄，软骨柔软，缺乏弹力组织，黏膜血管丰富，纤毛运动差，清除能力弱。右主支气管短粗、走向较直，异物容易进入右侧。',clin:'易感染、易阻塞；异物多见于右侧'},
-{id:'small',name:'细支气管与肺泡',mesh:['small','alv'],txt:'肺弹力组织发育差，血管丰富，间质发育旺盛；肺泡数量少、面积小，整个肺含血多而含气少。一旦感染，容易被黏液阻塞，引起间质炎症、肺气肿和肺不张。',clin:'毛细支气管炎、支气管肺炎容易缺氧'},
-{id:'chest',name:'胸廓与呼吸肌',mesh:['lungL','lungR'],txt:'胸廓短、呈桶状，肋骨水平位，膈肌位置较高，呼吸肌发育差。婴幼儿以腹式呼吸为主，呼吸时肺扩张受限。',clin:'代偿能力差 → 很快出现呼吸增快、三凹征'},
-{id:'rr',name:'呼吸频率快',mesh:['lungL','lungR'],txt:'年龄越小呼吸越快：新生儿 40–44 次/分，1 岁以内 30 次/分左右，1–3 岁约 24 次/分，学龄儿 20 次/分左右。婴幼儿呼吸节律不齐，新生儿尤其明显。'+W('W8'),clin:'判断“气促”要按年龄'},
-{id:'immune',name:'免疫功能低',mesh:['trachea','small'],txt:'婴幼儿 SIgA、IgA、IgG 和 IgG 亚类含量都低，肺泡巨噬细胞功能不足，乳铁蛋白、溶菌酶、干扰素、补体等的数量和活性也不足，所以容易发生呼吸道感染。',clin:'反复呼吸道感染的基础'}];
+{id:'nose',name:'鼻腔短、无鼻毛',mesh:['nose'],fx:'urti',
+ where:'鼻子里的通道——空气进来的第一站。',
+ feat:'婴幼儿鼻腔短小、鼻道狭窄，几乎没有鼻毛，黏膜柔嫩、血管丰富。一感染就充血肿胀，鼻塞明显，吃奶时还会呼吸困难。',
+ clin:'上感时鼻塞重 → 婴儿拒奶、烦躁',
+ see:'橙色高亮的是鼻腔管道；动画里它变红变窄，模拟黏膜充血肿胀后鼻道更窄。'},
+{id:'sinus',name:'鼻窦/咽鼓管',mesh:['nose','pharynx'],fx:'urti',
+ where:'鼻子后方连到中耳的那条短管（咽鼓管），以及旁边的鼻窦开口。',
+ feat:'小儿咽鼓管宽、短、直、平，鼻咽部感染容易“往上爬”引起中耳炎。',
+ clin:'上感并发中耳炎多见',
+ see:'高亮的是鼻→咽这一段；动画里变红，表示感染可以从这里往中耳走。'},
+{id:'pharynx',name:'咽部与扁桃体',mesh:['pharynx'],fx:'urti',
+ where:'口腔后面、喉的上面——咽部，两侧有扁桃体。',
+ feat:'咽部狭窄而垂直；腭扁桃体 1 岁末才逐渐增大，4–10 岁达高峰，所以扁桃体炎多见于年长儿，婴儿少见。',
+ clin:'疱疹性咽峡炎、咽结合膜热病变都在这里',
+ see:'中间偏上那截被点亮的管子就是咽；变红表示黏膜发炎充血。'},
+{id:'larynx',name:'喉腔窄、声门下黏膜疏松',mesh:['larynx','subglottic'],fx:'larynx',
+ where:'脖子前面、气管最上端——喉，尤其是声门下方那一圈。',
+ feat:'小儿喉呈漏斗形，喉腔窄，软骨软；声门下黏膜疏松、血管淋巴丰富。轻度炎症就会水肿，把本来就窄的气道堵得更窄。',
+ clin:'急性喉炎 → 吸气性呼吸困难、犬吠样咳嗽、喉梗阻',
+ see:'橙色环就是声门下；动画里它鼓起来变窄，上方有向下的吸气箭头——吸气时负压会把这里吸得更窄。'},
+{id:'trachea',name:'气管支气管窄、软',mesh:['trachea','bronchi'],fx:'bronch',
+ where:'喉下面那根“主气管”，再分成左右主支气管。',
+ feat:'管腔相对窄，软骨软，弹力差，黏膜血管丰富，纤毛清扫弱。右主支气管短粗、走向直，异物容易掉进右侧。',
+ clin:'易感染、易阻塞；异物多见于右侧',
+ see:'高亮的是气管环和左右分叉；右侧那根更粗更直——异物常进这边。'},
+{id:'small',name:'细支气管与肺泡',mesh:['small','alv'],fx:'small',
+ where:'肺里最细的分支（细支气管）和末端的小气囊（肺泡）。',
+ feat:'肺弹力差、血管多、间质旺；肺泡数量少、含血多含气少。感染后容易被黏液堵住，出现肺气肿或肺不张。',
+ clin:'毛细支气管炎、支气管肺炎容易缺氧',
+ see:'末梢细管和圆球肺泡被点亮；呼气时细管明显变细——气体呼不出。'},
+{id:'chest',name:'胸廓与呼吸肌',mesh:['lungL','lungR'],fx:'chest',
+ where:'整个胸廓和左右两叶肺（半透明外壳）。',
+ feat:'胸廓短、呈桶状，肋骨接近水平，膈肌高，呼吸肌弱。婴幼儿以腹式呼吸为主，肺扩张受限。',
+ clin:'代偿能力差 → 很快出现呼吸增快、三凹征',
+ see:'半透明肺壳在起伏；下方有“腹式呼吸”标记，表示主要靠肚子起伏带动换气。'},
+{id:'rr',name:'呼吸频率快',mesh:['lungL','lungR'],fx:'rr',
+ where:'整肺换气节奏——看模型起伏快慢。',
+ feat:'年龄越小呼吸越快：新生儿约 40–44 次/分，1 岁内约 30，1–3 岁约 24，学龄儿约 20。婴幼儿节律可不齐。'+W('W8'),
+ clin:'判断“气促”要按年龄',
+ see:'肺壳起伏明显加快（示意），右上角相位标签闪得更勤——表示小儿基础呼吸频率高。'},
+{id:'immune',name:'免疫功能低',mesh:['trachea','small'],fx:'immune',
+ where:'覆盖整条气道黏膜的“防护层”（示意）。',
+ feat:'婴幼儿 SIgA、IgA、IgG 及亚类偏低，肺泡巨噬细胞和乳铁蛋白、溶菌酶、干扰素、补体等不足，容易反复呼吸道感染。',
+ clin:'反复呼吸道感染的基础',
+ see:'气道与细支气管高亮，并出现盾牌图标闪烁——表示黏膜局部免疫薄弱、防护不够。'}
+];
 
 // ===== 机制廊：六个病 =====
 const DIS=[
@@ -264,8 +317,14 @@ const PATIENTS=[
 </script><script>// ===== 3D 引擎 =====
 const V3=(x,y,z)=>new THREE.Vector3(x,y,z);
 let R3={};
+const FOCUS={ // 点选特点时相机对准
+ nose:{y:3.05,z:4.8,look:3.05},sinus:{y:2.85,z:5.0,look:2.85},pharynx:{y:2.7,z:4.9,look:2.7},
+ larynx:{y:2.15,z:4.4,look:2.15},trachea:{y:1.35,z:5.6,look:1.35},small:{y:.05,z:5.4,look:.05},
+ chest:{y:.15,z:7.0,look:.1},rr:{y:.2,z:7.2,look:.1},immune:{y:1.0,z:6.2,look:1.0}
+};
 function init3D(){
- const holder=document.createElement('div');holder.id='stage3d';holder.innerHTML='<div id="phase"></div><div id="hint3d">单指旋转 · 双指缩放</div>';
+ const holder=document.createElement('div');holder.id='stage3d';
+ holder.innerHTML='<div id="phase"></div><div id="legend3d"><i class="lg-hi"></i>当前部位 <i class="lg-dim"></i>其他（半透明）</div><div id="callout3d"></div><div id="fxBadge"></div><div id="hint3d">单指旋转 · 双指缩放</div>';
  const ren=new THREE.WebGLRenderer({antialias:true,alpha:true});ren.setPixelRatio(Math.min(devicePixelRatio,2));holder.appendChild(ren.domElement);
  const sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(40,1,.1,100);cam.position.set(0,.9,8.2);
  sc.add(new THREE.AmbientLight(0x6688aa,.9));const dl=new THREE.DirectionalLight(0xffffff,1.1);dl.position.set(3,5,6);sc.add(dl);const dl2=new THREE.DirectionalLight(0x44ccff,.6);dl2.position.set(-4,-2,-3);sc.add(dl2);
@@ -289,51 +348,96 @@ function init3D(){
  M.alvA=mat(0xb8e8ff,.55);M.alvB=mat(0xb8e8ff,.55);const sg=new THREE.SphereGeometry(.06,8,6);
  tips.forEach((t,i)=>{for(let k=0;k<4;k++){const a=new THREE.Mesh(sg,i%3==0?M.alvB:M.alvA);a.position.copy(t).add(V3((Math.random()-.5)*.14,(Math.random()-.5)*.14,(Math.random()-.5)*.14));add('alv',a)}});
  const lg=new THREE.SphereGeometry(1,24,18);[-1,1].forEach(s=>{const l=new THREE.Mesh(lg,mat(0x4fa8ff,.1));l.scale.set(.95,1.35,.75);l.position.set(1.05*s,-.05,0);add(s<0?'lungL':'lungR',l)});
+ // 吸气箭头（喉炎示意）
+ const arrows=new THREE.Group();arrows.visible=false;g.add(arrows);
+ const am=mat(0xffe066,.95);[-.22,0,.22].forEach((x,i)=>{const c=new THREE.Mesh(new THREE.ConeGeometry(.07,.28,8),am);c.position.set(x,2.55-i*.02,.35);c.rotation.x=Math.PI;arrows.add(c)});
  // 粒子
  const N=110,pos=new Float32Array(N*3),pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.BufferAttribute(pos,3));
  const pts=new THREE.Points(pg,new THREE.PointsMaterial({color:0x7cf0ff,size:.07,transparent:true,opacity:.95,depthWrite:false}));g.add(pts);
  const P=[];for(let i=0;i<N;i++)P.push({p:paths[i%paths.length].map(v=>v.clone()),off:Math.random()*.35,trap:Math.random()<.6});
  const curves=P.map(o=>new THREE.CatmullRomCurve3(o.p));
- R3={holder,ren,sc,cam,g,M,P,curves,pos,pg,mode:'normal',hl:[],t0:performance.now()};
+ // 记住基础透明度
+ Object.keys(M).forEach(n=>{(M[n]||[]).forEach&& (M[n]||[]).forEach(mesh=>{if(mesh.material&&mesh.material.opacity!=null)mesh.material.userData.baseOp=mesh.material.opacity})});
+ ['noseMat','phMat','subMat','smallMat','alvA','alvB'].forEach(k=>{if(M[k])M[k].userData.baseOp=M[k].opacity});
+ R3={holder,ren,sc,cam,g,M,P,curves,pos,pg,arrows,mode:'normal',hl:[],hlNames:[],t0:performance.now(),camTo:null,lookTo:null,period:3.2,fxBadge:''};
  // 交互
  let drag=null,pinch=0;const el=ren.domElement;
- el.addEventListener('pointerdown',e=>{drag=[e.clientX,e.clientY];el.setPointerCapture(e.pointerId)});
+ el.addEventListener('pointerdown',e=>{drag=[e.clientX,e.clientY];el.setPointerCapture(e.pointerId);R3.drag=true});
  el.addEventListener('pointermove',e=>{if(!drag||pinch)return;g.rotation.y+=(e.clientX-drag[0])*.01;g.rotation.x=Math.max(-1,Math.min(1,g.rotation.x+(e.clientY-drag[1])*.006));drag=[e.clientX,e.clientY]});
- el.addEventListener('pointerup',()=>drag=null);
- el.addEventListener('touchmove',e=>{if(e.touches.length==2){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);if(pinch)cam.position.z=Math.max(3.5,Math.min(12,cam.position.z-(d-pinch)*.02));pinch=d;e.preventDefault()}},{passive:false});
+ el.addEventListener('pointerup',()=>{drag=null;R3.drag=false});
+ el.addEventListener('touchmove',e=>{if(e.touches.length==2){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);if(pinch)cam.position.z=Math.max(3.2,Math.min(12,cam.position.z-(d-pinch)*.02));pinch=d;e.preventDefault()}},{passive:false});
  el.addEventListener('touchend',()=>pinch=0);
- el.addEventListener('wheel',e=>{cam.position.z=Math.max(3.5,Math.min(12,cam.position.z+e.deltaY*.005));e.preventDefault()},{passive:false});
+ el.addEventListener('wheel',e=>{cam.position.z=Math.max(3.2,Math.min(12,cam.position.z+e.deltaY*.005));e.preventDefault()},{passive:false});
  requestAnimationFrame(loop);
+}
+function applyDim(hlNames){
+ const names=hlNames||[];const active=names.length>0;
+ const all=['nose','pharynx','larynx','subglottic','trachea','bronchi','small','alv','lungL','lungR'];
+ all.forEach(n=>{(R3.M[n]||[]).forEach(mesh=>{
+  const mat=mesh.material;if(!mat)return;
+  const base=mat.userData.baseOp!=null?mat.userData.baseOp:(mat.opacity||.5);
+  const on=names.includes(n);
+  if(!active){mat.opacity=base;if(mat.emissive)mat.emissive.setHex(0);mesh.scale.set(1,1,1)}
+  else if(on){mat.opacity=Math.min(.98,Math.max(base,.82));}
+  else{mat.opacity=base*0.18;if(mat.emissive)mat.emissive.setHex(0)}
+ })});
+ // 共享材质也按组处理
+ if(R3.M.noseMat){R3.M.noseMat.opacity=(!active||names.includes('nose'))?(R3.M.noseMat.userData.baseOp||.55):(R3.M.noseMat.userData.baseOp||.55)*0.18}
+ if(R3.M.phMat){R3.M.phMat.opacity=(!active||names.includes('pharynx'))?(R3.M.phMat.userData.baseOp||.55):(R3.M.phMat.userData.baseOp||.55)*0.18}
+ if(R3.M.smallMat){R3.M.smallMat.opacity=(!active||names.includes('small'))?(R3.M.smallMat.userData.baseOp||.65):(R3.M.smallMat.userData.baseOp||.65)*0.18}
 }
 function loop(){requestAnimationFrame(loop);const r=R3;if(!r.holder||!r.holder.isConnected)return;
  const w=r.holder.clientWidth,h=r.holder.clientHeight;if(r.ren.domElement.width!==Math.floor(w*r.ren.getPixelRatio())){r.ren.setSize(w,h,false);r.cam.aspect=w/h;r.cam.updateProjectionMatrix()}
- const t=(performance.now()-r.t0)/1000,per=3.2,ph=(t%per)/per,insp=ph<.5,s=insp?ph*2:2-ph*2;// s:0→1→0
+ // 相机平滑对焦
+ if(r.camTo){r.cam.position.lerp(r.camTo,.08);if(r.lookTo){if(!r.lookCur)r.lookCur=r.lookTo.clone();r.lookCur.lerp(r.lookTo,.1);r.cam.lookAt(r.lookCur)}}
+ const per=r.period||3.2,t=(performance.now()-r.t0)/1000,ph=(t%per)/per,insp=ph<.5,s=insp?ph*2:2-ph*2;
  const m=r.mode;const lab=document.getElementById('phase');if(lab)lab.textContent=(insp?'吸气 ↓':'呼气 ↑')+(r.modeLabel?' · '+r.modeLabel:'');
- const pulse=.5+.5*Math.sin(t*4);
+ const pulse=.5+.5*Math.sin(t*5.5);
+ const glowPulse=.55+.45*Math.sin(t*6);
  // 模式效果
- const sub=r.M.subglottic[0];let reach=1,trapBack=0;
- if(m==='larynx'){const sw=1+ (insp?.9:.5)*1;sub.scale.set(1,1,sw*1.6);r.M.subMat.color.setHex(0xff4d6a);reach=.62}else{sub.scale.set(1,1,1);r.M.subMat.color.setHex(0xffc0c8)}
+ const sub=r.M.subglottic[0];let reach=1;
+ if(m==='larynx'){const sw=1+(insp?.9:.5)*1;sub.scale.set(1.15+glowPulse*.25,1.15+glowPulse*.25,sw*1.8);r.M.subMat.color.setHex(0xff4d6a);if(r.M.subMat.emissive)r.M.subMat.emissive.setHex(0xaa0022);reach=.62;if(r.arrows)r.arrows.visible=true}else{if(!(r.hlNames||[]).includes('subglottic'))sub.scale.set(1,1,1);r.M.subMat.color.setHex(0xffc0c8);if(r.M.subMat.emissive&&!(r.hlNames||[]).includes('subglottic'))r.M.subMat.emissive.setHex(0);if(r.arrows)r.arrows.visible=false}
+ if(r.arrows&&r.arrows.visible){r.arrows.children.forEach((c,i)=>{c.position.y=2.7-i*.02-(insp?0:.12);c.material.opacity=.55+glowPulse*.4})}
  r.M.noseMat.color.setHex(m==='urti'?0xff5a6e:0x9fd8ff);r.M.phMat.color.setHex(m==='urti'?0xff5a6e:0x9fd8ff);
+ if(m==='urti'){const k=.78+.08*pulse;r.M.nose.forEach(x=>x.scale.set(k,1,k));r.M.pharynx.forEach(x=>x.scale.set(k,1,k))}
  const smallC=(m==='small'||m==='asthma')?0xff8a4d:m==='bronch'?0xffb060:0x8fc8ff;r.M.smallMat.color.setHex(smallC);
- r.M.small.forEach(x=>{const k=(m==='small'||m==='asthma')?(insp?.8:.45+.1*pulse):1;x.scale.set(k,1,k)});
+ r.M.small.forEach(x=>{const k=(m==='small'||m==='asthma')?(insp?.8:.42+.12*pulse):1;x.scale.set(k,1,k)});
  r.M.bronchi.forEach(x=>x.material.color.setHex(m==='bronch'?0xffb060:0x8fc8ff));
- const fill=m==='pneu'?Math.min(1,(t%12)/5):0;r.M.alvB.color.setRGB(.72+.28*fill,.9-.6*fill,1-.7*fill);r.M.alvB.opacity=.55+.4*fill;
+ const fill=m==='pneu'?Math.min(1,(t%12)/5):0;r.M.alvB.color.setRGB(.72+.28*fill,.9-.6*fill,1-.7*fill);r.M.alvB.opacity=(r.M.alvB.userData.baseOp||.55)+.4*fill;
  r.M.alvA.color.setHex(m==='pneu'?0xffd0d0:0xb8e8ff);
- const infl=(m==='small'||m==='asthma')?1.12:1;[...r.M.lungL,...r.M.lungR].forEach(l=>{const k=1+.05*s;l.scale.set(.95*k*infl,1.35*k*infl,.75*k*infl)});
- r.hl.forEach(x=>x.material.emissive&&x.material.emissive.setHex(pulse>.5?0x2266aa:0x113355));
+ let infl=(m==='small'||m==='asthma')?1.12:1;
+ let breathAmp=.05;if(m==='chest'){breathAmp=.12;infl=1.05}if(m==='rr'){breathAmp=.1}
+ [...r.M.lungL,...r.M.lungR].forEach(l=>{const k=1+breathAmp*s;l.scale.set(.95*k*infl,1.35*k*infl,.75*k*infl)});
+ // 高亮脉冲：亮橙发光
+ r.hl.forEach(x=>{if(x.material&&x.material.emissive)x.material.emissive.setHex(glowPulse>.45?0xff6a1a:0xff3300)});
+ // 免疫盾牌 / 腹式呼吸角标
+ const badge=document.getElementById('fxBadge');
+ if(badge){if(m==='immune'){badge.style.display='block';badge.innerHTML='🛡️ 黏膜免疫弱';badge.style.opacity=String(.55+glowPulse*.45)}
+  else if(m==='chest'){badge.style.display='block';badge.innerHTML=insp?'腹式呼吸 ↑ 肚子鼓起':'腹式呼吸 ↓ 肚子回落';badge.style.opacity='1'}
+  else if(m==='rr'){badge.style.display='block';badge.innerHTML='呼吸偏快（示意）';badge.style.opacity=String(.7+glowPulse*.3)}
+  else{badge.style.display='none'}}
  r.P.forEach((o,i)=>{let u=Math.max(0,Math.min(1,s*1.25-o.off));
   if(m==='larynx')u=Math.min(u,reach*(.92+.08*Math.random()));
   if((m==='small'||m==='asthma')&&o.trap&&!insp)u=Math.max(u,.78);
   if(m==='pneu'&&i%3==0)u=Math.min(u,.9);
   const v=r.curves[i].getPointAt(u);r.pos[i*3]=v.x;r.pos[i*3+1]=v.y;r.pos[i*3+2]=v.z});
- r.pg.attributes.position.needsUpdate=true;if(!document.hidden&&!R3.drag)r.g.rotation.y+=.0015;
+ r.pg.attributes.position.needsUpdate=true;if(!document.hidden&&!R3.drag)r.g.rotation.y+=.0012;
  r.ren.render(r.sc,r.cam)}
-function mount3D(parent,mode,label,hl){if(!R3.holder)init3D();parent.appendChild(R3.holder);R3.mode=mode||'normal';R3.modeLabel=label||'';
- R3.hl.forEach(x=>x.material.emissive&&x.material.emissive.setHex(0));R3.hl=[];(hl||[]).forEach(n=>(R3.M[n]||[]).forEach(x=>R3.hl.push(x)));
- if(hl&&hl.length){const n=hl[0];R3.cam.position.z=['nose','pharynx','larynx','subglottic'].includes(n)?5.5:['alv','small'].includes(n)?6.2:8.2;R3.cam.position.y=['nose','pharynx','larynx','subglottic'].includes(n)?2:.9;R3.cam.lookAt(0,R3.cam.position.y-.4,0)}else{R3.cam.position.set(0,.9,8.2);R3.cam.lookAt(0,.5,0)}}
+function mount3D(parent,mode,label,hl,focusKey){if(!R3.holder)init3D();parent.appendChild(R3.holder);R3.mode=mode||'normal';R3.modeLabel=label||'';
+ R3.period=(mode==='rr')?1.45:3.2;
+ R3.hl.forEach(x=>{if(x.material&&x.material.emissive)x.material.emissive.setHex(0)});R3.hl=[];R3.hlNames=hl||[];
+ (hl||[]).forEach(n=>(R3.M[n]||[]).forEach(x=>R3.hl.push(x)));
+ applyDim(hl);
+ // 相机目标
+ const fk=focusKey||(hl&&hl[0]);const f=FOCUS[fk]||(hl&&hl.length?FOCUS[hl.includes('larynx')||hl.includes('subglottic')?'larynx':hl.includes('nose')?'nose':hl.includes('pharynx')?'pharynx':hl.includes('small')||hl.includes('alv')?'small':hl.includes('trachea')||hl.includes('bronchi')?'trachea':'chest']:null);
+ if(f){R3.camTo=V3(0,f.y,f.z);R3.lookTo=V3(0,f.look,0)}
+ else{R3.camTo=V3(0,.9,8.2);R3.lookTo=V3(0,.5,0)}
+ if(!R3.lookCur)R3.lookCur=(R3.lookTo||V3(0,.5,0)).clone();
+ const call=document.getElementById('callout3d');if(call){if(label&&hl&&hl.length){call.style.display='block';call.textContent='▶ '+label}else call.style.display='none'}
+}
 
 // ===== 状态与计分 =====
-const S={sc:{},veto:new Set(),done:{},ret:null,pi:null,ps:null,mechTab:{},mechQuiz:{}};
+const S={sc:{},veto:new Set(),done:{},ret:null,pi:null,ps:null,mechTab:{},mechQuiz:{},anatCoach:false};
 function award(key,cat,got,max){S.sc[key]={cat,got:Math.max(0,Math.min(max,got)),max}}
 function totals(){const t={anat:[0,0],mech:[0,0],clin:[0,0]};Object.entries(S.sc).forEach(([k,v])=>{if(k.startsWith('P1/'))return;t[v.cat][0]+=v.got;t[v.cat][1]+=v.max});return t}
 const MAXPOS={anat:0,mech:0,clin:0};
@@ -357,10 +461,25 @@ function home(){setRet(null);const t=totals();html(topbar('儿科学 · 呼吸�
 <div class="card"><h2>怎么玩</h2><div class="sub">建议按 ①→②→③ 的顺序。门诊里每个关键题都可以一键跳回对应的机制动画和解剖部位，看完再回到病例。第 1 位患儿是练习，不计分。<br>标 <span class="tag">⚠</span> 的内容请任课老师核实，点右上角“教师”可以查看清单。</div></div>`)}
 
 // ===== 解剖馆 =====
-function anat(spot){html(topbar('解剖馆 · 小儿呼吸系统特点','home()')+`<div id="m3"></div><div class="tabs" id="anTabs">${ANAT.map(a=>`<span class="btn sm${a.id==spot?' on':''}" onclick="anat('${a.id}')">${a.name}</span>`).join('')}</div><div id="anInfo"></div>
-<div class="card"><h2>🎮 小游戏</h2><span class="btn" onclick="gAssemble()">拼装呼吸道</span> <span class="btn" onclick="gDiff()">儿童 vs 成人 找不同</span></div>`);
- const a=ANAT.find(x=>x.id==spot);mount3D($('#m3'),'normal',a?a.name:'',a?a.mesh:[]);
- $('#anInfo').innerHTML=a?`<div class="card"><h2>${a.name}</h2>${a.txt}<div class="fb">临床联系：${a.clin}</div></div>`:`<div class="card sub">点上面的标签，模型会高亮对应部位。</div>`}
+function anat(spot){
+ const coach=!S.anatCoach;if(coach)S.anatCoach=true;
+ html(topbar('解剖馆 · 小儿呼吸系统特点','home()')+
+ (coach?`<div class="anat-coach" id="anatCoach">👆 先点下面每一个特点；模型会自动转到对应部位，并播放一小段动画。<span class="btn sm" onclick="this.parentNode.remove()">知道了</span></div>`:'')+
+ `<div id="m3"></div>
+ <div class="tabs" id="anTabs">${ANAT.map(a=>`<span class="btn sm${a.id==spot?' on':''}" onclick="anat('${a.id}')">${a.name}</span>`).join('')}</div>
+ <div id="anInfo"></div>
+ <div class="card"><h2>🎮 小游戏</h2><span class="btn" onclick="gAssemble()">拼装呼吸道</span> <span class="btn" onclick="gDiff()">儿童 vs 成人 找不同</span></div>`);
+ const a=ANAT.find(x=>x.id==spot);
+ if(a){mount3D($('#m3'),a.fx||'normal',a.name,a.mesh,a.id);
+  $('#anInfo').innerHTML=`<div class="card anat-card"><h2>${a.name}</h2>
+   <div class="anat-block"><div class="anat-k">【这是哪儿】</div><div>${a.where}</div></div>
+   <div class="anat-block"><div class="anat-k">【小儿特点】</div><div>${a.feat}</div></div>
+   <div class="anat-block clin"><div class="anat-k">【临床上会怎样】</div><div>${a.clin}</div></div>
+   <div class="anat-block see"><div class="anat-k">【图上你在看】</div><div>${a.see}</div></div>
+  </div>`}
+ else{mount3D($('#m3'),'normal','总览',[],null);
+  $('#anInfo').innerHTML=`<div class="card sub">点上面的特点标签：模型会自动转到对应部位，高亮并播放动画；下方卡片会用四句话告诉你「这是哪儿 / 小儿特点 / 临床 / 图上在看什么」。</div>`}
+}
 let asmSeq=[];
 function gAssemble(){asmSeq=[];const sh=[...G_ASSEMBLE].sort(()=>Math.random()-.5);
  const draw=()=>{modal(`<h2>拼装呼吸道</h2><div class="sub">按空气从外到内经过的顺序依次点选（手机请点选即可，无需拖拽）</div><div style="margin:8px 0">${G_ASSEMBLE.map((_,i)=>`<span class="slot ${asmSeq[i]?'f':''}">${asmSeq[i]||i+1}</span>`).join('→')}</div><div class="chips">${sh.map(x=>`<span class="btn sm ${asmSeq.includes(x)?'ok':''}" onclick="asmPick('${x}')">${x}</span>`).join('')}</div><div id="asmFb"></div>`)};window._asmDraw=draw;draw()}
