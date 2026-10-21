@@ -82,7 +82,8 @@ const WARN=[
 ['W11','毛细支气管炎：高渗盐水雾化、支气管扩张剂“试验性使用”各指南说法不一，课件按“不常规使用”处理'],
 ['W12','重症肺炎合并心衰的强心药（毛花苷C/地高辛）使用，近年指南有争议，请确认教学口径'],
 ['W13','7 个病例的生命体征及化验数值为教学虚构，请老师审核是否合理'],
-['W14','整个课件约需 3–4 课时，是否拆分请老师决定']];
+['W14','整个课件约需 3–4 课时，是否拆分请老师决定'],
+['W15','哮喘急性发作吸氧目标写 SpO₂ ≥94%；部分指南为 94–98% 或 ≥92%，请按所用教材/指南统一']];
 const W=id=>`<span class="tag">⚠${id}</span>`;
 
 // ===== 解剖馆 =====
@@ -105,42 +106,48 @@ const DIS=[
  sign:'局部：鼻塞、流涕、喷嚏、咽痛。全身：发热、烦躁、拒奶，可伴呕吐、腹泻。婴幼儿全身症状重，可因高热出现<b>热性惊厥</b>。<br>• 疱疹性咽峡炎：咽腭弓、软腭、悬雍垂上有 2–4 mm 的疱疹，破溃后形成小溃疡，病程约 1 周。<br>• 咽结合膜热：发热、咽炎、结膜炎三联征，颈部和耳后淋巴结肿大，病程 1–2 周。',
  exam:'病毒感染时白细胞正常或偏低；细菌感染时白细胞和中性粒细胞升高，CRP 升高。一般<b>不需要</b>拍胸片。',
  treat:'以一般治疗和对症处理为主：休息、多饮水、退热（物理降温，或用对乙酰氨基酚、布洛芬）。病毒感染<b>不用抗生素</b>，有细菌感染证据时才使用。发生热性惊厥时止惊。',
- link:['nose','pharynx']},
+ link:['nose','pharynx'],
+ quiz:{q:'疱疹性咽峡炎的病原是？',opts:['柯萨奇 A 组病毒','腺病毒 3、7 型','肺炎链球菌'],ans:0}},
 {id:'larynx',name:'急性感染性喉炎',mode:'larynx',
  cause:'由病毒或细菌感染引起，冬春季多见，好发于婴幼儿。',
  mech:'小儿声门下黏膜疏松、喉腔窄，炎症时<b>声门下水肿</b>，管腔明显变窄。<br>这一段在胸腔以外：吸气时管腔内是负压，会被吸得更窄 → <b>吸气性呼吸困难</b>、吸气性喉鸣。<br>吸气费力，胸腔负压很大，软组织被往里拽 → <b>三凹征</b>（胸骨上窝、锁骨上窝、肋间隙凹陷）'+W('W7')+'。<br>声带和声门下水肿 → 声音嘶哑、<b>犬吠样咳嗽</b>。症状常在夜间加重。',
  sign:'发热、声嘶、犬吠样咳嗽、吸气性喉鸣、三凹征。<br><b>喉梗阻分度</b>'+W('W1')+'：<table><tr><th>Ⅰ度</th><td>只在活动后出现吸气性喉鸣和呼吸困难；肺部呼吸音和心率无改变</td></tr><tr><th>Ⅱ度</th><td>安静时也有喉鸣和吸气性呼吸困难；可闻喉传导音或管状呼吸音；心率加快</td></tr><tr><th>Ⅲ度</th><td>在Ⅱ度基础上烦躁不安，口唇、指趾发绀，双眼圆睁、惊恐，头面出汗；呼吸音明显减低，心音低钝，心率快</td></tr><tr><th>Ⅳ度</th><td>渐显衰竭、昏睡；因无力呼吸，<b class="warn">三凹征反而不明显</b>；面色苍白发灰；呼吸音几乎消失；心音低钝，心律不齐</td></tr></table>',
  exam:'以临床诊断为主，重点是判断喉梗阻分度。需要与白喉、喉痉挛、喉或气管异物鉴别。',
- treat:'保持呼吸道通畅；<b>糖皮质激素</b>（雾化吸入或全身用）'+W('W6')+'；有细菌感染时用抗生素；烦躁者可适当镇静；吸氧。<br><b class="warn">Ⅲ度、Ⅳ度喉梗阻：立即气管插管或气管切开。</b>',
- link:['larynx']},
+ treat:'保持呼吸道通畅；<b>糖皮质激素</b>（雾化吸入或全身用）'+W('W6')+'；有细菌感染时用抗生素；烦躁者可适当镇静（<b>仅限Ⅰ–Ⅱ度</b>、气道相对稳定时酌情；Ⅲ度及以上优先开放气道，忌盲目镇静）；吸氧。<br><b class="warn">Ⅲ度、Ⅳ度喉梗阻：立即气管插管或气管切开。</b>',
+ link:['larynx'],
+ quiz:{q:'吸气性呼吸困难、三凹征，主要堵点在？',opts:['胸外大气道（声门下）','胸内细支气管','肺泡'],ans:0}},
 {id:'bronch',name:'急性支气管炎',mode:'bronch',
  cause:'在病毒感染的基础上可以继发细菌感染，常继发于上感。',
  mech:'炎症累及较大的支气管，黏膜充血水肿、分泌物增多。分泌物在较大的气道里会随咳嗽和体位移动，所以<b>啰音不固定</b>，咳嗽后会变化。肺泡没有受累，一般不缺氧。',
  sign:'先是干咳，以后有痰；可以发热。双肺呼吸音粗，可闻<b>不固定</b>的散在干啰音和粗中湿啰音。<br>婴幼儿可出现喘息样支气管炎。',
  exam:'胸片：肺纹理增粗，或者正常。血常规的白细胞多正常。',
  treat:'对症治疗：祛痰（不要用强力镇咳药把痰压住），多饮水、拍背。有细菌感染证据时才用抗生素。',
- link:['trachea']},
+ link:['trachea'],
+ quiz:{q:'急性支气管炎啰音的特点是？',opts:['不固定，咳后可改变','较固定的细湿啰音','哮鸣音为主'],ans:0}},
 {id:'bronchio',name:'毛细支气管炎',mode:'small',
  cause:'最常见的病原是<b>呼吸道合胞病毒（RSV）</b>，多见于 2 岁以内，尤其是 2–6 个月的小婴儿。',
  mech:'炎症在直径 75–300 μm 的细支气管：黏膜水肿，坏死脱落的上皮和黏液把管腔堵住。<br>这些小气道在胸腔以内，呼气时胸腔受压，管腔被挤得更窄 → 气体呼不出 → <b>呼气性呼吸困难</b>、哮鸣音，气体潴留在肺里造成<b>肺气肿</b>，堵死的地方会出现肺不张。<br>肺过度充气把膈肌往下压，肝脏随之下移（<b class="warn">不是心衰</b>）。',
  sign:'阵发性喘憋，呼气相延长，伴哮鸣音；呼吸浅快，鼻翼扇动，三凹征；喘憋缓解时可闻细湿啰音；叩诊呈过清音。',
  exam:'胸片：肺过度充气，可有斑片影。鼻咽分泌物 RSV 检测。血气：低氧血症，可伴 CO₂ 潴留。',
  treat:'以<b>支持治疗</b>为主：吸氧、保持呼吸道通畅（吸痰）、补液或保证喂养、监测。<b>不常规使用</b>抗生素、糖皮质激素和支气管扩张剂'+W('W11')+'。<div class="fb">思政点：“合理使用抗生素”。病毒感染打抗生素不仅没用，还会带来耐药和不良反应。</div>',
- link:['small']},
+ link:['small'],
+ quiz:{q:'毛细支气管炎治疗原则是？',opts:['支持治疗为主，不常规用抗生素/激素/支气管扩张剂','常规静脉抗生素','常规全身激素'],ans:0}},
 {id:'asthma',name:'支气管哮喘',mode:'asthma',
  cause:'在遗传和环境（过敏原、病毒感染、运动、冷空气等）的共同作用下发生，常有过敏史和家族史。',
  mech:'本质是<b>气道慢性炎症</b>，伴有气道高反应性。诱因刺激后出现<b>支气管平滑肌痉挛</b>、黏膜水肿和黏液栓，小气道狭窄 → <b>呼气性呼吸困难</b>、哮鸣音。<br>阻塞是<b>可逆的</b>，用支气管扩张剂后能缓解。<br><span class="sub">对比 COPD：同样是呼气性、小气道阻塞，但气道重塑和肺泡破坏不可逆，主要见于成人。</span><br><b class="warn">危重发作时气流极少，哮鸣音反而减弱甚至消失（“沉默肺”），这不代表好转。</b>',
  sign:'反复发作的喘息、咳嗽、气促、胸闷，夜间和清晨加重。呼气相延长，双肺满布哮鸣音。重度时端坐呼吸，说话断断续续、只能讲单字，大汗，发绀。',
  exam:'肺功能（≥5–6 岁）：FEV₁ 下降，支气管舒张试验阳性；PEF 变异率增大。过敏原检测。急性发作时测 SpO₂ 和血气。',
  treat:'<b>急性发作</b>：首选吸入<b>短效β₂受体激动剂（沙丁胺醇）</b>，可联用异丙托溴铵，加<b>全身糖皮质激素</b>；吸氧。危重时转 PICU，必要时机械通气'+W('W5')+'。<br><b>长期控制</b>：首选<b>吸入糖皮质激素（ICS）</b>，按 <b>≤5 岁</b> 和 <b>≥6 岁</b> 分别做阶梯治疗'+W('W4')+'。<br><b class="warn">错误做法</b>：用镇静剂（会抑制呼吸）；把茶碱当一线药；常规使用抗生素。',
- link:['small','trachea']},
+ link:['small','trachea'],
+ quiz:{q:'哮喘急性发作首选？',opts:['吸入短效β₂受体激动剂（沙丁胺醇）','镇静剂','口服茶碱作一线'],ans:0}},
 {id:'pneu',name:'支气管肺炎',mode:'pneu',
  cause:'病毒或细菌，也可以是支原体等。常见病原'+W('W9')+'：<table><tr><th>病原</th><td>特点</td></tr><tr><td>呼吸道合胞病毒</td><td>婴幼儿病毒性肺炎最常见</td></tr><tr><td>腺病毒</td><td>病情重，易有后遗症</td></tr><tr><td>肺炎链球菌</td><td>细菌性肺炎最常见</td></tr><tr><td>金黄色葡萄球菌</td><td>易形成肺脓肿、脓胸、肺大疱</td></tr><tr><td>流感嗜血杆菌</td><td>婴幼儿多见</td></tr><tr><td>肺炎支原体</td><td>学龄儿和学龄前儿多见，刺激性干咳</td></tr></table>',
  mech:'<b>（掌握）病理生理</b>：炎症使支气管黏膜水肿、管腔变窄，肺泡里充满炎性渗出物（动画中肺泡由透明变红）→ 通气和换气障碍 → <b>低氧血症</b>和<b>CO₂潴留</b>，由此引出一连串后果：<br>• <b>循环系统</b>：缺氧使肺小动脉收缩，肺动脉高压，右心负荷加重，加上病原毒素损伤心肌 → <b>心力衰竭</b>、中毒性心肌炎；<br>• <b>神经系统</b>：缺氧和 CO₂ 潴留使脑血管扩张、通透性增加 → 脑水肿，即<b>中毒性脑病</b>；<br>• <b>消化系统</b>：缺氧和毒素 → 胃肠功能紊乱，严重时出现<b>中毒性肠麻痹</b>、消化道出血；<br>• <b>酸碱失衡</b>：CO₂ 潴留引起呼吸性酸中毒，缺氧时无氧代谢增加引起代谢性酸中毒，所以常是<b>混合性酸中毒</b>。',
  sign:'发热、咳嗽、气促；严重时鼻翼扇动、三凹征、发绀。肺部可闻<b>较固定的中、细湿啰音</b>，以背部两肺下方和脊柱两旁多见。<br><b>合并心衰的诊断要点</b>'+W('W2')+'：<ol><li>安静时心率突然超过 180 次/分</li><li>呼吸突然加快，超过 60 次/分</li><li>突然极度烦躁不安，明显发绀，面色苍白发灰，指（趾）甲微血管再充盈时间延长</li><li>心音低钝，出现奔马律，颈静脉怒张</li><li>肝脏迅速增大</li><li>尿少或无尿，眼睑或双下肢水肿</li></ol>',
  exam:'血常规：细菌性肺炎白细胞和中性粒细胞升高，CRP 升高。胸片：两肺下野、中内带有斑片状阴影。血气分析判断缺氧和酸碱失衡'+W('W10')+'。病原学检查。',
  treat:'抗感染：肺炎链球菌首选<b>青霉素或阿莫西林</b>；支原体用<b>大环内酯类</b>（如阿奇霉素）；疗程'+W('W3')+'。<br>对症支持：氧疗，保持呼吸道通畅，控制液体量和输液速度。<br>合并心衰：吸氧、镇静、强心、利尿、使用血管活性药'+W('W12')+'。',
- link:['small','chest']}];
+ link:['small','chest'],
+ quiz:{q:'肺炎合并心衰时，肝脏的特点是？',opts:['迅速增大','仅因肺气肿被推下、不迅速增大','缩小'],ans:0}}];
 
 // ===== 小游戏 =====
 const G_ASSEMBLE=['鼻','咽','喉','气管','主支气管','细支气管','肺泡'];
@@ -212,6 +219,7 @@ const PATIENTS=[
  {k:'ask',items:[['喘了多久？','今天早上开始，一阵一阵的。',1],['吃奶怎么样？尿多不多？','吃两口就喘，尿比平时少。',1],['家里有人感冒吗？','哥哥上周感冒了。',1],['以前喘过吗？有没有湿疹、过敏？','第一次喘，没有。',1],['是顺产还是剖宫产？','顺产。',0]]},
  {k:'exam',find:{vitals:'T 37.8℃，RR 62 次/分，HR 160 次/分，SpO₂ 91%',general:'烦躁，阵发性喘憋，鼻翼扇动',lips:'口周轻度发绀',neck:'吸气时胸骨上窝凹陷',chest:'吸气时肋间隙凹陷，胸廓饱满','chest:叩':'过清音',lungs:'呼气相明显延长，双肺广泛哮鸣音，喘憋缓解时可闻细湿啰音',liver:'肋下 2.5 cm，质软；叩诊肺肝界下移',heart:'心音有力，律齐'},key:['vitals','general','lips','chest','lungs','liver']},
  {k:'tests',list:[['RSV 抗原检测','key',T('病原检测',[['呼吸道合胞病毒抗原','阳性 (+)']])],['胸片','ok',T('胸片报告',[['所见','双肺透亮度增高，膈肌低平，少许斑片影'],['印象','肺过度充气']])],['血气分析','ok',T('血气',[['pH','7.36'],['PaO₂','58 mmHg ↓'],['PaCO₂','44 mmHg']])],['血培养','no','']]},
+ {k:'q',title:'鉴别诊断',type:'multi',cat:'clin',pts:2,text:'列出需要鉴别的诊断（多选）：',opts:[['毛细支气管炎',1],['支气管哮喘（首次发作）',1],['支气管肺炎合并心衰',1],['急性感染性喉炎',0]],explain:'需与哮喘首发、肺炎合并心衰鉴别。本例有 RSV、肺过度充气推肝下移，心音有力不支持心衰；无犬吠样咳嗽与吸气性喉鸣，不是喉炎。'},
  {k:'q',title:'确定诊断',type:'single',cat:'clin',pts:3,text:'诊断是：',opts:[['毛细支气管炎（RSV）',1],['支气管哮喘',0],['支气管肺炎合并心衰',0]]},
  {k:'q',title:'为什么',type:'single',cat:'mech',pts:3,text:'为什么是<b>呼气</b>相延长、叩诊过清音？',opts:[['细支气管被水肿和黏液堵住，呼气时胸内小气道被压得更窄，气呼不出来，潴留在肺里',1],['喉部水肿，吸气受阻',0],['肺泡实变',0]],jump:{mech:'bronchio',anat:'small'}},
  {k:'q',title:'陷阱题',type:'single',cat:'mech',pts:3,text:'肝脏在肋下 2.5 cm，是心衰吗？',opts:[['是，必须马上强心治疗',0],['不一定。肺过度充气让膈肌下移，肝脏被推下来；肝脏没有迅速增大，心率和心音也不支持心衰',1]],jump:{mech:'bronchio'}},
@@ -224,7 +232,7 @@ const PATIENTS=[
  {k:'exam',find:{vitals:'RR 38 次/分，HR 140 次/分，SpO₂ 89%',general:'端坐呼吸，大汗，只能讲单字',lips:'口唇发绀',neck:'胸骨上窝、锁骨上窝凹陷，辅助呼吸肌参与',chest:'肋间隙凹陷，胸廓饱满','chest:叩':'过清音',lungs:'呼气相延长，双肺满布哮鸣音','lungs:叩':'过清音'},key:['vitals','general','lips','neck','lungs']},
  {k:'tests',list:[['SpO₂ 监测','key','<div class="doc">SpO₂ 89%（吸空气）</div>'],['血气分析','key',T('血气',[['pH','7.38'],['PaO₂','56 mmHg ↓'],['PaCO₂','40 mmHg（重度发作时“正常”值也是危险信号）']])],['肺功能','no','<div class="doc">急性重度发作时不宜做</div>'],['过敏原检测','no','<div class="doc">留待缓解期</div>']]},
  {k:'q',title:'为什么',type:'single',cat:'mech',pts:3,text:'喘息的机制是：',opts:[['气道慢性炎症基础上支气管平滑肌痉挛、水肿、黏液栓，小气道可逆性狭窄',1],['声门下水肿',0],['气道重塑、肺泡破坏，不可逆（像 COPD）',0]],jump:{mech:'asthma',anat:'small'}},
- {k:'q',title:'急诊处理',type:'multi',cat:'clin',pts:4,text:'现在立即做（多选）：',opts:[['吸入沙丁胺醇（可重复），联用异丙托溴铵',1],['全身糖皮质激素',1],['吸氧，维持 SpO₂ ≥94%',1],['给镇静剂让他安静',0],['首选口服茶碱',0],['常规静脉抗生素',0]],explain:'镇静剂会抑制呼吸；茶碱不是一线药。'},
+ {k:'q',title:'急诊处理',type:'multi',cat:'clin',pts:4,text:'现在立即做（多选）：',opts:[['吸入沙丁胺醇（可重复），联用异丙托溴铵',1],['全身糖皮质激素',1],['吸氧，维持 SpO₂ ≥94% '+W('W15'),1],['给镇静剂让他安静',0],['首选口服茶碱',0],['常规静脉抗生素',0]],explain:'镇静剂会抑制呼吸；茶碱不是一线药。'},
  {k:'q',title:'⏰ 1 小时后',type:'single',cat:'clin',pts:5,veto:'危重哮喘未升级处理',pre:'已雾化 3 次加静脉激素：孩子仍端坐、更疲倦，SpO₂ 88%；听诊<b>哮鸣音明显减弱</b>；复查 PaCO₂ 50 mmHg。',text:'你的判断和处理：',opts:[['哮鸣音减少，说明好转了，继续观察',0],['这是危重发作，气流极少（“沉默肺”），CO₂ 开始潴留：立即升级，转 PICU，静脉硫酸镁，准备无创或有创通气',1],['加用镇静剂和茶碱',0]],jump:{mech:'asthma'}},
  {k:'q',title:'长期控制',type:'single',cat:'clin',pts:2,text:'缓解后，长期控制首选：',opts:[['吸入糖皮质激素（ICS），按 ≥6 岁阶梯治疗',1],['长期口服抗生素',0],['只在喘的时候用沙丁胺醇',0]]},
  {k:'q',title:'家长交代',type:'single',cat:'clin',pts:2,text:'出院时对妈妈说：',opts:[['“哮喘是气道里长期的炎症，不喘的时候炎症也还在。吸入激素就像每天给气道消肿，剂量很小，比这次发作安全得多。不要自己停药，我们每 1–3 个月复诊一次，按情况调整药量。”',1],['“这次是你没给他用药造成的。”',0],['“好了就不用吃药了。”',0]]}]},
@@ -251,7 +259,7 @@ const PATIENTS=[
  {k:'q',title:'心衰判断',type:'multi',cat:'clin',pts:4,text:'下面哪些符合<b>肺炎合并心衰</b>的诊断要点？（多选）',opts:[['安静时心率突然超过 180 次/分',1],['呼吸突然超过 60 次/分',1],['极度烦躁、面色苍白发灰、毛细血管再充盈时间延长',1],['心音低钝、奔马律',1],['肝脏迅速增大',1],['尿少、眼睑和下肢水肿',1],['体温 38.5℃',0]]},
  {k:'q',title:'确定诊断',type:'single',cat:'clin',pts:5,veto:'漏诊心力衰竭',text:'诊断：',opts:[['支气管肺炎',0],['重症肺炎合并心力衰竭',1],['毛细支气管炎',0]]},
  {k:'q',title:'为什么',type:'single',cat:'mech',pts:3,text:'肺炎为什么会导致心衰？',opts:[['缺氧和 CO₂ 潴留使肺小动脉收缩，引起肺动脉高压，右心负荷加重；病原毒素损伤心肌',1],['抗生素的副作用',0],['发烧引起的',0]],jump:{mech:'pneu',anat:'small'}},
- {k:'q',title:'处理',type:'multi',cat:'clin',pts:4,veto:'漏诊心力衰竭',text:'处理（多选）：',opts:[['吸氧，转 PICU',1],['镇静',1],['强心、利尿（如毛花苷C、呋塞米）',1],['严格控制液体量和输液速度',1],['大量快速补液纠正尿少',0],['纠正酸中毒，改善通气',1]],explain:'尿少是心衰所致，快速补液会加重心衰。强心药口径⚠W12。'},
+ {k:'q',title:'处理',type:'multi',cat:'clin',pts:4,veto:'心衰处理错误',text:'处理（多选）：',opts:[['吸氧，转 PICU',1,'crit'],['镇静',1],['强心、利尿（如毛花苷C、呋塞米）',1,'crit'],['严格控制液体量和输液速度',1,'crit'],['大量快速补液纠正尿少',0,'harm'],['纠正酸中毒，改善通气',1]],explain:'尿少是心衰所致，快速补液会加重心衰。漏选关键项（吸氧转PICU / 强心利尿 / 控液）或误选有害项才触发「心衰处理错误」否决；漏选非关键项只扣分。强心药口径⚠W12。'},
  {k:'q',title:'家长交代',type:'single',cat:'clin',pts:2,text:'妈妈哭着问：“是不是诊所把孩子耽误了？”',opts:[['“对，就是诊所耽误的，你去告他们。”',0],['“孩子现在肺炎很重，心脏也累坏了，我们正在全力抢救，要马上送重症监护室。之前的治疗我们会再了解，眼下最要紧的是孩子，请您在这里签字，我们会随时告诉您情况。”',1],['“现在说这些没用。”',0]]}]}];
 </script><script>// ===== 3D 引擎 =====
 const V3=(x,y,z)=>new THREE.Vector3(x,y,z);
@@ -325,7 +333,7 @@ function mount3D(parent,mode,label,hl){if(!R3.holder)init3D();parent.appendChild
  if(hl&&hl.length){const n=hl[0];R3.cam.position.z=['nose','pharynx','larynx','subglottic'].includes(n)?5.5:['alv','small'].includes(n)?6.2:8.2;R3.cam.position.y=['nose','pharynx','larynx','subglottic'].includes(n)?2:.9;R3.cam.lookAt(0,R3.cam.position.y-.4,0)}else{R3.cam.position.set(0,.9,8.2);R3.cam.lookAt(0,.5,0)}}
 
 // ===== 状态与计分 =====
-const S={sc:{},veto:new Set(),done:{},ret:null,pi:null,ps:null};
+const S={sc:{},veto:new Set(),done:{},ret:null,pi:null,ps:null,mechTab:{},mechQuiz:{}};
 function award(key,cat,got,max){S.sc[key]={cat,got:Math.max(0,Math.min(max,got)),max}}
 function totals(){const t={anat:[0,0],mech:[0,0],clin:[0,0]};Object.entries(S.sc).forEach(([k,v])=>{if(k.startsWith('P1/'))return;t[v.cat][0]+=v.got;t[v.cat][1]+=v.max});return t}
 const MAXPOS={anat:0,mech:0,clin:0};
@@ -355,19 +363,29 @@ function anat(spot){html(topbar('解剖馆 · 小儿呼吸系统特点','home()'
  $('#anInfo').innerHTML=a?`<div class="card"><h2>${a.name}</h2>${a.txt}<div class="fb">临床联系：${a.clin}</div></div>`:`<div class="card sub">点上面的标签，模型会高亮对应部位。</div>`}
 let asmSeq=[];
 function gAssemble(){asmSeq=[];const sh=[...G_ASSEMBLE].sort(()=>Math.random()-.5);
- const draw=()=>{modal(`<h2>拼装呼吸道</h2><div class="sub">按空气从外到内经过的顺序依次点选</div><div style="margin:8px 0">${G_ASSEMBLE.map((_,i)=>`<span class="slot ${asmSeq[i]?'f':''}">${asmSeq[i]||i+1}</span>`).join('→')}</div><div class="chips">${sh.map(x=>`<span class="btn sm ${asmSeq.includes(x)?'ok':''}" onclick="asmPick('${x}')">${x}</span>`).join('')}</div><div id="asmFb"></div>`)};window._asmDraw=draw;draw()}
+ const draw=()=>{modal(`<h2>拼装呼吸道</h2><div class="sub">按空气从外到内经过的顺序依次点选（手机请点选即可，无需拖拽）</div><div style="margin:8px 0">${G_ASSEMBLE.map((_,i)=>`<span class="slot ${asmSeq[i]?'f':''}">${asmSeq[i]||i+1}</span>`).join('→')}</div><div class="chips">${sh.map(x=>`<span class="btn sm ${asmSeq.includes(x)?'ok':''}" onclick="asmPick('${x}')">${x}</span>`).join('')}</div><div id="asmFb"></div>`)};window._asmDraw=draw;draw()}
 function asmPick(x){if(asmSeq.includes(x))return;asmSeq.push(x);_asmDraw();if(asmSeq.length==G_ASSEMBLE.length){let c=asmSeq.filter((v,i)=>v==G_ASSEMBLE[i]).length;award('G/asm','anat',c/7*5,5);$('#asmFb').innerHTML=`<div class="fb">${c}/7 位置正确，得 ${(c/7*5).toFixed(1)}/5 分。正确顺序：${G_ASSEMBLE.join('→')}。以环状软骨下缘为界，上面是上呼吸道，下面是下呼吸道。</div><span class="btn sm" onclick="gAssemble()">再来一次</span>`}}
 function gDiff(){const ans={};window._diffAns=ans;modal(`<h2>儿童 vs 成人 找不同</h2><div class="sub">判断每一条是“儿童特点”还是“成人特点”（右主支气管那条，两者都对，选“都是”）</div>${G_DIFF.map((d,i)=>`<div class="opt" id="df${i}">${d[0]}<br><span class="btn sm" onclick="dPick(${i},'c')">儿童</span> <span class="btn sm" onclick="dPick(${i},'a')">成人</span> <span class="btn sm" onclick="dPick(${i},'b')">都是</span></div>`).join('')}<span class="btn pri" onclick="dDone()">提交</span><div id="dfFb"></div>`)}
 function dPick(i,v){_diffAns[i]=v;$('#df'+i).className='opt sel'}
 function dDone(){let c=0;G_DIFF.forEach((d,i)=>{const ok=_diffAns[i]==d[1];c+=ok;$('#df'+i).className='opt '+(ok?'ok':'no')});award('G/diff','anat',c/G_DIFF.length*5,5);$('#dfFb').innerHTML=`<div class="fb">答对 ${c}/${G_DIFF.length}。</div>`}
 
 // ===== 机制廊 =====
-function mechHall(){setRet(S.ret);html(topbar('机制廊 · 从上到下六个病','home()')+`<div id="m3"></div><div class="card"><h2>按部位从上往下</h2>${DIS.map((d,i)=>`<div class="opt" onclick="mech('${d.id}')"><b>${i+1}. ${d.name}</b> <span class="sub">${{urti:'鼻咽',larynx:'喉·声门下',bronch:'较大支气管',small:'细支气管',asthma:'小气道痉挛',pneu:'肺泡'}[d.mode]}</span></div>`).join('')}</div>
+function mechHall(){setRet(S.ret);const doneN=DIS.filter(d=>S.mechQuiz[d.id]).length;html(topbar('机制廊 · 从上到下六个病','home()')+`<div id="m3"></div><div class="card"><h2>按部位从上往下</h2><div class="sub">每个病点开浏览各页，再做页底短测（计入机制分）。已测 ${doneN}/6。</div>${DIS.map((d,i)=>{const tabs=(S.mechTab[d.id]||new Set()).size;const qz=S.mechQuiz[d.id];return `<div class="opt" onclick="mech('${d.id}')"><b>${i+1}. ${d.name}</b> <span class="sub">${{urti:'鼻咽',larynx:'喉·声门下',bronch:'较大支气管',small:'细支气管',asthma:'小气道痉挛',pneu:'肺泡'}[d.mode]} · 页签 ${tabs}/5 ${qz?'· ✅已测':'· 待测'}</span></div>`}).join('')}</div>
 <div class="card"><h2>🎮 机制小游戏</h2><div class="chips"><span class="btn" onclick="gInsp()">吸气性还是呼气性</span><span class="btn" onclick="gRetract()">三凹征点选</span><span class="btn" onclick="gMatch()">症状↔部位连线</span><span class="btn" onclick="gGrade()">喉梗阻分度滑块</span><span class="btn" onclick="gGas()">血气酸碱判断</span></div></div>`);mount3D($('#m3'),'normal','正常气流')}
 function mech(id,tab){const d=DIS.find(x=>x.id==id);tab=tab||'mech';const T={cause:'病因',mech:'机制病理',sign:'表现',exam:'检查',treat:'治疗'};
- html(topbar(d.name,'mechHall()')+`<div id="m3"></div><div class="tabs">${Object.entries(T).map(([k,v])=>`<span class="btn sm${k==tab?' on':''}" onclick="mech('${id}','${k}')">${v}</span>`).join('')}</div><div class="card"><h2>${T[tab]}</h2>${d[tab]}</div>
- <div class="card"><span class="btn sm" onclick="anat('${d.link[0]}')">🫁 回到解剖：${ANAT.find(a=>a.id==d.link[0]).name}</span></div>`);
+ S.mechTab[id]=S.mechTab[id]||new Set();S.mechTab[id].add(tab);
+ const tabsDone=S.mechTab[id].size,quizReady=tabsDone>=5,qz=S.mechQuiz[id];
+ let quizHtml='';
+ if(d.quiz){if(qz){quizHtml=`<div class="card"><h2>短测 ✅</h2><div class="fb">已答：${d.quiz.opts[d.quiz.ans]}（${qz.ok?'正确':'已作答'}），得 ${qz.got}/${qz.max} 分</div></div>`}
+  else if(!quizReady){quizHtml=`<div class="card"><h2>短测</h2><div class="sub">请先点开全部 5 个页签（病因/机制病理/表现/检查/治疗），再解锁短测。当前 ${tabsDone}/5。</div></div>`}
+  else{quizHtml=`<div class="card"><h2>短测（计入机制分）</h2><div>${d.quiz.q}</div>${d.quiz.opts.map((o,k)=>`<div class="opt" id="mq${k}" onclick="document.querySelectorAll('#mq0,#mq1,#mq2').forEach(e=>e.classList.remove('sel'));this.classList.add('sel');window._mqSel=${k}">${o}</div>`).join('')}<span class="btn pri" onclick="mechQuizSubmit('${id}')">提交短测</span><div id="mqFb"></div></div>`}}
+ html(topbar(d.name,'mechHall()')+`<div id="m3"></div><div class="tabs">${Object.entries(T).map(([k,v])=>`<span class="btn sm${k==tab?' on':''}" onclick="mech('${id}','${k}')">${v}${S.mechTab[id].has(k)?' ·':''}</span>`).join('')}</div><div class="card"><h2>${T[tab]}</h2>${d[tab]}</div>
+ <div class="card"><span class="btn sm" onclick="anat('${d.link[0]}')">🫁 回到解剖：${ANAT.find(a=>a.id==d.link[0]).name}</span></div>${quizHtml}`);
  mount3D($('#m3'),d.mode,d.name,d.link.flatMap(l=>ANAT.find(a=>a.id==l).mesh))}
+function mechQuizSubmit(id){const d=DIS.find(x=>x.id==id);if(S.mechQuiz[id])return;const k=window._mqSel;if(k==null){$('#mqFb').innerHTML='<div class="fb bad">请先选择</div>';return}
+ const ok=k===d.quiz.ans,got=ok?1:0;award('MQ/'+id,'mech',got,1);S.mechQuiz[id]={ok,got,max:1};
+ d.quiz.opts.forEach((o,i)=>{const e=$('#mq'+i);if(!e)return;e.onclick=null;if(i===d.quiz.ans)e.classList.add('ok');else if(i===k)e.classList.add('no')});
+ $('#mqFb').innerHTML=`<div class="fb ${ok?'':'bad'}">${ok?'✔ 正确':'✘ 正确答案：'+d.quiz.opts[d.quiz.ans]}（1 分计入机制）</div>`}
 function gInsp(){window._gi={};modal(`<h2>吸气性还是呼气性？</h2>${G_INSP.map((g,i)=>`<div class="opt" id="gi${i}">${g[0]}<br><span class="btn sm" onclick="giPick(${i},'i')">吸气性</span> <span class="btn sm" onclick="giPick(${i},'e')">呼气性</span><div class="sub" id="gw${i}"></div></div>`).join('')}`)}
 function giPick(i,v){if(_gi[i]!=null)return;_gi[i]=v;const ok=v==G_INSP[i][1];$('#gi'+i).className='opt '+(ok?'ok':'no');$('#gw'+i).textContent=(ok?'✔ ':'✘ ')+G_INSP[i][2];if(Object.keys(_gi).length==G_INSP.length){const c=G_INSP.filter((g,j)=>_gi[j]==g[1]).length;award('G/insp','mech',c/G_INSP.length*4,4)}}
 function gRetract(){window._gr=new Set();const pos={ss:[120,72],sc:[78,66],ic:[96,140],ax:[40,118],um:[120,250],sp:[180,110]};
@@ -408,14 +426,18 @@ function examUI(i,si,head,next){const ps=S.ps[si];ps.log=ps.log||[];html(head+`<
  <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"><span class="btn sm" id="h_vitals_b" onclick="exSite('vitals')">📟 生命体征/监护仪</span>${Object.entries(SITES).filter(e=>e[0]!='vitals').map(([k,v])=>`<span class="btn sm" onclick="exSite('${k}')">${v[0]}</span>`).join('')}</div>
  <div class="body">${BODY_SVG}</div><div id="exMeth" class="chips"></div><h3>检查记录</h3><div class="log" id="exLog"></div><br><span class="btn pri" id="exDone" onclick="exDone(${i},${si})">查体完成</span><div id="exFb"></div></div>`+next);exRender(i,si);if(ps.fin)$('#nextBox').style.display='block'}
 function exSite(k){const si=S.si,ps=S.ps[si];ps.cur=k;document.querySelectorAll('.hot').forEach(h=>h.classList.remove('sel'));const h=$('#h_'+k);h&&h.classList.add('sel');
- $('#exMeth').innerHTML=`<b>${SITES[k][0]}：</b>`+['看','摸','叩','听'].map(m=>`<span class="btn sm" onclick="exDo('${k}','${m}')">${m}</span>`).join('')}
+ $('#exMeth').innerHTML=`<b>${SITES[k][0]}：</b>`+['看','摸','叩','听'].map(m=>{const ok=SITES[k][1].includes(m);return ok?`<span class="btn sm" onclick="exDo('${k}','${m}')">${m}</span>`:`<span class="btn sm" style="opacity:.35;pointer-events:none" title="此部位不用${m}">${m}</span>`}).join('')}
 function exDo(k,m){const i=S.pi,si=Object.keys(S.ps).map(Number).pop(),ps=S.ps[si],st=PATIENTS[i].stages[si];if(ps.fin)return;
  let r;if(!SITES[k][1].includes(m))r=`（${m}${SITES[k][0]}没有意义）`;else r=st.find[k+':'+m]||(SITES[k][1][0]==m||k=='lungs'&&m=='听'?st.find[k]:null)||NORMAL[k+':'+m]||NORMAL[k];
  ps.log.push([k,m,r]);exRender(i,si)}
 function exRender(i,si){const ps=S.ps[si];$('#exLog').innerHTML=ps.log.map(l=>`<div><b>${SITES[l[0]][0]}·${l[1]}</b>：${l[2]}</div>`).join('')||'<span class="sub">还没检查</span>';ps.log.forEach(l=>{const h=$('#h_'+l[0]);h&&h.classList.add('done')})}
 function exDone(i,si){const p=PATIENTS[i],st=p.stages[si],ps=S.ps[si];if(ps.fin)return;ps.fin=1;const did=new Set(ps.log.filter(l=>SITES[l[0]][1].includes(l[1])).map(l=>l[0]));const miss=st.key.filter(k=>!did.has(k));
- const first=ps.log[0]?ps.log[0][0]:'';const orderBad=!(first=='vitals'||first=='general');const sc=(st.key.length-miss.length)/st.key.length*4-(orderBad?1:0);award(`P${p.id}/${si}`,'clin',sc,4);
- $('#exFb').innerHTML=`<div class="fb ${miss.length?'bad':''}">关键项完成 ${st.key.length-miss.length}/${st.key.length}${miss.length?'，漏查：'+miss.map(k=>SITES[k][0]).join('、'):''}。${orderBad?'<br>顺序扣 1 分：应先测生命体征、看全身情况，再从上到下检查。':''}<br>关键所见：${st.key.map(k=>`<br>· ${SITES[k][0]}：${st.find[k]||NORMAL[k]}`).join('')}</div>`;$('#nextBox').style.display='block'}
+ const unique=[];ps.log.forEach(l=>{if(!unique.includes(l[0]))unique.push(l[0])});
+ let orderBad=unique[0]!=='vitals';
+ if(!orderBad&&st.key.includes('general'))orderBad=unique[1]!=='general';
+ else if(!orderBad&&unique.includes('general')){const gi=unique.indexOf('general');const firstReg=unique.findIndex(s=>['pharynx','neck','chest','lungs','heart','liver','limbs'].includes(s));if(firstReg>=0&&gi>firstReg)orderBad=true}
+ const sc=(st.key.length-miss.length)/st.key.length*4-(orderBad?1:0);award(`P${p.id}/${si}`,'clin',sc,4);
+ $('#exFb').innerHTML=`<div class="fb ${miss.length||orderBad?'bad':''}">关键项完成 ${st.key.length-miss.length}/${st.key.length}${miss.length?'，漏查：'+miss.map(k=>SITES[k][0]).join('、'):''}。${orderBad?'<br>顺序扣 1 分：应先测生命体征，再看全身，然后从上到下检查。':''}<br>关键所见：${st.key.map(k=>`<br>· ${SITES[k][0]}：${st.find[k]||NORMAL[k]}`).join('')}</div>`;$('#nextBox').style.display='block'}
 function testDone(i,si){const p=PATIENTS[i],st=p.stages[si],ps=S.ps[si];if(ps.fin)return;ps.fin=1;ps.sel=st.list.map((t,k)=>$('#t'+k).classList.contains('sel'));
  let sc=2;st.list.forEach((t,k)=>{if(t[1]=='key'&&!ps.sel[k])sc-=1;if(t[1]=='no'&&ps.sel[k])sc-=.5});award(`P${p.id}/${si}`,'clin',sc,2);testShow(i,si)}
 function testShow(i,si){const st=PATIENTS[i].stages[si],ps=S.ps[si];st.list.forEach((t,k)=>{const e=$('#t'+k);e.onclick=null;e.className='opt '+(t[1]=='key'?(ps.sel[k]?'ok':'no'):t[1]=='no'?(ps.sel[k]?'no':''):ps.sel[k]?'ok':'');e.innerHTML=`${t[0]} <span class="sub">${{key:'必查',ok:'可选',no:'不必要'}[t[1]]}</span>`+(ps.sel[k]&&t[2]?`<div style="margin-top:6px">${t[2]}</div>`:'')});
@@ -428,10 +450,20 @@ function qPick(si,k,t){const ps=S.ps[si];if(ps.fin)return;ps.sel=ps.sel||[];if(t
 function qSubmit(i,si){const p=PATIENTS[i],st=p.stages[si],ps=S.ps[si];if(ps.fin)return;if(!(ps.sel||[]).length){$('#qFb').innerHTML='<div class="fb bad">请先选择</div>';return}ps.fin=1;
  const good=st.opts.filter(o=>o[1]).length,hit=ps.sel.filter(k=>st.opts[k][1]).length,wrong=ps.sel.length-hit;
  const sc=st.type=='single'?(hit?1:0):Math.max(0,(hit-wrong))/good;award(`P${p.id}/${si}`,st.cat,sc*st.pts,st.pts);ps.ok=sc>=(st.type=='single'?1:.99);
- if(st.veto&&!p.practice&&sc<1&&(st.type=='single'||ps.sel.some(k=>!st.opts[k][1])||hit<good))S.veto.add(st.veto);qShow(i,si)}
+ ps.vetoed=false;
+ if(st.veto&&!p.practice&&!ps.ok){
+  if(st.type=='single'){ps.vetoed=true}
+  else{
+   const hasFlags=st.opts.some(o=>o[2]==='crit'||o[2]==='harm');
+   if(hasFlags){const missCrit=st.opts.some((o,k)=>o[2]==='crit'&&!ps.sel.includes(k));const hitHarm=ps.sel.some(k=>st.opts[k][2]==='harm');ps.vetoed=missCrit||hitHarm}
+   else{ps.vetoed=ps.sel.some(k=>!st.opts[k][1])||hit<good}
+  }
+  if(ps.vetoed)S.veto.add(st.veto);
+ }
+ qShow(i,si)}
 function qShow(i,si){const p=PATIENTS[i],st=p.stages[si],ps=S.ps[si];st.opts.forEach((o,k)=>{const e=$('#o'+k);e.onclick=null;if(o[1])e.classList.add('ok');else if(ps.sel.includes(k))e.classList.add('no')});
  const j=st.jump;const jb=j?`<div style="margin-top:8px">${j.mech?`<span class="btn sm" onclick="jumpMech('${j.mech}',${i},${si})">🧬 看机制动画</span> `:''}${j.anat?`<span class="btn sm" onclick="jumpAnat('${j.anat}',${i},${si})">🫁 回到解剖部位</span>`:''}</div>`:'';
- $('#qFb').innerHTML=`<div class="fb ${ps.ok?'':'bad'}">${ps.ok?'✔ 回答正确':'✘ 不完全正确，绿色是正确答案'}${st.explain?'<br>'+st.explain:''}${st.veto&&!ps.ok&&!p.practice?'<br><b class="warn">触发一票否决：'+st.veto+'（总评最高“合格”）</b>':''}${jb}</div>`;$('#nextBox').style.display='block'}
+ $('#qFb').innerHTML=`<div class="fb ${ps.ok?'':'bad'}">${ps.ok?'✔ 回答正确':'✘ 不完全正确，绿色是正确答案'}${st.explain?'<br>'+st.explain:''}${ps.vetoed?'<br><b class="warn">触发一票否决：'+st.veto+'（总评最高“合格”）</b>':''}${jb}</div>`;$('#nextBox').style.display='block'}
 function jumpMech(id,i,si){setRet({pi:i,si});mech(id)}
 function jumpAnat(id,i,si){setRet({pi:i,si});anat(id)}
 function patientEnd(i){const p=PATIENTS[i];S.done[p.id]=1;let g=0,m=0;Object.entries(S.sc).forEach(([k,v])=>{if(k.startsWith(`P${p.id}/`)){g+=v.got;m+=v.max}});
@@ -445,11 +477,11 @@ function report(){setRet(null);const t=totals();const pc=c=>t[c][1]?t[c][0]/t[c]
  const pd=[2,3,4,5,6,7].filter(n=>!S.done[n]).length;
  html(topbar('成绩单','home()')+`<div class="hero" style="text-align:center"><div class="sub">综合得分</div><div style="font-size:46px;font-weight:700" id="totalScore">${total.toFixed(0)}</div><div style="font-size:20px" id="grade">${grade}</div>${capped?'<div class="warn">因一票否决，总评最高为“合格”</div>':''}</div>
  <div class="card"><div class="score3">${[['anat','解剖',20],['mech','机制',30],['clin','临床推理',50]].map(([c,n,w])=>`<div>${n}<b>${pc(c).toFixed(0)}</b><span class="sub">权重 ${w}%<br>${t[c][0].toFixed(1)}/${t[c][1]}</span><div class="bar"><i style="width:${pc(c)}%"></i></div></div>`).join('')}</div>
- <div class="sub" style="margin-top:8px">解剖 = 解剖馆小游戏；机制 = 机制廊小游戏 + 病例中的“为什么”题；临床推理 = 问诊、查体、检查、诊断、处理、家长交代。没做的小游戏和病例按 0 分算。第 1 位患儿是练习，不计分。</div></div>
- <div class="card"><h2>一票否决</h2>${S.veto.size?[...S.veto].map(v=>`<div class="warn">✘ ${v}</div>`).join(''):'<div style="color:var(--ac2)">✔ 无</div>'}<div class="sub">否决项：漏判喉梗阻≥Ⅲ度、危重哮喘未升级处理、漏诊心力衰竭。触发后总评最高为“合格”，不足 60 分仍是“不合格”。</div></div>
+ <div class="sub" style="margin-top:8px">解剖 = 解剖馆小游戏；机制 = 机制廊短测 + 机制小游戏 + 病例中的“为什么”题；临床推理 = 问诊、查体、检查、诊断、处理、家长交代。没做的小游戏、短测和病例按 0 分算。第 1 位患儿是练习，不计分。</div></div>
+ <div class="card"><h2>一票否决</h2>${S.veto.size?[...S.veto].map(v=>`<div class="warn">✘ ${v}</div>`).join(''):'<div style="color:var(--ac2)">✔ 无</div>'}<div class="sub">否决项：漏判喉梗阻≥Ⅲ度、危重哮喘未升级处理、漏诊心力衰竭、心衰处理错误。触发后总评最高为“合格”，不足 60 分仍是“不合格”。</div></div>
  ${pd?`<div class="card warn">还有 ${pd} 位计分患儿没完成。</div>`:''}
  <div class="card"><h2>各病例</h2><table>${PATIENTS.map(p=>{let g=0,m=0;Object.entries(S.sc).forEach(([k,v])=>{if(k.startsWith(`P${p.id}/`)){g+=v.got;m+=v.max}});return `<tr><td>${p.id}. ${p.name}</td><td>${DIS.find(d=>d.id==p.dis).name}</td><td>${S.done[p.id]?g.toFixed(1)+'/'+m:'—'}${p.practice?' (练习)':''}</td></tr>`}).join('')}</table></div>
- <div class="card"><span class="btn" onclick="if(confirm('清空所有成绩重新开始？')){S.sc={};S.veto=new Set();S.done={};home()}">重新开始</span></div>`)}
+ <div class="card"><span class="btn" onclick="if(confirm('清空所有成绩重新开始？')){S.sc={};S.veto=new Set();S.done={};S.mechTab={};S.mechQuiz={};home()}">重新开始</span></div>`)}
 function teacher(){modal(`<h2>教师面板 · ⚠需核实清单（${WARN.length} 项）</h2><table>${WARN.map(w=>`<tr><td class="warn">${w[0]}</td><td>${w[1]}</td></tr>`).join('')}</table><h3>说明</h3><div class="sub">听诊只有文字描述，没有生成任何声音；如需音频，请使用有授权的真实听诊录音。课件中的 3D 模型是示意模型，不是真实解剖比例。病例全部为虚构。</div>`)}
 document.addEventListener('DOMContentLoaded',home);
 </script></body></html>
