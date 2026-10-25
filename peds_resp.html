@@ -205,9 +205,12 @@ body.pano-on #app .hero,body.pano-on #app .grid{display:none}
 #coachFab .coach-tip b{color:#1f8fff;margin-right:4px}
 #coachFab .coach-tip.wang b{color:#1b8f6a}
 #coachFab .coach-row{pointer-events:auto;display:flex;gap:6px;align-items:flex-end}
-#coachFab .coach-btn{display:flex;align-items:center;gap:5px;background:rgba(8,24,48,.92);border:2px solid rgba(79,209,255,.55);border-radius:999px;padding:3px 8px 3px 3px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.45);color:#e8f2ff;font-size:11px}
-#coachFab .coach-btn.wang{border-color:rgba(124,240,196,.55)}
-#coachFab .coach-btn img{width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.35)}
+#coachFab .coach-btn{display:flex;align-items:center;gap:5px;background:rgba(8,24,48,.72);border:2px solid rgba(79,209,255,.28);border-radius:999px;padding:3px 8px 3px 3px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.35);color:#a8bdd4;font-size:11px;opacity:.72;transition:opacity .15s,border-color .15s,box-shadow .15s,transform .15s}
+#coachFab .coach-btn.wang{border-color:rgba(124,240,196,.28)}
+#coachFab .coach-btn img{width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.25);filter:grayscale(.25)}
+#coachFab .coach-btn.on{opacity:1;color:#e8f2ff;background:rgba(8,24,48,.95);border-color:rgba(79,209,255,.95);box-shadow:0 0 0 2px rgba(79,209,255,.35),0 8px 20px rgba(0,0,0,.5);transform:scale(1.04)}
+#coachFab .coach-btn.wang.on{border-color:rgba(124,240,196,.95);box-shadow:0 0 0 2px rgba(124,240,196,.4),0 8px 20px rgba(0,0,0,.5)}
+#coachFab .coach-btn.on img{border-color:rgba(255,255,255,.55);filter:none}
 #coachFab .coach-btn:active{transform:scale(.96)}
 .wb-fab{bottom:88px!important;right:12px}
 .wb-fab.show{bottom:88px}
@@ -1122,7 +1125,7 @@ function gsPick(i,o){if(_gs[i])return;_gs[i]=o;const ok=o==G_GAS[i].a;$('#gs'+i)
 // ===== 门诊 =====
 
 function clinic(){clinicList()}
-function clinicList(){setRet(null); document.body.classList.remove('on-home'); showWbFab(false); closeWhiteboard(); document.body.classList.add('panel-over'); if(typeof hideWangRail==='function') hideWangRail(); S.coachTrack='li'; ensureCoachFab(true);
+function clinicList(){setRet(null); document.body.classList.remove('on-home'); showWbFab(false); closeWhiteboard(); document.body.classList.add('panel-over'); if(typeof hideWangRail==='function') hideWangRail(); S.coachTrack='li'; ensureCoachFab(true); if(typeof syncCoachFabHighlight==='function') syncCoachFabHighlight('li');
  if(typeof Pano!=='undefined'&&Pano.cur&&Pano.cur()!=='clinic'){enterPano('clinic',0.18); setTimeout(()=>{showPanoUI(false);document.body.classList.add('panel-over')},520)}
  html(topbar('儿科诊室 · 候诊名单','backToPano()')+`<div class="card"><h2>今日候诊（由易到难）</h2><div class="sub">你是门诊医生。可先环视诊室，再点患儿接诊。完成一位才能叫下一位。</div>
 <span class="btn sm" onclick="enterPano('clinic',0.18)">🌐 诊室环视</span> <span class="btn sm" onclick="enterPano('lobby',0.08)">大厅</span></div>`+PATIENTS.map((p,i)=>{const lock=i>0&&!S.done[PATIENTS[i-1].id];return `<div class="card pt" style="${lock?'opacity:.45':''}" ${lock?'':`onclick="patient(${i})"`} id="pt${p.id}"><div class="avatar">${p.ava}</div><div><b>${p.id}. ${p.name}</b> <span class="sub">${p.age}</span>${p.practice?'<span class="tag">练习·不计分</span>':''}${p.revisit?'<span class="tag">复诊·资料不全</span>':''}<div class="sub">${S.done[p.id]?'✅ 已完成':lock?'🔒 等待中':'▶ 请接诊'}</div></div></div>`}).join('')+(S.done[7]?`<div class="card"><span class="btn pri" onclick="report()">查看成绩单</span></div>`:''))}
@@ -1245,7 +1248,7 @@ function patient(i){S.pi=i;S.ps={};const p=PATIENTS[i];
  ${S.demo?`<span class="btn sm" onclick="demoFillAskExam(${i})">一键演示：标准问诊+查体</span>`:''}</div>`)}
 function showDoc(i,j){modal(PATIENTS[i].docs[j].h)}
 function stepBar(p,si){return `<div class="steps">${p.stages.map((s,k)=>`<i class="${k<si?'done':k==si?'cur':''}">${STEPN[s.k]||s.title}</i>`).join('')}</div>`}
-function patientStage(i,si,resume){S.pi=i;S.si=si; document.body.classList.remove('on-home'); showWbFab(true); ensureCoachFab(true);const p=PATIENTS[i],st=p.stages[si];if(!st)return patientEnd(i);const key=`P${p.id}/${si}`;
+function patientStage(i,si,resume){S.pi=i;S.si=si; document.body.classList.remove('on-home'); showWbFab(true); S.coachTrack='li'; ensureCoachFab(true); if(typeof syncCoachFabHighlight==='function') syncCoachFabHighlight('li');const p=PATIENTS[i],st=p.stages[si];if(!st)return patientEnd(i);const key=`P${p.id}/${si}`;
  const head=topbar(`${p.id}号 ${p.name} · ${STEPN[st.k]||st.title}`,'clinicList()')+stepBar(p,si)+(p.docs.length?`<div style="padding:0 14px">${p.docs.map((d,j)=>`<span class="btn sm" onclick="showDoc(${i},${j})">📄 ${d.t}</span>`).join(' ')}</div>`:'');
  const next=`<div class="card" id="nextBox" style="display:none"><span class="btn pri" id="nextBtn" onclick="patientStage(${i},${si+1})">下一步 ›</span></div>`;
  if(!resume)S.ps[si]={};const ps=S.ps[si];
@@ -1522,23 +1525,41 @@ function teacherGuide(){
 function ensureCoachFab(show){
   let fab=document.getElementById('coachFab');
   if(!fab){ fab=document.createElement('div'); fab.id='coachFab'; document.body.appendChild(fab); }
+  const track=(typeof S!=='undefined' && S.coachTrack)==='wang'?'wang':'li';
+  // 当前线老师放右侧（与 tip 右对齐），并加 .on 高亮，避免李老师交接页误亮王老师
+  const liBtn=`<div class="coach-btn${track==='li'?' on':''}" data-who="li" onclick="onCoachTap('li')" title="李老师·临床提示">${avHTML('li')}<span>李老师</span></div>`;
+  const wangBtn=`<div class="coach-btn wang${track==='wang'?' on':''}" data-who="wang" onclick="onCoachTap('wang')" title="王老师·机制提示">${avHTML('wang')}<span>王老师</span></div>`;
   fab.innerHTML=`<div class="coach-tip" id="coachTip" style="display:none"></div>
-    <div class="coach-row">
-      <div class="coach-btn" onclick="onCoachTap('li')" title="李老师·临床提示">
-        ${avHTML('li')}<span>李老师</span>
-      </div>
-      <div class="coach-btn wang" onclick="onCoachTap('wang')" title="王老师·机制提示">
-        ${avHTML('wang')}<span>王老师</span>
-      </div>
-    </div>`;
+    <div class="coach-row">${track==='li'?(wangBtn+liBtn):(liBtn+wangBtn)}</div>`;
   if(show && !document.body.classList.contains('on-home')) fab.classList.add('show');
   else if(!show) fab.classList.remove('show');
   else fab.classList.add('show');
 }
+function syncCoachFabHighlight(who){
+  const fab=document.getElementById('coachFab'); if(!fab) return;
+  const track=who||((typeof S!=='undefined'&&S.coachTrack)==='wang'?'wang':'li');
+  if(typeof S!=='undefined') S.coachTrack=track;
+  const row=fab.querySelector('.coach-row');
+  if(row){
+    const liBtn=fab.querySelector('.coach-btn[data-who="li"]');
+    const wangBtn=fab.querySelector('.coach-btn[data-who="wang"]');
+    if(liBtn&&wangBtn){
+      // 当前线放右侧，贴近 tip
+      if(track==='li'){ if(row.lastElementChild!==liBtn) row.appendChild(liBtn); }
+      else { if(row.lastElementChild!==wangBtn) row.appendChild(wangBtn); }
+    }
+  }
+  fab.querySelectorAll('.coach-btn').forEach(btn=>{
+    const isWang=btn.getAttribute('data-who')==='wang';
+    btn.classList.toggle('on', track==='wang'?isWang:!isWang);
+  });
+}
 function hideCoachTip(){ const tip=document.getElementById('coachTip'); if(tip){ tip.style.display='none'; tip.innerHTML=''; } }
 function coachSpeak(msg, ms, who){
   who=who||S.coachTrack||'li';
+  S.coachTrack=who;
   ensureCoachFab(true);
+  syncCoachFabHighlight(who);
   const tip=document.getElementById('coachTip'); if(!tip) return;
   const name=who==='wang'?'王老师':'李老师';
   tip.className='coach-tip'+(who==='wang'?' wang':'');
@@ -1550,6 +1571,7 @@ function coachSpeak(msg, ms, who){
 function onCoachTap(who){
   who=who||S.coachTrack||'li';
   S.coachTrack=who;
+  syncCoachFabHighlight(who);
   if(who==='wang'){
     // 机制线短提示 + 可开白板
     const p=PATIENTS[S.pi];
