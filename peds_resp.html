@@ -153,6 +153,18 @@ body.pano-on #app .hero,body.pano-on #app .grid{display:none}
 .wb-fab.show{display:flex}
 .wb-fab .btn{box-shadow:0 6px 20px rgba(0,0,0,.4)}
 
+
+/* 带教老师对话（仿污水课件 dlg） */
+.dlg{display:flex;gap:12px;align-items:flex-end;margin:10px 0}
+.dlg .av{flex:0 0 74px;text-align:center;font-size:12px;color:var(--sub)}
+.dlg .av svg{width:70px;height:70px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.25))}
+.bub{position:relative;background:rgba(255,255,255,.95);color:#1a2a40;border:2px solid rgba(140,200,255,.45);border-radius:16px;padding:10px 14px;box-shadow:0 6px 18px rgba(0,0,0,.25);flex:1;min-height:52px;font-size:14px;line-height:1.55}
+.bub:before{content:"";position:absolute;left:-10px;bottom:16px;border:8px solid transparent;border-right-color:rgba(140,200,255,.45)}
+.bub b.nm{color:#1f8fff;margin-right:6px}
+.coach-card .fb.info{border-left-color:var(--ac2)}
+.coach-pipe{padding-left:0;padding-right:0}
+.coach-pipe i.cur{background:rgba(255,181,71,.35);color:#ffe6b0;border:1px solid rgba(255,181,71,.55)}
+
 </style></head><body>
 
 <div id="pano" aria-label="360全景"></div>
@@ -426,6 +438,7 @@ function patientBodyKind(p){return PATIENT_BODY[p.id]||"child"}
 /* 360° 圆柱环形全景（复用 pano_course / pharmacy 配方） */
 const PANO_SCENES={
  lobby:{n:'儿科门诊大厅',hot:[
+  {k:'hs_teacher',t:'李老师',sub:'带教 · 任务引导',u:0.04,v:0.50,kind:'go'},
   {k:'hs_hall',t:'资料库',sub:'解剖/机制可选预习',u:0.30,v:0.40,kind:'go'},
   {k:'hs_clinic',t:'进入诊室',sub:'接诊患儿',u:0.08,v:0.48,kind:'jump'},
   {k:'hs_ward',t:'观察病房',sub:'可选参观',u:0.78,v:0.46,kind:'jump'},
@@ -433,16 +446,19 @@ const PANO_SCENES={
   {k:'hs_queue',t:'叫号屏',sub:'今日候诊一览',u:0.12,v:0.38,kind:'go'}
  ],lab:[
   {t:'接待台 · 儿科门诊',u:0.02,v:0.55},
-  {t:'走廊 · 教学区',u:0.30,v:0.55}
+  {t:'走廊 · 教学区',u:0.30,v:0.55},
+  {t:'李老师（带教）',u:0.04,v:0.62}
  ]},
  clinic:{n:'儿科诊室',hot:[
+  {k:'hs_teacher',t:'李老师',sub:'带教 · 下一步提示',u:0.46,v:0.50,kind:'go'},
   {k:'hs_patient',t:'患儿与家长',sub:'开始/继续接诊',u:0.18,v:0.52,kind:'go'},
   {k:'hs_chart',t:'病历夹',sub:'今日候诊名单',u:0.38,v:0.48,kind:'go'},
   {k:'hs_vitals',t:'生命体征参考',sub:'墙上挂图',u:0.82,v:0.38,kind:'go'},
   {k:'hs_lobby',t:'返回大厅',sub:'360° 大厅',u:0.55,v:0.48,kind:'jump'}
  ],lab:[
   {t:'诊查床',u:0.15,v:0.62},
-  {t:'医生工作台',u:0.40,v:0.58}
+  {t:'医生工作台',u:0.40,v:0.58},
+  {t:'李老师（带教）',u:0.46,v:0.62}
  ]},
  ward:{n:'观察病房',hot:[
   {k:'hs_beds',t:'观察床位',sub:'重症观察示意',u:0.15,v:0.55,kind:'go'},
@@ -549,18 +565,22 @@ function enterPano(sk,u){ if(typeof showLoading==='function'){showLoading('进�
  Pano.init(); showPanoUI(true); document.body.classList.add('in-pano'); document.body.classList.remove('panel-over');
  // 清空卡片，只留顶栏，避免挡住 360
  const sc=PANO_SCENES[sk]||{n:sk};
+ const tipTeach=(sk==='lobby'||sk==='clinic')?' 先点橙色热点「李老师」听任务。':'';
  if(typeof html==='function'&&typeof topbar==='function'){
-  html(topbar(sc.n+' · 360°','listHome()')+`<div class="pano-tip card"><div class="sub">👆 拖动环视，点橙色/蓝色热点进入。也可 <span class="btn sm" onclick="listHome()">列表模式</span></div></div>`);
+  html(topbar(sc.n+' · 360°','listHome()')+`<div class="pano-tip card"><div class="sub">👆 拖动环视，点热点进入。${tipTeach}也可 <span class="btn sm" onclick="listHome()">列表模式</span></div></div>`);
  }
  const uu=u!=null?u:(PANO_SCENES[sk].hot[0]||{u:0}).u;
- const after=()=>{ Tour.build(sk); Pano.auto(true); setTimeout(()=>Pano.auto(false),2800); const fader=document.getElementById('fader'); if(fader)fader.classList.remove('on'); };
+ const after=()=>{ Tour.build(sk); Pano.auto(true); setTimeout(()=>Pano.auto(false),2800); const fader=document.getElementById('fader'); if(fader)fader.classList.remove('on');
+  if((sk==='lobby'||sk==='clinic') && typeof S!=='undefined' && !S.teacherSeen && typeof toast==='function'){ setTimeout(()=>toast('👆 先点橙色热点「李老师」，接受任务引导'),500); }
+ };
  const fader=document.getElementById('fader'); if(fader){fader.classList.add('on'); setTimeout(()=>Pano.show(sk,uu,after),280)} else Pano.show(sk,uu,after);
 }
 function hidePanoKeep(){ /* keep texture but hide interaction while reading cards */ showPanoUI(false); document.body.classList.add('panel-over'); }
 function leavePano(){ showPanoUI(false); document.body.classList.remove('in-pano','panel-over'); Tour.sk=null; const layer=document.getElementById('hsLayer'); if(layer)layer.innerHTML=''; }
 
 function onPanoHot(sk,h){
- if(h.k==='hs_anat'){hidePanoKeep(); anat()}
+ if(h.k==='hs_teacher'){hidePanoKeep(); teacherGuide()}
+ else if(h.k==='hs_hall'||h.k==='hs_anat'){hidePanoKeep(); hall()}
  else if(h.k==='hs_mech'){hidePanoKeep(); mechHall()}
  else if(h.k==='hs_report'){hidePanoKeep(); report()}
  else if(h.k==='hs_queue'||h.k==='hs_chart'||h.k==='hs_patient'){hidePanoKeep(); clinicList()}
@@ -724,7 +744,7 @@ function mount3D(parent,mode,label,hl,focusKey){ showLoading('加载 3D 模型',
 }
 
 // ===== 状态与计分 =====
-const S={sc:{},veto:new Set(),done:{},ret:null,pi:null,ps:null,mechTab:{},mechQuiz:{},anatCoach:false,hallCoach:false,anatSeen:null,wrong:[],demo:false};
+const S={sc:{},veto:new Set(),done:{},ret:null,pi:null,ps:null,mechTab:{},mechQuiz:{},anatCoach:false,hallCoach:false,anatSeen:null,wrong:[],demo:false,teacherSeen:false};
 function award(key,cat,got,max){S.sc[key]={cat,got:Math.max(0,Math.min(max,got)),max}; saveProgress();}
 function totals(){const t={anat:[0,0],mech:[0,0],clin:[0,0]};Object.entries(S.sc).forEach(([k,v])=>{if(k.startsWith('P1/'))return;t[v.cat][0]+=v.got;t[v.cat][1]+=v.max});return t}
 const MAXPOS={anat:0,mech:0,clin:0};
@@ -745,7 +765,7 @@ function home(){ hideLoading(); showWbFab(false); closeWhiteboard(); document.bo
 <span class="btn pri" onclick="enterPano('lobby',0.08)">🌐 进入 360° 大厅</span>
 <span class="btn sm" onclick="listHome()">列表模式</span>
 </div></div>
-<div class="card"><h2>怎么玩</h2><div class="sub">大厅进诊室接诊（主线）。接诊中右下角「白板·解剖/机制」可随时打开。资料库供预习复习。第 1 位患儿练习不计分。</div></div>`);
+<div class="card"><h2>怎么玩</h2><div class="sub">进大厅/诊室先点橙色热点「李老师」听任务。主线在诊室接诊；右下角白板可看解剖/机制。第 1 位练习不计分。</div></div>`);
  setTimeout(()=>enterPano('lobby',0.08),80)}
 function listHome(){leavePano();html(topbar('列表入口','home()')+`
 <div class="grid">
@@ -1192,13 +1212,117 @@ function report(){setRet(null);document.body.classList.add('panel-over');const t
  <div class="card"><h2>错题回看</h2>${(S.wrong&&S.wrong.length)?S.wrong.slice(-12).map(w=>`<div class="opt" onclick="openWhiteboard({mode:'dis',id:'${w.dis||DIS[0].id}',title:'错题回看'})">${w.name||''} · ${w.title||'题目'} — 打开机制白板</div>`).join(''):'<div class="sub">暂无错题。答错后可从这里跳回机制白板。</div>'}</div>
   <div class="card"><h2>各病例</h2><table>${PATIENTS.map(p=>{let g=0,m=0;Object.entries(S.sc).forEach(([k,v])=>{if(k.startsWith(`P${p.id}/`)){g+=v.got;m+=v.max}});return `<tr><td>${p.id}. ${p.name}</td><td>${DIS.find(d=>d.id==p.dis).name}</td><td>${S.done[p.id]?g.toFixed(1)+'/'+m:'—'}${p.practice?' (练习)':''}</td></tr>`}).join('')}</table></div>
  <div class="card"><span class="btn" onclick="if(confirm('清空所有成绩重新开始？')){S.sc={};S.veto=new Set();S.done={};S.mechTab={};S.mechQuiz={};home()}">重新开始</span></div>`)}
+// ===== 带教老师（仿清水河「王老师」热点：点即给任务/下一步，非全程演示） =====
+const COACH_FLOW=['问诊','查体','检查','诊断','处理','病历'];
+function coachAvatarSVG(){
+  return `<svg viewBox="0 0 70 70" aria-hidden="true"><circle cx="35" cy="35" r="34" fill="#e8f4ee"/>
+  <path d="M10 70c2-12 12-16 25-16s23 4 25 16z" fill="#fff" stroke="#cdd" stroke-width="1"/>
+  <rect x="45" y="62" width="6" height="6" fill="#e04848"/><rect x="47" y="60" width="2" height="10" fill="#fff"/><rect x="43" y="64" width="10" height="2" fill="#fff"/>
+  <rect x="30" y="47" width="10" height="9" fill="#f7d6b8"/>
+  <ellipse cx="35" cy="36" rx="17" ry="18" fill="#f7d6b8"/>
+  <circle cx="35" cy="10" r="7" fill="#20160f"/><path d="M16 34c0-14 9-21 19-21s19 7 19 21c-4-8-10-12-19-12s-15 4-19 12z" fill="#20160f"/>
+  <circle cx="28" cy="38" r="2" fill="#222"/><circle cx="42" cy="38" r="2" fill="#222"/>
+  <path d="M29 46q6 5 12 0" stroke="#b5533c" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <circle cx="23" cy="44" r="3" fill="#f4a3a3" opacity=".5"/><circle cx="47" cy="44" r="3" fill="#f4a3a3" opacity=".5"/></svg>`;
+}
+function stageToCoachStep(st){
+  if(!st) return null;
+  if(st.k==='ask') return '问诊';
+  if(st.k==='exam') return '查体';
+  if(st.k==='tests') return '检查';
+  if(st.k==='q'){
+    const t=st.title||'';
+    if(/处理|紧急|处置/.test(t)) return '处理';
+    if(/家长|交代/.test(t)) return '病历';
+    return '诊断';
+  }
+  return st.title||'接诊';
+}
+function coachHint(){
+  const doneN = PATIENTS.filter(p=>S.done[p.id]).length;
+  const nextPi = PATIENTS.findIndex(p=>!S.done[p.id]);
+  const pipe = COACH_FLOW;
+  if(S.pi!=null && PATIENTS[S.pi] && !S.done[PATIENTS[S.pi].id] && S.si!=null){
+    const p=PATIENTS[S.pi], st=p.stages[S.si], cur=stageToCoachStep(st);
+    const nxtSt=p.stages[S.si+1];
+    const nxt=nxtSt?stageToCoachStep(nxtSt):(S.si>=p.stages.length-1?'完成本例':'继续');
+    const line = cur==='问诊' ? `先把主诉、现病史问清楚，问完会生成病例报告。`
+      : cur==='查体' ? `点患儿身体部位做体格检查，该查的别漏，顺序先生命体征再全身。`
+      : cur==='检查' ? `只开必要的辅助检查，乱开、多开会扣分。`
+      : cur==='诊断' ? `结合问诊查体结果鉴别、下诊断；不懂就点右下角白板回看解剖/机制。`
+      : cur==='处理' ? `按分度/危重程度处理，危急漏判会一票否决。`
+      : `向家长交代清楚，语气要有温度；问诊生成的病历可复制交作业。`;
+    return {
+      say:`同学，你正在接诊「${p.name}」。当前环节：${cur}。${line}`,
+      task:`接诊 ${p.name}（${p.age}）`,
+      cur, nxt, pipe,
+      goLabel: '回到接诊',
+      goFn: `patientStage(${S.pi},${S.si},true)`
+    };
+  }
+  if(nextPi<0){
+    return {
+      say:'7 位患儿都接完了。去成绩单看看哪一环还薄弱，错题可以跳回机制白板复习。',
+      task:'全部完成 · 复盘成绩',
+      cur:null, nxt:'成绩单', pipe,
+      goLabel:'查看成绩单', goFn:'report()'
+    };
+  }
+  const np=PATIENTS[nextPi];
+  if(doneN===0){
+    return {
+      say:'欢迎来到儿科门诊。今天你是值班医生，我是带教李老师。接诊固定走：问诊→查体→检查→诊断→处理→病历。需要提示随时点我，我不代做。先从第 1 位练习例开始。',
+      task:`接诊第 1 位：${np.name}（练习·不计分）`,
+      cur:null, nxt:'问诊', pipe,
+      goLabel:'去诊室候诊名单', goFn:'clinicList()'
+    };
+  }
+  return {
+    say:`前面已完成 ${doneN} 例。下一位是「${np.name}」${np.revisit?'（复诊，资料可能不全）':''}。还是同一套流程，遇到不懂点白板回看。`,
+    task:`下一位：${np.name}（${np.age}）`,
+    cur:null, nxt:'问诊', pipe,
+    goLabel:'去候诊名单', goFn:'clinicList()'
+  };
+}
+function teacherGuide(){
+  S.teacherSeen=true;
+  try{ if(typeof saveProgress==='function') saveProgress(); }catch(e){}
+  const h=coachHint();
+  const pipeHtml = COACH_FLOW.map(s=>{
+    const cls = h.cur===s ? 'cur' : '';
+    return `<i class="${cls}">${s}</i>`;
+  }).join('<span class="sub">→</span>');
+  hidePanoKeep();
+  html(topbar('李老师 · 任务引导','backToPano()')+`
+  <div class="card coach-card">
+    <div class="dlg coach-dlg">
+      <div class="av">${coachAvatarSVG()}<div>李老师</div><div class="sub">儿科带教</div></div>
+      <div class="bub"><b class="nm">李老师</b><span class="tx" id="coachTx"></span></div>
+    </div>
+    <h3>今日任务</h3>
+    <div class="fb info"><div class="t">${h.task}</div></div>
+    <h3>接诊流程</h3>
+    <div class="steps coach-pipe" style="flex-wrap:wrap">${pipeHtml}</div>
+    <div class="sub" style="padding:0 2px">当前：<b>${h.cur||'—'}</b>　下一步：<b>${h.nxt||'—'}</b></div>
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+      <span class="btn pri" onclick="${h.goFn}">${h.goLabel} →</span>
+      <span class="btn" onclick="backToPano()">继续环视</span>
+    </div>
+    <div class="sub" style="margin-top:10px">提示：只给方向，不代做；危急漏判会一票否决。可随时再点「李老师」。</div>
+  </div>`);
+  const plain=h.say; const tx=document.getElementById('coachTx');
+  if(tx){ let i=0; const step=()=>{ if(!tx.isConnected)return; i+=2; tx.textContent=plain.slice(0,i); if(i<plain.length) setTimeout(step,18); }; step();
+    if(tx.parentElement) tx.parentElement.onclick=()=>{i=plain.length; tx.textContent=plain};
+  }
+}
+
 function teacher(){modal(`<h2>教师面板</h2><div style="margin:8px 0"><span class="btn sm" onclick="toggleDemo();closeModal()">${S.demo?'关闭':'开启'}教师演示模式</span> <span class="btn sm" onclick="clearProgress();closeModal();home()">清空进度</span></div><h3>⚠需核实清单（${WARN.length} 项）</h3><table>${WARN.map(w=>`<tr><td class="warn">${w[0]}</td><td>${w[1]}</td></tr>`).join('')}</table><h3>说明</h3><div class="sub">听诊只有文字描述，没有生成任何声音；如需音频，请使用有授权的真实听诊录音。课件中的 3D 模型是示意模型，不是真实解剖比例。病例全部为虚构。</div>`)}
 
 // ===== v1.4 进度保存 / 教师演示 / 加载提示 / 错题回看 =====
 const SAVE_KEY='peds_resp_v14';
 function saveProgress(){
  try{
-  const data={sc:S.sc,veto:[...S.veto],done:S.done,mechTab:{},mechQuiz:S.mechQuiz,anatSeen:[...(S.anatSeen||[])],wrong:S.wrong||[],demo:!!S.demo,pi:S.pi,si:S.si};
+  const data={sc:S.sc,veto:[...S.veto],done:S.done,mechTab:{},mechQuiz:S.mechQuiz,anatSeen:[...(S.anatSeen||[])],wrong:S.wrong||[],demo:!!S.demo,pi:S.pi,si:S.si,teacherSeen:!!S.teacherSeen};
   Object.keys(S.mechTab||{}).forEach(k=>data.mechTab[k]=[...(S.mechTab[k]||[])]);
   localStorage.setItem(SAVE_KEY, JSON.stringify(data));
  }catch(e){}
@@ -1207,7 +1331,7 @@ function loadProgress(){
  try{
   const raw=localStorage.getItem(SAVE_KEY); if(!raw)return false;
   const d=JSON.parse(raw);
-  S.sc=d.sc||{}; S.veto=new Set(d.veto||[]); S.done=d.done||{}; S.mechQuiz=d.mechQuiz||{}; S.demo=!!d.demo;
+  S.sc=d.sc||{}; S.veto=new Set(d.veto||[]); S.done=d.done||{}; S.mechQuiz=d.mechQuiz||{}; S.demo=!!d.demo; S.teacherSeen=!!d.teacherSeen;
   S.anatSeen=new Set(d.anatSeen||[]); S.wrong=d.wrong||[]; S.mechTab={};
   Object.keys(d.mechTab||{}).forEach(k=>S.mechTab[k]=new Set(d.mechTab[k]));
   return true;
