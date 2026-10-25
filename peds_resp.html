@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#06142b"><title>儿科学·呼吸系统疾病 虚拟仿真 v1.8</title><style>:root{--bg:#06142b;--bg2:#0b2246;--glass:rgba(120,180,255,.09);--line:rgba(140,200,255,.22);--ac:#4fd1ff;--ac2:#7cf0c4;--warn:#ffb547;--bad:#ff6b7a;--tx:#e8f2ff;--sub:#9fb6d6}
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#06142b"><title>儿科学·呼吸系统疾病 虚拟仿真 v1.8.1</title><style>:root{--bg:#06142b;--bg2:#0b2246;--glass:rgba(120,180,255,.09);--line:rgba(140,200,255,.22);--ac:#4fd1ff;--ac2:#7cf0c4;--warn:#ffb547;--bad:#ff6b7a;--tx:#e8f2ff;--sub:#9fb6d6}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;background:radial-gradient(120% 80% at 50% 0%,#123a6e 0%,var(--bg) 60%) fixed;color:var(--tx);font:15px/1.6 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
 #app{max-width:560px;margin:0 auto;min-height:100%;padding:0 0 90px}
@@ -212,6 +212,8 @@ body.pano-on #app .hero,body.pano-on #app .grid{display:none}
 #coachFab .coach-btn.wang.on{border-color:rgba(124,240,196,.95);box-shadow:0 0 0 2px rgba(124,240,196,.4),0 8px 20px rgba(0,0,0,.5)}
 #coachFab .coach-btn.on img{border-color:rgba(255,255,255,.55);filter:none}
 #coachFab .coach-btn:active{transform:scale(.96)}
+#coachFab .coach-btn.lobby{opacity:1;color:#e8f2ff;border-color:rgba(255,200,100,.55);background:rgba(8,24,48,.88)}
+#coachFab .coach-btn.lobby span:last-child{font-size:11px}
 .wb-fab{bottom:88px!important;right:12px}
 .wb-fab.show{bottom:88px}
 body.on-home #coachFab{display:none!important}
@@ -248,7 +250,7 @@ body.on-home .wang-rail,body.pano-on:not(.panel-over) .wang-rail{display:none!im
 
 
 
-/* v1.8 fig teachers + side rail */
+/* v1.8.1 fig teachers + side rail */
 .hs.fig{flex-direction:column;align-items:center;gap:0;z-index:6;white-space:normal;position:absolute}
 .hs.fig .fig-img{display:block;height:min(34vh,280px);width:auto;filter:drop-shadow(0 10px 18px rgba(0,0,0,.55));pointer-events:none;user-select:none}
 .hs.fig .fig-lb{position:absolute;top:calc(100% - 2px);left:50%;transform:translateX(-50%);background:rgba(6,20,43,.88);color:#fff;border-radius:12px;padding:4px 10px;font-size:12px;line-height:1.25;text-align:center;box-shadow:0 3px 12px rgba(0,0,0,.4);border:1px solid rgba(140,200,255,.45);max-width:120px;white-space:nowrap}
@@ -271,7 +273,7 @@ body.pano-on #app .top{background:rgba(6,20,43,.55)}
   .pano-side{bottom:100px;right:6px}
   .pano-side .btn{font-size:11px;padding:6px 8px}
 }
-</style></head><body data-ver="v1.8">
+</style></head><body data-ver="v1.8.1">
 
 <div id="pano" aria-label="360全景"></div>
 <div id="hsLayer" style="display:none"></div>
@@ -1031,7 +1033,7 @@ function hall(mode, id, tab){
  </div>`;
  if(!mode){
   const ctx={kind:'anat',id:null};
-  html(head+nav+wangWrap((coach?`<div class="anat-coach">👋 王老师：这里练解剖标红与机制动画。诊室看病时点白板也能跳过来。<span class="btn sm" onclick="this.parentNode.remove()">知道了</span></div>`:'')+
+  html(head+nav+wangWrap((coach?`<div class="anat-coach">👋 王老师：这里练解剖标红与机制动画。解剖和机制都在我这条线；要看病请回大厅点李老师。<span class="btn sm" onclick="this.parentNode.remove()">知道了</span></div>`:'')+
    `<div id="m3"></div>
    <div class="card"><h2>推荐学习路径</h2>
     <div class="opt" onclick="hall('anat')"><b>① 解剖特点</b><div class="sub">9 个点 · 点选看 3D 标红</div></div>
@@ -1476,7 +1478,7 @@ function report(){setRet(null);document.body.classList.remove('on-home');documen
  const pd=[2,3,4,5,6,7].filter(n=>!S.done[n]).length;
  html(topbar('成绩单','backToPano()')+`<div class="hero" style="text-align:center"><div class="sub">综合得分</div><div style="font-size:46px;font-weight:700" id="totalScore">${total.toFixed(0)}</div><div style="font-size:20px" id="grade">${grade}</div>${capped?'<div class="warn">因一票否决，总评最高为“合格”</div>':''}</div>
  <div class="card"><div class="score3">${[['anat','解剖',20],['mech','机制',30],['clin','临床推理',50]].map(([c,n,w])=>`<div>${n}<b>${pc(c).toFixed(0)}</b><span class="sub">权重 ${w}%<br>${t[c][0].toFixed(1)}/${t[c][1]}</span><div class="bar"><i style="width:${pc(c)}%"></i></div></div>`).join('')}</div>
- <div class="sub" style="margin-top:8px">解剖分 = 资料库小游戏；机制分 = 短测 + 机制小游戏 + 病例“为什么”；临床 = 问诊（含病例报告）/查体/检查/诊断/处理/家长交代。主线在诊室，白板不单独计分。没做的小游戏、短测和病例按 0 分算。第 1 位患儿是练习，不计分。</div></div>
+ <div class="sub" style="margin-top:8px">解剖分 = 资料库小游戏；机制分 = 短测 + 机制小游戏 + 病例“为什么”；临床 = 问诊（含病例报告）/查体/检查/诊断/处理/家长交代。看病线与王老师线分开计分。没做的小游戏、短测和病例按 0 分算。第 1 位患儿是练习，不计分。</div></div>
  <div class="card"><h2>一票否决</h2>${S.veto.size?[...S.veto].map(v=>`<div class="warn">✘ ${v}</div>`).join(''):'<div style="color:var(--ac2)">✔ 无</div>'}<div class="sub">否决项：漏判喉梗阻≥Ⅲ度、危重哮喘未升级处理、漏诊心力衰竭、心衰处理错误。触发后总评最高为“合格”，不足 60 分仍是“不合格”。</div></div>
  ${pd?`<div class="card warn">还有 ${pd} 位计分患儿没完成。</div>`:''}
  <div class="card"><h2>错题回看</h2>${(S.wrong&&S.wrong.length)?S.wrong.slice(-12).map(w=>`<div class="opt">${w.name||''} · ${w.title||'题目'} <span class="sub">（请回王老师线复习）</span></div>`).join(''):'<div class="sub">暂无错题。</div>'}</div>
@@ -1519,7 +1521,7 @@ function coachHint(){
     const line = cur==='问诊' ? `先把主诉、现病史问清楚，问完会生成病例报告。`
       : cur==='查体' ? `点患儿身体部位做体格检查，该查的别漏，顺序先生命体征再全身。`
       : cur==='检查' ? `只开必要的辅助检查，乱开、多开会扣分。`
-      : cur==='诊断' ? `结合问诊查体结果鉴别、下诊断；不懂就点右下角白板回看解剖/机制。`
+      : cur==='诊断' ? `结合问诊查体结果鉴别、下诊断；需要提示随时点我。解剖机制请回大厅找王老师。`
       : cur==='处理' ? `按分度/危重程度处理，危急漏判会一票否决。`
       : `向家长交代清楚，语气要有温度；问诊生成的病历可复制交作业。`;
     return {
@@ -1532,7 +1534,7 @@ function coachHint(){
   }
   if(nextPi<0){
     return {
-      say:'7 位患儿都接完了。去成绩单看看哪一环还薄弱，错题可以跳回机制白板复习。',
+      say:'7 位患儿都接完了。去成绩单看看哪一环还薄弱；机制内容请回大厅点王老师复习。',
       task:'全部完成 · 复盘成绩',
       cur:null, nxt:'成绩单', pipe,
       goLabel:'查看成绩单', goFn:'report()'
@@ -1595,11 +1597,13 @@ function ensureCoachFab(show){
   let fab=document.getElementById('coachFab');
   if(!fab){ fab=document.createElement('div'); fab.id='coachFab'; document.body.appendChild(fab); }
   const track=(typeof S!=='undefined' && S.coachTrack)==='wang'?'wang':'li';
-  // 当前线老师放右侧（与 tip 右对齐），并加 .on 高亮，避免李老师交接页误亮王老师
-  const liBtn=`<div class="coach-btn${track==='li'?' on':''}" data-who="li" onclick="onCoachTap('li')" title="李老师·临床提示">${avHTML('li')}<span>李老师</span></div>`;
-  const wangBtn=`<div class="coach-btn wang${track==='wang'?' on':''}" data-who="wang" onclick="onCoachTap('wang')" title="王老师·机制提示">${avHTML('wang')}<span>王老师</span></div>`;
+  // v1.8.1: 单轨 FAB — 看病线只有李老师+回大厅；王老师线只有王老师+回大厅（互不露出对方）
+  const lobbyBtn=`<div class="coach-btn lobby" data-who="lobby" onclick="enterPano('lobby',0.245)" title="回大厅换线"><span style="font-size:18px;line-height:42px;width:42px;text-align:center;display:inline-block">🏠</span><span>回大厅</span></div>`;
+  const liBtn=`<div class="coach-btn on" data-who="li" onclick="onCoachTap('li')" title="李老师·临床提示">${avHTML('li')}<span>李老师</span></div>`;
+  const wangBtn=`<div class="coach-btn wang on" data-who="wang" onclick="onCoachTap('wang')" title="王老师·解剖机制提示">${avHTML('wang')}<span>王老师</span></div>`;
+  const row = track==='wang' ? (lobbyBtn+wangBtn) : (lobbyBtn+liBtn);
   fab.innerHTML=`<div class="coach-tip" id="coachTip" style="display:none"></div>
-    <div class="coach-row">${track==='li'?(wangBtn+liBtn):(liBtn+wangBtn)}</div>`;
+    <div class="coach-row">${row}</div>`;
   if(show && !document.body.classList.contains('on-home')) fab.classList.add('show');
   else if(!show) fab.classList.remove('show');
   else fab.classList.add('show');
@@ -1608,20 +1612,9 @@ function syncCoachFabHighlight(who){
   const fab=document.getElementById('coachFab'); if(!fab) return;
   const track=who||((typeof S!=='undefined'&&S.coachTrack)==='wang'?'wang':'li');
   if(typeof S!=='undefined') S.coachTrack=track;
-  const row=fab.querySelector('.coach-row');
-  if(row){
-    const liBtn=fab.querySelector('.coach-btn[data-who="li"]');
-    const wangBtn=fab.querySelector('.coach-btn[data-who="wang"]');
-    if(liBtn&&wangBtn){
-      // 当前线放右侧，贴近 tip
-      if(track==='li'){ if(row.lastElementChild!==liBtn) row.appendChild(liBtn); }
-      else { if(row.lastElementChild!==wangBtn) row.appendChild(wangBtn); }
-    }
-  }
-  fab.querySelectorAll('.coach-btn').forEach(btn=>{
-    const isWang=btn.getAttribute('data-who')==='wang';
-    btn.classList.toggle('on', track==='wang'?isWang:!isWang);
-  });
+  // 重建 FAB，保证只露出本线老师 + 回大厅
+  const showing = fab.classList.contains('show');
+  ensureCoachFab(showing || !document.body.classList.contains('on-home'));
 }
 function hideCoachTip(){ const tip=document.getElementById('coachTip'); if(tip){ tip.style.display='none'; tip.innerHTML=''; } }
 function coachSpeak(msg, ms, who){
@@ -1642,10 +1635,10 @@ function onCoachTap(who){
   S.coachTrack=who;
   syncCoachFabHighlight(who);
   if(who==='wang'){
-    // 机制线短提示 + 可开白板
+    // 王老师线短提示（不跨到看病线）
     const p=PATIENTS[S.pi];
     const dis=p?p.dis:(DIS[0]&&DIS[0].id);
-    coachSpeak('需要回看解剖标红或机制动画，就开白板；也可以进我的解剖·机制馆。', 4200, 'wang');
+    coachSpeak('跟我看解剖标红和疾病机制；要接诊看病请回大厅点李老师。', 4200, 'wang');
     // soft offer via tip already; optional: don't force navigate
   } else {
     const h=coachHint();
@@ -1712,14 +1705,14 @@ function trackWrong(entry){S.wrong=S.wrong||[]; S.wrong.push(entry); saveProgres
 
 
 
-// ===== 诊室白板：接诊中按需叠解剖/机制（v1.4 诊所主线）=====
+// ===== 白板残留 API（v1.8.1 临床线不再入口；保留函数以免旧存档报错）=====
 function openWhiteboard(opts){
  // opts: {mode:'anat'|'dis', id, title, fromPatient:true}
  opts=opts||{}; S.coachTrack='wang';
- showLoading('正在打开白板…','加载 3D 解剖/机制示意');
+ showLoading('加载中…','解剖/机制示意');
  const wb=document.getElementById('whiteboard'); if(!wb){hideLoading();return}
  const title=opts.title|| (opts.mode==='dis'?'机制示意':'解剖示意');
- wb.innerHTML=`<div class="wb-bar"><b>🖥 王老师白板 · ${title}</b>
+ wb.innerHTML=`<div class="wb-bar"><b>🖥 王老师 · ${title}</b>
   <span class="btn sm" onclick="wbShowAnat()">解剖</span>
   <span class="btn sm" onclick="wbShowDis()">机制</span>
   <span class="btn sm" onclick="closeWhiteboard()">关闭 ✕</span></div>
@@ -1750,7 +1743,7 @@ function wbRenderDis(id){
  const meshes=(d.link||[]).flatMap(l=>{const a=ANAT.find(x=>x.id==l);return a?a.mesh:[]});
  mount3D(hold, d.mode, d.name, meshes);
  note.innerHTML=`<div class="card" style="margin:0"><h2>${d.name}</h2>
-  <div class="sub">机制病理（诊室白板速览）</div><div style="margin-top:8px">${d.mech}</div>
+  <div class="sub">机制病理（速览）</div><div style="margin-top:8px">${d.mech}</div>
   <div style="margin-top:10px"><span class="btn sm" onclick="wbRenderAnat('${d.link[0]}')">标红解剖：${ANAT.find(a=>a.id==d.link[0]).name}</span>
   <span class="btn sm" onclick="openWhiteboard({mode:'dis',id:'${d.id}',title:'完整机制'});hall('dis','${d.id}')">打开完整页签</span></div>
   <div style="margin-top:8px">${DIS.map(x=>`<span class="btn sm${x.id==d.id?' on':''}" onclick="wbRenderDis('${x.id}')">${x.name.slice(0,4)}</span>`).join(' ')}</div></div>`;
@@ -1763,7 +1756,7 @@ function showWbFab(show){
  fab.classList.add('show');
 }
 
-document.addEventListener('DOMContentLoaded',()=>{loadProgress(); ensureCoachFab(false); enterPano('lobby',0.245);}); // v1.8
+document.addEventListener('DOMContentLoaded',()=>{loadProgress(); ensureCoachFab(false); enterPano('lobby',0.245);}); // v1.8.1
 
 </script>
 <script>
