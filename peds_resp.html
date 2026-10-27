@@ -655,16 +655,16 @@ function patientBodyKind(p){return PATIENT_BODY[p.id]||"child"}
 /* 360° 圆柱环形全景（复用 pano_course / pharmacy 配方） */
 const PANO_SCENES={
  lobby:{n:'儿科门诊大厅',hot:[
-  {k:'hs_li',t:'李老师',sub:'临床接诊线',u:0.14,v:0.56,kind:'fig',who:'li'},
-  {k:'hs_wang',t:'王老师',sub:'解剖·机制线',u:0.19,v:0.56,kind:'fig',who:'wang'},
+  {k:'hs_li',t:'李老师',sub:'临床接诊线',u:0.14,v:0.71,kind:'fig',who:'li'},
+  {k:'hs_wang',t:'王老师',sub:'解剖·机制线',u:0.19,v:0.71,kind:'fig',who:'wang'},
   {k:'hs_clinic',t:'进入诊室',sub:'接诊患儿',u:0.48,v:0.48,kind:'jump'},
   {k:'hs_ward',t:'观察病房',sub:'可选参观',u:0.78,v:0.46,kind:'jump'},
   {k:'hs_report',t:'成绩单',sub:'查看进度',u:0.72,v:0.52,kind:'go'}
  ],lab:[
   {t:'接待台 · 儿科门诊',u:0.12,v:0.55},
   {t:'解剖馆 / 机制廊方向',u:0.40,v:0.42},
-  {t:'李老师（临床）',u:0.14,v:0.64},
-  {t:'王老师（解剖·机制）',u:0.19,v:0.64}
+  {t:'李老师（临床）',u:0.14,v:0.78},
+  {t:'王老师（解剖·机制）',u:0.19,v:0.78}
  ]},
  clinic:{n:'儿科诊室',hot:[
   {k:'hs_teacher',t:'李老师',sub:'带教 · 下一步提示',u:0.46,v:0.50,kind:'go'},
@@ -806,11 +806,11 @@ function enterPano(sk,u){ if(typeof showLoading==='function'){showLoading('进�
     <span class="btn sm" onclick="goReportFromHome()">📊 成绩</span>
     <span class="btn sm" onclick="listHome()">☰ 列表</span>
   </div>` : '';
-  html(topbar(sc.n+' · 360°', sk==='lobby' ? "toast('左右拖动环视，点李老师或王老师')" : "enterPano('lobby',0.245)")
+  html(topbar(sc.n+' · 360°', sk==='lobby' ? "toast('左右拖动环视，点李老师或王老师')" : "enterPano('lobby',0.165)")
     +`<div class="pano-tip card"><div class="sub">👆 ${tipTeach||('拖动环视 · '+sc.n)}</div></div>`+side);
  }
  // lobby: look between the two teachers (u≈0.26)
- const uu = u!=null ? u : (sk==='lobby' ? 0.245 : ((PANO_SCENES[sk].hot[0]||{u:0}).u));
+ const uu = u!=null ? u : (sk==='lobby' ? 0.165 : ((PANO_SCENES[sk].hot[0]||{u:0}).u));
  const after=()=>{ Tour.build(sk);
   if(sk==='lobby'){ Pano.auto(false); }
   else { Pano.auto(true); setTimeout(()=>Pano.auto(false),2400); }
@@ -847,7 +847,7 @@ function onPanoHot(sk,h){
  else if(h.k==='hs_beds'){modal(`<h2>观察病房</h2><div class="sub">重症肺炎、哮喘危重、喉梗阻Ⅲ–Ⅳ度等需要留观/住院的患儿，可在这里想象监护与吸氧场景。具体接诊仍在诊室完成。</div><span class="btn pri" onclick="closeModal();enterPano('clinic',0.18)">去诊室接诊</span>`)}
  else if(h.k==='hs_clinic'||h.k==='hs_clinic2')enterPano('clinic',0.18)
  else if(h.k==='hs_ward')enterPano('ward',0.15)
- else if(h.k==='hs_lobby'||h.k==='hs_nurse')enterPano('lobby',0.245)
+ else if(h.k==='hs_lobby'||h.k==='hs_nurse')enterPano('lobby',0.165)
 }
 
 </script>
@@ -1085,7 +1085,7 @@ function home(){
     <span class="btn" onclick="goReportFromHome()">📊 成绩</span>
   </div>
   <div class="home-meta">两条线互不交叉：李老师只看病，王老师只管解剖+机制。<br>正式入口是 <b>360° 大厅</b>。第 1 位练习不计分。
-  <br><span class="btn pri" onclick="enterPano('lobby',0.245);document.body.classList.remove('on-home');ensureCoachFab(true)">↩ 回到 360° 大厅</span>
+  <br><span class="btn pri" onclick="enterPano('lobby',0.165);document.body.classList.remove('on-home');ensureCoachFab(true)">↩ 回到 360° 大厅</span>
   </div>`);
   typeHomeBubble(bubbleLi);
   S.teacherSeen=true; try{saveProgress()}catch(e){}
@@ -1133,7 +1133,7 @@ function hall(mode, id, tab){
  const coach=!S.hallCoach; if(coach)S.hallCoach=true;
  const anatDone = (S.anatSeen||new Set()).size;
  const mechDone = DIS.filter(d=>S.mechQuiz[d.id]).length;
- const head = topbar('王老师 · 解剖·机制馆',"enterPano('lobby',0.245)");
+ const head = topbar('王老师 · 解剖·机制馆',"enterPano('lobby',0.165)");
  const nav = `<div class="hall-nav">
   <span class="btn sm ${!mode||mode==='anat'?'on':''}" onclick="hall('anat')">🫁 解剖特点 <span class="sub">${anatDone}/${ANAT.length}</span></span>
   <span class="btn sm ${mode==='dis'?'on':''}" onclick="hall('dis')">🧬 疾病机制 <span class="sub">${mechDone}/6</span></span>
@@ -1154,7 +1154,7 @@ function hall(mode, id, tab){
  if(mode==='dis') return hallDis(id, tab);
 }
 function hallAnat(spot){
- const head=topbar('王老师 · 解剖特点',"enterPano('lobby',0.245)");
+ const head=topbar('王老师 · 解剖特点',"enterPano('lobby',0.165)");
  const nav=`<div class="hall-nav">
   <span class="btn sm on" onclick="hall('anat')">🫁 解剖特点</span>
   <span class="btn sm" onclick="hall('dis')">🧬 疾病机制</span>
@@ -1237,7 +1237,7 @@ function mpOnion(){
 }
 
 function hallDis(id, tab){
- const head=topbar('王老师 · 疾病机制',"enterPano('lobby',0.245)");
+ const head=topbar('王老师 · 疾病机制',"enterPano('lobby',0.165)");
  const nav=`<div class="hall-nav">
   <span class="btn sm" onclick="hall('anat')">🫁 解剖特点</span>
   <span class="btn sm on" onclick="hall('dis')">🧬 疾病机制</span>
@@ -1368,7 +1368,7 @@ function clinic(){clinicList()}
 function clinicList(){setRet(null); document.body.classList.remove('on-home'); showWbFab(false); closeWhiteboard(); document.body.classList.add('panel-over'); if(typeof hideWangRail==='function') hideWangRail(); S.coachTrack='li'; ensureCoachFab(true); if(typeof syncCoachFabHighlight==='function') syncCoachFabHighlight('li');
  if(typeof Pano!=='undefined'&&Pano.cur&&Pano.cur()!=='clinic'){enterPano('clinic',0.18); setTimeout(()=>{showPanoUI(false);document.body.classList.add('panel-over')},520)}
  html(topbar('儿科诊室 · 候诊名单','backToPano()')+`<div class="card"><h2>今日候诊（由易到难）</h2><div class="sub">你是门诊医生。可先环视诊室，再点患儿接诊。完成一位才能叫下一位。</div>
-<span class="btn sm" onclick="enterPano('clinic',0.18)">🌐 诊室环视</span> <span class="btn sm" onclick="enterPano('lobby',0.245)">大厅</span></div>`+PATIENTS.map((p,i)=>{const lock=i>0&&!S.done[PATIENTS[i-1].id];return `<div class="card pt" style="${lock?'opacity:.45':''}" ${lock?'':`onclick="patient(${i})"`} id="pt${p.id}"><div class="avatar">${p.ava}</div><div><b>${p.id}. ${p.name}</b> <span class="sub">${p.age}</span>${p.practice?'<span class="tag">练习·不计分</span>':''}${p.revisit?'<span class="tag">复诊·资料不全</span>':''}<div class="sub">${S.done[p.id]?'✅ 已完成':lock?'🔒 等待中':'▶ 请接诊'}</div></div></div>`}).join('')+(S.done[7]?`<div class="card"><span class="btn pri" onclick="report()">查看成绩单</span></div>`:''))}
+<span class="btn sm" onclick="enterPano('clinic',0.18)">🌐 诊室环视</span> <span class="btn sm" onclick="enterPano('lobby',0.165)">大厅</span></div>`+PATIENTS.map((p,i)=>{const lock=i>0&&!S.done[PATIENTS[i-1].id];return `<div class="card pt" style="${lock?'opacity:.45':''}" ${lock?'':`onclick="patient(${i})"`} id="pt${p.id}"><div class="avatar">${p.ava}</div><div><b>${p.id}. ${p.name}</b> <span class="sub">${p.age}</span>${p.practice?'<span class="tag">练习·不计分</span>':''}${p.revisit?'<span class="tag">复诊·资料不全</span>':''}<div class="sub">${S.done[p.id]?'✅ 已完成':lock?'🔒 等待中':'▶ 请接诊'}</div></div></div>`}).join('')+(S.done[7]?`<div class="card"><span class="btn pri" onclick="report()">查看成绩单</span></div>`:''))}
 function backToPano(){const sk=(typeof Pano!=='undefined'&&Pano.cur&&Pano.cur())||'lobby'; document.body.classList.remove('panel-over'); html(topbar('360° 场景','listHome()')+`<div class="card sub">拖动环视，点热点继续。或 <span class="btn sm" onclick="listHome()">列表模式</span></div>`); enterPano(sk)}
 const STEPN={ask:'问诊',exam:'体格检查',tests:'辅助检查'};
 // ===== v1.4 helpers: realistic exam body, case report, patient presence, 6 opts =====
@@ -1767,7 +1767,7 @@ function ensureCoachFab(show){
   if(!fab){ fab=document.createElement('div'); fab.id='coachFab'; document.body.appendChild(fab); }
   const track=(typeof S!=='undefined' && S.coachTrack)==='wang'?'wang':'li';
   // v1.8.2: 单轨 FAB（机制廊成品已并入疾病机制） — 看病线只有李老师+回大厅；王老师线只有王老师+回大厅（互不露出对方）
-  const lobbyBtn=`<div class="coach-btn lobby" data-who="lobby" onclick="enterPano('lobby',0.245)" title="回大厅换线"><span style="font-size:18px;line-height:42px;width:42px;text-align:center;display:inline-block">🏠</span><span>回大厅</span></div>`;
+  const lobbyBtn=`<div class="coach-btn lobby" data-who="lobby" onclick="enterPano('lobby',0.165)" title="回大厅换线"><span style="font-size:18px;line-height:42px;width:42px;text-align:center;display:inline-block">🏠</span><span>回大厅</span></div>`;
   const liBtn=`<div class="coach-btn on" data-who="li" onclick="onCoachTap('li')" title="李老师·临床提示">${avHTML('li')}<span>李老师</span></div>`;
   const wangBtn=`<div class="coach-btn wang on" data-who="wang" onclick="onCoachTap('wang')" title="王老师·解剖机制提示">${avHTML('wang')}<span>王老师</span></div>`;
   const row = track==='wang' ? (lobbyBtn+wangBtn) : (lobbyBtn+liBtn);
@@ -1925,7 +1925,7 @@ function showWbFab(show){
  fab.classList.add('show');
 }
 
-document.addEventListener('DOMContentLoaded',()=>{loadProgress(); ensureCoachFab(false); enterPano('lobby',0.245);}); // v1.8.1
+document.addEventListener('DOMContentLoaded',()=>{loadProgress(); ensureCoachFab(false); enterPano('lobby',0.165);}); // v1.8.1
 
 </script>
 <script>

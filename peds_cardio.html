@@ -498,14 +498,14 @@ const LI_PANO_IMG="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAF0AAAFACAYAAAD
 
 const PANO_SCENES={
  lobby:{n:'儿科循环门诊大厅',hot:[
-  {k:'hs_li',t:'李老师',sub:'临床接诊线',u:0.155,v:0.56,kind:'fig',who:'li'},
+  {k:'hs_li',t:'李老师',sub:'临床接诊线',u:0.155,v:0.71,kind:'fig',who:'li'},
   {k:'hs_clinic',t:'进入诊室',sub:'候诊名单',u:0.48,v:0.48,kind:'jump'},
   {k:'hs_report',t:'进度',sub:'病例完成情况',u:0.72,v:0.52,kind:'go'},
   {k:'hs_about',t:'说明',sub:'样板说明',u:0.62,v:0.55,kind:'go'}
  ],lab:[
   {t:'接待台 · 循环门诊',u:0.12,v:0.55},
   {t:'诊室方向',u:0.48,v:0.40},
-  {t:'李老师（临床）',u:0.155,v:0.64}
+  {t:'李老师（临床）',u:0.155,v:0.78}
  ]},
  clinic:{n:'儿科循环诊室',hot:[
   {k:'hs_teacher',t:'李老师',sub:'带教 · 接诊',u:0.46,v:0.50,kind:'go'},
@@ -637,7 +637,7 @@ function enterPano(sk,u){
  }
  var side=document.getElementById('panoSide');
  if(side) side.style.display = sk==='lobby' ? 'flex' : 'none';
- var uu = u!=null ? u : (sk==='lobby' ? 0.22 : ((PANO_SCENES[sk].hot[0]||{u:0}).u));
+ var uu = u!=null ? u : (sk==='lobby' ? 0.155 : ((PANO_SCENES[sk].hot[0]||{u:0}).u));
  var after=function(){ Tour.build(sk);
   if(sk==='lobby'){ Pano.auto(false); }
   else { Pano.auto(true); setTimeout(function(){Pano.auto(false);},2400); }
@@ -658,7 +658,7 @@ function onPanoHot(sk,h){
  else if(h.k==='hs_report'){ hidePanoKeep(); if(A.openProgress) A.openProgress(); }
  else if(h.k==='hs_about'){ hidePanoKeep(); if(A.openAbout) A.openAbout(); }
  else if(h.k==='hs_clinic') enterPano('clinic',0.18);
- else if(h.k==='hs_lobby') enterPano('lobby',0.22);
+ else if(h.k==='hs_lobby') enterPano('lobby',0.155);
 }
 
 
@@ -1087,7 +1087,7 @@ function onPanoHot(sk,h){
     if(view==='hall'){
       ['hall','cases','clinic','about'].forEach(v=>{ const el=$('view-'+v); if(el) el.classList.add('hidden'); });
       $('locLabel').textContent='大厅';
-      enterPano('lobby',0.22);
+      enterPano('lobby',0.155);
       return;
     }
     hidePanoKeep();
