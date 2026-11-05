@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>传染病虚仿 · 实验室诊断实训 v0.1.0</title>
+<!--
+  v0.1.0 · BSL-2 实验室诊断实训 · 对标发热门诊手感
+  硬否决：①未防护进实验区 ②杂质当环状体 ③HIV假阳性直接当确诊 ④IgM+/PCR−当确诊
+  流程：开场→防护→鼻咽拭子角度→疟原虫镜检→HIV胶体金→报告解读→成绩单
+  人物锚点：脚踩地 translate(-50%,-100%)；禁止悬空
+-->
+<style>
+:root{
+  --bg:#eef2f6; --paper:#fffdf8; --ink:#1a2433; --muted:#5a6a7a;
+  --line:#c9d0d8; --accent:#0f766e; --accent2:#1f6fb2; --soft:#ecfdf5;
+  --red:#c0392b; --red-soft:#fdecea; --ok:#1b7a4a; --ok-soft:#e8f6ee;
+  --warn:#b45309; --warn-soft:#fff7ed; --shadow:0 2px 12px rgba(26,36,51,.1);
+  --violet:#6d28d9; font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);line-height:1.55}
+.wrap{max-width:980px;margin:0 auto;padding:12px 12px 72px}
+.topbar{
+  display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;justify-content:space-between;
+  margin-bottom:12px;padding:12px 14px;background:var(--paper);border:1px solid var(--line);
+  border-radius:14px;box-shadow:var(--shadow);
+}
+.topbar h1{margin:0;font-size:17px;font-weight:800}
+.topbar .sub{color:var(--muted);font-size:12px;margin-top:3px}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill{font-size:11px;border-radius:999px;padding:3px 10px;border:1px solid var(--line);background:#fff;color:var(--muted)}
+.pill.warn{background:var(--warn-soft);border-color:#fdba74;color:var(--warn);font-weight:700}
+.pill.ok{background:var(--ok-soft);border-color:#86efac;color:var(--ok);font-weight:700}
+.pill.red{background:var(--red-soft);border-color:#f5a9a0;color:var(--red);font-weight:700}
+.scene-banner{
+  position:relative;border-radius:14px;overflow:hidden;margin-bottom:12px;
+  background:linear-gradient(135deg,#0e7490 0%,#1e3a5f 55%,#6d28d9 100%);
+  color:#fff;min-height:110px;padding:16px 18px;box-shadow:var(--shadow);
+}
+.scene-banner .tag{font-size:11px;opacity:.85;letter-spacing:.04em}
+.scene-banner h2{margin:4px 0 6px;font-size:20px}
+.scene-banner p{margin:0;font-size:13px;opacity:.92;max-width:560px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.card h2{margin:0 0 6px;font-size:16px}
+.card h3{margin:10px 0 6px;font-size:14px}
+.lead{color:var(--muted);font-size:13px;margin:0 0 10px}
+.hidden{display:none!important}
+.station-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.station{
+  border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff;text-align:left;
+  cursor:pointer;min-height:110px;
+}
+.station:hover{border-color:var(--accent);box-shadow:0 0 0 2px rgba(15,118,110,.15)}
+.station .n{font-size:11px;color:var(--muted);font-weight:700}
+.station .t{font-size:16px;font-weight:800;margin:4px 0}
+.station .d{font-size:12px;color:var(--muted);margin:0}
+.station .st{display:inline-block;margin-top:8px;font-size:11px;padding:2px 8px;border-radius:999px;background:#e5e7eb;color:#374151}
+.steps{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.step-dot{font-size:11px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--muted)}
+.step-dot.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.step-dot.done{background:var(--ok-soft);border-color:#86efac;color:var(--ok)}
+.step-dot.fail{background:var(--red-soft);border-color:#f5a9a0;color:var(--red)}
+.case-box{background:#fff;border:1px dashed var(--line);border-radius:12px;padding:12px 14px;font-size:14px}
+.case-box strong{color:var(--accent2)}
+.emr{
+  background:#0f172a;color:#e2e8f0;border-radius:12px;padding:12px 14px;font-size:13px;
+  font-family:ui-monospace,Menlo,Consolas,monospace;margin:8px 0;
+}
+.emr .k{color:#94a3b8}
+.emr .v{color:#fde68a}
+.choice-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin:10px 0}
+.choice{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff;cursor:pointer;text-align:left}
+.choice:hover{border-color:var(--accent)}
+.choice.on{border-color:var(--accent);background:var(--soft);box-shadow:0 0 0 2px rgba(15,118,110,.2)}
+.choice .t{font-weight:800;font-size:14px;margin:0 0 4px}
+.choice .d{font-size:12px;color:var(--muted);margin:0}
+.tip{margin-top:10px;padding:10px 12px;border-radius:10px;font-size:13px;background:#e8f1f8;border:1px solid #bfdbfe;color:#1e3a5f}
+.tip.ok{background:var(--ok-soft);border-color:#86efac;color:#14532d}
+.tip.fail{background:var(--red-soft);border-color:#f5a9a0;color:#7f1d1d}
+.tip.warn{background:var(--warn-soft);border-color:#fdba74;color:#7c2d12}
+.gate{border-left:4px solid var(--warn);padding:8px 12px;background:var(--warn-soft);border-radius:0 10px 10px 0;font-size:13px;margin:8px 0}
+.btn{border:none;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.btn.ok{background:var(--ok)}
+.btn.blue{background:var(--accent2)}
+.btn.danger{background:var(--red)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.scorebar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:10px 12px;background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:12px;font-size:13px}
+.ppe-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:10px 0}
+.ppe-item{
+  border:1px dashed var(--line);border-radius:12px;padding:14px 10px;text-align:center;background:#fff;cursor:pointer;
+}
+.ppe-item.on{border-style:solid;border-color:var(--ok);background:var(--ok-soft)}
+.ppe-item .ico{font-size:28px;line-height:1}
+.ppe-item .lab{font-size:13px;font-weight:800;margin-top:6px}
+.ppe-item .hint{font-size:11px;color:var(--muted);margin-top:2px}
+.toast{
+  position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(120%);
+  background:#1a2433;color:#fff;padding:10px 16px;border-radius:999px;font-size:13px;
+  font-weight:700;z-index:80;opacity:0;transition:transform .25s,opacity .25s;max-width:92vw;text-align:center;
+}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.fail{background:#7f1d1d}
+.lock-banner{
+  display:none;margin:10px 0;padding:12px;border-radius:12px;background:var(--red-soft);
+  border:1px solid #f5a9a0;color:#7f1d1d;font-weight:700;font-size:14px;
+}
+.lock-banner.show{display:block}
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+@media(max-width:560px){.score-grid{grid-template-columns:1fr}}
+.score-cell{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px}
+.score-cell .k{font-size:11px;color:var(--muted)}
+.score-cell .v{font-size:22px;font-weight:900}
+.footer-note{font-size:11px;color:var(--muted);margin-top:18px;text-align:center}
+.dialog{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0}
+.dialog .who{font-size:11px;color:var(--muted);margin:0 0 4px}
+.dialog .say{font-size:14px;margin:0}
+.beat-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:8px 0}
+.beat-card .tag{font-size:11px;color:var(--muted);font-weight:700}
+.beat-card h3{margin:4px 0 6px;font-size:15px}
+.beat-card p{margin:0;font-size:14px}
+.coord-note{font-size:11px;color:var(--muted);margin-top:8px}
+.replay-box{margin:10px 0;padding:12px;border-radius:12px;background:#fff7ed;border:1px solid #fdba74;font-size:13px}
+.stage{
+  position:relative;width:100%;height:240px;border-radius:14px;overflow:hidden;
+  border:1px solid var(--line);margin-bottom:12px;
+  background:linear-gradient(180deg,#a5f3fc 0 50%,#99f6e4 50% 56%,#a8a29e 56% 100%);
+  box-shadow:var(--shadow);
+}
+.stage.corridor{
+  background:linear-gradient(180deg,#fef3c7 0 50%,#d6d3d1 50% 56%,#a8a29e 56% 100%);
+}
+.stage.lab{
+  background:linear-gradient(180deg,#e0f2fe 0 46%,#cbd5e1 46% 54%,#94a3b8 54% 100%);
+}
+.stage .floor-line{
+  position:absolute;left:0;right:0;bottom:12%;height:2px;background:rgba(15,23,42,.18);pointer-events:none;
+}
+.stage .prop{
+  position:absolute;transform:translate(-50%,-100%);text-align:center;pointer-events:none;
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.15));
+}
+.stage .prop .box{
+  background:#fff;border:1px solid #64748b;border-radius:8px;padding:6px 8px;font-size:11px;font-weight:800;color:#0f172a;
+  white-space:nowrap;
+}
+.stage .prop .ico{font-size:28px;line-height:1;display:block}
+.stage .fig{
+  position:absolute;transform:translate(-50%,-100%);text-align:center;cursor:default;
+  filter:drop-shadow(0 2px 3px rgba(0,0,0,.2));
+}
+.stage .fig .avatar{
+  width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:900;font-size:14px;margin:0 auto;border:2px solid #fff;
+}
+.stage .fig .name{font-size:10px;font-weight:800;background:rgba(255,255,255,.92);border-radius:4px;padding:1px 5px;margin-top:2px}
+.stage .fig .sub{font-size:9px;color:#334155;background:rgba(255,255,255,.8);border-radius:4px;padding:0 4px;margin-top:1px}
+.stage .ann{
+  position:absolute;transform:translate(-50%,-100%);font-size:10px;font-weight:800;
+  background:#7f1d1d;color:#fff;padding:3px 8px;border-radius:6px;white-space:nowrap;
+}
+.stage-caption{font-size:12px;color:var(--muted);margin:-4px 0 10px}
+.swab-board{
+  position:relative;height:220px;border-radius:12px;border:1px solid var(--line);overflow:hidden;
+  background:linear-gradient(180deg,#f1f5f9 0 55%,#e2e8f0 55% 100%);margin:10px 0;
+}
+.swab-board .face{
+  position:absolute;left:50%;top:18%;transform:translateX(-50%);width:120px;height:140px;
+}
+.swab-board svg{width:120px;height:140px}
+.angle-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.angle-card{
+  border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff;cursor:pointer;text-align:center;
+}
+.angle-card:hover{border-color:var(--accent)}
+.angle-card.on{border-color:var(--ok);background:var(--ok-soft);box-shadow:0 0 0 2px rgba(27,122,74,.25)}
+.angle-card .deg{font-size:22px;font-weight:900}
+.angle-card .d{font-size:12px;color:var(--muted);margin-top:4px}
+.smear{
+  position:relative;height:260px;border-radius:12px;border:1px solid var(--line);overflow:hidden;
+  background:radial-gradient(circle at 50% 45%,#fecaca 0%,#7f1d1d 45%,#450a0a 100%);
+  margin:10px 0;cursor:crosshair;
+}
+.smear .hint-lab{
+  position:absolute;left:8px;top:8px;font-size:11px;background:rgba(0,0,0,.55);color:#fff;
+  padding:4px 8px;border-radius:6px;z-index:2;
+}
+.smear .spot{
+  position:absolute;border-radius:50%;transform:translate(-50%,-50%);border:2px solid transparent;cursor:pointer;
+}
+.smear .spot.ring{background:rgba(253,224,71,.85);box-shadow:0 0 0 2px rgba(234,179,8,.6), inset 0 0 0 3px rgba(127,29,29,.5)}
+.smear .spot.junk{background:rgba(148,163,184,.75);box-shadow:inset 0 0 4px rgba(15,23,42,.4)}
+.smear .spot.picked{outline:3px solid #22c55e;outline-offset:2px}
+.smear .spot.wrong{outline:3px solid #ef4444;outline-offset:2px}
+.strip-wrap{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0}
+@media(max-width:640px){.strip-wrap{grid-template-columns:1fr}}
+.strip-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px}
+.strip-visual{
+  height:70px;border-radius:8px;background:#f8fafc;border:1px solid #cbd5e1;position:relative;margin:8px 0;
+  display:flex;align-items:center;justify-content:center;gap:28px;
+}
+.strip-visual .band{width:6px;height:42px;border-radius:2px;background:#e5e7eb}
+.strip-visual .band.c{background:#111827}
+.strip-visual .band.t{background:#b91c1c}
+.strip-visual .label{position:absolute;bottom:4px;font-size:10px;color:#64748b}
+.strip-visual .label.l{left:28%}
+.strip-visual .label.r{right:28%}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div>
+      <h1>传染病虚仿 · 模块2 实验室诊断实训</h1>
+      <div class="sub">BSL-2 · 防护→拭子→疟原虫→HIV试纸→报告解读 · 小绿红线 · 本地不挂网 · v0.1.0</div>
+    </div>
+    <div class="pills">
+      <span class="pill warn">未防护进实验区锁死</span>
+      <span class="pill">杂质≠环状体</span>
+      <span class="pill">HIV须复测/确证</span>
+      <span class="pill">IgM+/PCR−≠确诊</span>
+    </div>
+  </div>
+
+  <div id="hallView">
+    <div class="scene-banner">
+      <div class="tag">BIOSafety Level 2 · 虚拟实验室</div>
+      <h2>动线：更衣室 → 防护柜 → 气闸 → 实验台</h2>
+      <p>标本已送达。先过防护柜（口罩+手套+实验服），再进实验区。跳过防护 = 硬否决。</p>
+    </div>
+    <div class="card">
+      <h2>实验室前厅动线</h2>
+      <p class="lead">左送检交接 → 中防护柜 → 右气闸门。点「今日班次」开场，不能直接冲进实验区。</p>
+      <div class="stage" id="hallStage" aria-label="实验室前厅动线"></div>
+      <p class="stage-caption">脚锚：送检 14%/12% · 防护柜 40%/14% · 气闸 88%/16% · transform:translate(-50%,-100%)</p>
+    </div>
+    <div class="card">
+      <h2>今日班次 · 综合实训</h2>
+      <p class="lead">一班跑完四工位（衔接发热门诊乳名）。案例驱动，少说明书。</p>
+      <div class="station-grid">
+        <button class="station" type="button" id="btnStartShift">
+          <div class="n">班次 LAB-01</div>
+          <div class="t">综合诊断实训</div>
+          <div class="d">小安拭子 · 阿远血涂片 · 小雨HIV · IgM/PCR报告</div>
+          <span class="st">开始本班</span>
+        </button>
+        <a class="station" href="infect_fever_clinic.html" style="text-decoration:none;color:inherit">
+          <div class="n">衔接</div>
+          <div class="t">← 返回发热门诊</div>
+          <div class="d">模块1轻症初筛（已过医学审）</div>
+          <span class="st">门诊页</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div id="playView" class="hidden">
+    <div class="scorebar">
+      <div>
+        <strong id="playTitle">实验室实训</strong>
+        <span class="pill" id="playCaseBadge" style="margin-left:6px">LAB-01</span>
+      </div>
+      <div class="pills">
+        <span class="pill" id="ppeBadge">防护：未就绪</span>
+        <span class="pill" id="stepBadge">步骤：—</span>
+        <span class="pill" id="vetoBadge">否决：0</span>
+      </div>
+    </div>
+    <div class="steps" id="stepDots"></div>
+    <div class="lock-banner" id="lockBanner"></div>
+    <div class="card" id="stepBody"></div>
+    <div class="row">
+      <button class="btn ghost" type="button" id="btnBackHall">回前厅</button>
+    </div>
+  </div>
+
+  <p class="footer-note">教学示意 · 检测判读均⚠ · 非临床指南替代 · 不挂 Pages · 小绿红线 · v0.1.0 · 2026-11-05 Asia/Shanghai</p>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const STEPS = [
+    {id:'intro', label:'开场'},
+    {id:'ppe', label:'防护柜'},
+    {id:'swab', label:'拭子采集'},
+    {id:'malaria', label:'疟原虫镜检'},
+    {id:'hiv', label:'HIV试纸'},
+    {id:'report', label:'报告解读'},
+    {id:'score', label:'成绩单'}
+  ];
+
+  const LAYOUT = {
+    hall:{
+      nurse:{left:14, bottom:12, role:'送检', color:'#1f6fb2', sub:'标本箱'},
+      ppe:{left:40, bottom:14, role:'防护柜', color:'#b45309', sub:'口罩·手套·服'},
+      door:{left:88, bottom:16, role:'气闸门', color:'#334155', sub:'须过防护柜'}
+    },
+    corridor:{
+      you:{left:28, bottom:12, role:'你', color:'#0f766e', sub:'更衣'},
+      ppe:{left:52, bottom:14, role:'防护柜', color:'#b45309', sub:'先穿戴'},
+      door:{left:86, bottom:16, role:'气闸', color:'#334155', sub:'未防护不开'}
+    },
+    lab:{
+      bsc:{left:22, bottom:18, role:'生物安全柜', color:'#0e7490', sub:'操作台'},
+      you:{left:34, bottom:12, role:'你·已防护', color:'#0f766e', sub:'台侧'},
+      scope:{left:62, bottom:16, role:'显微镜', color:'#6d28d9', sub:'镜检'},
+      strip:{left:82, bottom:14, role:'判读台', color:'#b45309', sub:'试纸/报告'}
+    }
+  };
+
+  const INTRO_BEATS = [
+    {tag:'拍 1 / 3 · 交接', title:'标本箱刚放到前厅', say:'送检护士：「小安鼻咽拭子、阿远抗凝血、小雨血清——都到了。BSL-2，别裸奔进实验室。」', stage:'hall'},
+    {tag:'拍 2 / 3 · 生物安全', title:'气闸门上的红字', say:'「进入实验区前完成个人防护。未防护操作 = 感控硬否决。」柜里有口罩、手套、实验服。', stage:'corridor'},
+    {tag:'拍 3 / 3 · 门外', title:'气闸仍锁着', say:'戴好必需防护后再进。今天要跑完：拭子角度 → 疟原虫环状体 → HIV试纸（含假阳性）→ IgM+/PCR− 解读。', stage:'corridor'}
+  ];
+
+  // malaria smear spots: rings = true parasites; junk = debris/platelets/stain
+  const SMEAR_SPOTS = [
+    {id:'r1', type:'ring', left:32, top:38, size:18, label:'环状体'},
+    {id:'r2', type:'ring', left:58, top:52, size:16, label:'环状体'},
+    {id:'r3', type:'ring', left:44, top:68, size:15, label:'环状体'},
+    {id:'j1', type:'junk', left:22, top:55, size:14, label:'杂质·染渣'},
+    {id:'j2', type:'junk', left:70, top:36, size:20, label:'杂质·血小板样'},
+    {id:'j3', type:'junk', left:78, top:70, size:13, label:'杂质·气泡影'},
+    {id:'j4', type:'junk', left:48, top:28, size:12, label:'杂质·污点'}
+  ];
+
+  const S = {
+    step:'intro', introBeat:0, locked:false, vetoes:[],
+    ppe:{mask:false, gloves:false, gown:false},
+    swabAngle:null, swabOk:false,
+    malariaPicked:{}, malariaOk:false,
+    hivChoice:null, hivOk:false,
+    reportChoice:null, reportOk:false,
+    score:null
+  };
+
+  function $(id){ return document.getElementById(id); }
+  function toast(msg, fail){
+    const t=$('toast'); t.textContent=msg; t.className='toast show'+(fail?' fail':'');
+    clearTimeout(t._tm); t._tm=setTimeout(()=>{ t.className='toast'; }, 2600);
+  }
+  function addVeto(code, msg){
+    if(S.vetoes.indexOf(code)<0) S.vetoes.push(code);
+    updateBadges();
+    toast(msg || ('硬否决：'+code), true);
+  }
+  function hardLock(reason){
+    S.locked=true;
+    const b=$('lockBanner');
+    b.className='lock-banner show';
+    b.textContent='本班已硬锁死：'+reason+'。请回前厅重开，或看成绩单回放。';
+    updateBadges();
+    // jump to score after short beat
+    setTimeout(()=>{ if(S.step!=='score'){ S.step='score'; paint(); } }, 600);
+  }
+  function ppeReady(){ return S.ppe.mask && S.ppe.gloves && S.ppe.gown; }
+  function ensurePpeOrFail(){
+    if(ppeReady()) return true;
+    addVeto('no_ppe', '硬否决：未完成防护就进入/操作实验区');
+    hardLock('未防护进实验区');
+    return false;
+  }
+  function updateBadges(){
+    const ready=ppeReady();
+    $('ppeBadge').textContent = ready ? '防护：口罩+手套+实验服✓' : '防护：未就绪';
+    $('ppeBadge').className = 'pill '+(ready?'ok':'warn');
+    const st = STEPS.find(s=>s.id===S.step);
+    $('stepBadge').textContent = '步骤：'+(st?st.label:'—');
+    $('vetoBadge').textContent='否决：'+S.vetoes.length;
+    $('vetoBadge').className = 'pill '+(S.vetoes.length?'red':'');
+  }
+  function paintDots(){
+    const box=$('stepDots'); box.innerHTML='';
+    const idx=STEPS.findIndex(s=>s.id===S.step);
+    STEPS.forEach((s,i)=>{
+      const d=document.createElement('span');
+      d.className='step-dot'+(i===idx?' on':(i<idx?' done':''));
+      if(S.locked && s.id===S.step) d.className='step-dot fail';
+      d.textContent=(i+1)+'. '+s.label;
+      box.appendChild(d);
+    });
+  }
+  function figHTML(left, bottom, label, sub, color){
+    return '<div class="fig" style="left:'+left+'%;bottom:'+bottom+'%">'+
+      '<div class="avatar" style="background:'+color+'">'+(label[0]||'?')+'</div>'+
+      '<div class="name">'+label+'</div>'+(sub?'<div class="sub">'+sub+'</div>':'')+'</div>';
+  }
+  function propHTML(left, bottom, ico, lab){
+    return '<div class="prop" style="left:'+left+'%;bottom:'+bottom+'%">'+
+      '<span class="ico">'+ico+'</span><div class="box">'+lab+'</div></div>';
+  }
+  function annHTML(left, bottom, text){
+    return '<div class="ann" style="left:'+left+'%;bottom:'+(bottom+18)+'%">'+text+'</div>';
+  }
+  function renderHallStage(){
+    const L=LAYOUT.hall;
+    $('hallStage').innerHTML =
+      '<div class="floor-line"></div>'+
+      figHTML(L.nurse.left, L.nurse.bottom, '送检', '标本箱', L.nurse.color)+
+      propHTML(L.ppe.left, L.ppe.bottom, '🧰', '防护物资柜')+
+      propHTML(L.door.left, L.door.bottom, '🚪', '气闸门')+
+      annHTML(L.door.left, L.door.bottom, '未防护不开');
+  }
+  function renderStage(kind){
+    let L, cls;
+    if(kind==='hall'){ L=LAYOUT.hall; cls='stage'; }
+    else if(kind==='corridor'){ L=LAYOUT.corridor; cls='stage corridor'; }
+    else { L=LAYOUT.lab; cls='stage lab'; }
+    let html='<div class="'+cls+'"><div class="floor-line"></div>';
+    if(kind==='hall'){
+      html+=figHTML(L.nurse.left, L.nurse.bottom, '送检', '标本箱', L.nurse.color);
+      html+=propHTML(L.ppe.left, L.ppe.bottom, '🧰', '防护柜');
+      html+=propHTML(L.door.left, L.door.bottom, '🚪', '气闸门');
+      if(!ppeReady()) html+=annHTML(L.door.left, L.door.bottom, '先过防护柜');
+    } else if(kind==='corridor'){
+      html+=figHTML(L.you.left, L.you.bottom, '你', ppeReady()?'已防护':'未防护', '#0f766e');
+      html+=propHTML(L.ppe.left, L.ppe.bottom, '🧰', '防护物资柜');
+      html+=propHTML(L.door.left, L.door.bottom, '🚪', '气闸');
+      if(!ppeReady()) html+=annHTML(L.door.left, L.door.bottom, '先过防护柜');
+    } else {
+      html+=propHTML(L.bsc.left, L.bsc.bottom, '🧪', '生物安全柜');
+      html+=figHTML(L.you.left, L.you.bottom, '你', '已防护·操作', '#0f766e');
+      html+=propHTML(L.scope.left, L.scope.bottom, '🔬', '显微镜');
+      html+=propHTML(L.strip.left, L.strip.bottom, '🧾', '判读台');
+    }
+    html+='</div>';
+    return html;
+  }
+
+  function resetShift(){
+    S.step='intro'; S.introBeat=0; S.locked=false; S.vetoes=[];
+    S.ppe={mask:false, gloves:false, gown:false};
+    S.swabAngle=null; S.swabOk=false;
+    S.malariaPicked={}; S.malariaOk=false;
+    S.hivChoice=null; S.hivOk=false;
+    S.reportChoice=null; S.reportOk=false;
+    S.score=null;
+    $('lockBanner').className='lock-banner';
+    $('lockBanner').textContent='';
+  }
+  function startShift(){
+    resetShift();
+    $('hallView').classList.add('hidden');
+    $('playView').classList.remove('hidden');
+    $('playTitle').textContent='BSL-2 · 综合诊断实训';
+    paint();
+  }
+  function backHall(){
+    $('playView').classList.add('hidden');
+    $('hallView').classList.remove('hidden');
+    renderHallStage();
+  }
+
+  function paint(){
+    paintDots(); updateBadges();
+    const body=$('stepBody');
+    if(S.step==='intro') buildIntro(body);
+    else if(S.step==='ppe') buildPpe(body);
+    else if(S.step==='swab') buildSwab(body);
+    else if(S.step==='malaria') buildMalaria(body);
+    else if(S.step==='hiv') buildHiv(body);
+    else if(S.step==='report') buildReport(body);
+    else if(S.step==='score') buildScore(body);
+  }
+
+  function buildIntro(body){
+    const beat=INTRO_BEATS[S.introBeat] || INTRO_BEATS[0];
+    body.innerHTML =
+      '<h2>短情景开场 · LAB-01</h2>'+
+      '<p class="lead">3 拍：标本交接 → 生物安全 → 气闸门外。开场结束仍须完成防护才能进实验区。</p>'+
+      renderStage(beat.stage)+
+      '<div class="beat-card"><div class="tag">'+beat.tag+'</div>'+
+      '<h3>'+beat.title+'</h3><p>'+beat.say+'</p></div>'+
+      '<div class="gate">开场不稀释红线：未过防护柜 → 进不了实验区 / 硬否决。</div>';
+    const skip=document.createElement('button');
+    skip.className='btn danger'; skip.type='button';
+    skip.textContent='不管了 · 冲进实验区开干';
+    skip.onclick=()=>{
+      if(S.locked) return;
+      addVeto('no_ppe', '硬否决：跳过防护柜直接进入实验区');
+      hardLock('未防护进实验区');
+    };
+    const next=document.createElement('button');
+    next.className='btn'; next.type='button';
+    next.textContent = S.introBeat < INTRO_BEATS.length-1 ? '下一拍' : '去防护物资柜';
+    next.onclick=()=>{
+      if(S.locked) return;
+      if(S.introBeat < INTRO_BEATS.length-1){ S.introBeat++; paint(); }
+      else { S.step='ppe'; paint(); }
+    };
+    const row=document.createElement('div'); row.className='row';
+    row.appendChild(skip); row.appendChild(next);
+    body.appendChild(row);
+  }
+
+  function ppeCard(k, ico, lab, hint){
+    return '<div class="ppe-item" data-k="'+k+'"><div class="ico">'+ico+'</div><div class="lab">'+lab+'</div><div class="hint">'+hint+'</div></div>';
+  }
+  function buildPpe(body){
+    body.innerHTML =
+      '<h2>防护物资柜 · 必过关卡</h2>'+
+      '<p class="lead">更衣走廊：你站在防护柜前。BSL-2 实训要求 <strong>口罩 + 手套 + 实验服</strong> 全齐，气闸才开。</p>'+
+      renderStage('corridor')+
+      '<div class="case-box">今日标本：<strong>小安拭子</strong> · <strong>阿远血涂片</strong> · <strong>小雨血清</strong></div>'+
+      '<div class="ppe-grid">'+
+        ppeCard('mask','😷','医用口罩','必需')+
+        ppeCard('gloves','🧤','手套','必需')+
+        ppeCard('gown','🥼','实验服','必需')+
+      '</div>'+
+      '<div class="tip warn" id="ppeTip">先点选防护装备。未就绪就进实验区 → 硬否决锁死。</div>'+
+      '<p class="coord-note">站位：你 28%/12% · 防护柜 52%/14% · 气闸 86%/16% · 脚锚 translate(-50%,-100%)</p>';
+    body.querySelectorAll('.ppe-item').forEach(el=>{
+      el.onclick=()=>{
+        if(S.locked) return;
+        const k=el.getAttribute('data-k');
+        S.ppe[k]=!S.ppe[k];
+        el.classList.toggle('on', S.ppe[k]);
+        updateBadges();
+        const stageWrap=body.querySelector('.stage');
+        if(stageWrap){
+          const tmp=document.createElement('div');
+          tmp.innerHTML=renderStage('corridor');
+          stageWrap.replaceWith(tmp.firstChild);
+        }
+        const tip=$('ppeTip');
+        if(ppeReady()){ tip.className='tip ok'; tip.textContent='防护齐全，气闸可开。'; }
+        else { tip.className='tip warn'; tip.textContent='还缺必需防护——气闸不开。'; }
+      };
+      if(S.ppe[el.getAttribute('data-k')]) el.classList.add('on');
+    });
+    const skip=document.createElement('button');
+    skip.className='btn danger'; skip.type='button'; skip.textContent='不等了 · 直接进实验区';
+    skip.onclick=()=>{
+      if(S.locked) return;
+      if(!ensurePpeOrFail()) return;
+      S.step='swab'; paint();
+    };
+    const go=document.createElement('button');
+    go.className='btn ok'; go.type='button'; go.textContent='防护就绪 · 进实验区';
+    go.onclick=()=>{
+      if(S.locked) return;
+      if(!ppeReady()){ toast('气闸未开：请戴口罩、手套、实验服', true); return; }
+      S.step='swab'; paint();
+    };
+    const row=document.createElement('div'); row.className='row';
+    row.appendChild(skip); row.appendChild(go);
+    body.appendChild(row);
+  }
+
+  function buildSwab(body){
+    if(!ensurePpeOrFail()){ body.innerHTML='<p class="tip fail">已因未防护锁死。</p>'; return; }
+    body.innerHTML =
+      '<h2>标本采集 · 鼻咽拭子（角度示意）</h2>'+
+      '<p class="lead">送检：<strong>小安</strong>。浏览器点选插入角度——示意约 <strong>45°</strong>（沿鼻腔底向后），不做 VR 手柄。</p>'+
+      renderStage('lab')+
+      '<div class="swab-board" aria-label="拭子角度示意">'+
+        '<div class="face"><svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">'+
+          '<ellipse cx="60" cy="48" rx="36" ry="42" fill="#fde68a" stroke="#b45309" stroke-width="2"/>'+
+          '<circle cx="46" cy="42" r="4" fill="#334155"/><circle cx="74" cy="42" r="4" fill="#334155"/>'+
+          '<path d="M48 62 Q60 72 72 62" fill="none" stroke="#b45309" stroke-width="2"/>'+
+          '<ellipse cx="60" cy="54" rx="8" ry="5" fill="#fda4af" opacity=".7"/>'+
+          '<line x1="60" y1="54" x2="95" y2="95" stroke="#0f766e" stroke-width="3" stroke-dasharray="4 3" opacity=".85"/>'+
+          '<text x="88" y="110" font-size="11" fill="#0f766e" font-weight="700">≈45°</text>'+
+        '</svg></div>'+
+      '</div>'+
+      '<div class="angle-grid" id="angleGrid">'+
+        '<div class="angle-card" data-a="15"><div class="deg">15°</div><div class="d">几乎贴鼻尖向上捅<br/>易痛且采不到鼻咽</div></div>'+
+        '<div class="angle-card" data-a="45"><div class="deg">45°</div><div class="d">沿鼻腔底向后下鼻道<br/>教学目标角度⚠</div></div>'+
+        '<div class="angle-card" data-a="80"><div class="deg">80°</div><div class="d">过于朝上顶筛板方向<br/>危险示意</div></div>'+
+      '</div>'+
+      '<div class="tip warn" id="swabTip">先选一个插入角度。</div>'+
+      '<div class="emr"><div><span class="k">标本</span> <span class="v">鼻咽拭子 · 小安</span></div>'+
+      '<div><span class="k">要求</span> <span class="v">角度示意正确后再送检</span></div></div>';
+    body.querySelectorAll('.angle-card').forEach(el=>{
+      el.onclick=()=>{
+        if(S.locked) return;
+        body.querySelectorAll('.angle-card').forEach(x=>x.classList.remove('on'));
+        el.classList.add('on');
+        const a=+el.getAttribute('data-a');
+        S.swabAngle=a;
+        S.swabOk = (a===45);
+        const tip=$('swabTip');
+        if(S.swabOk){ tip.className='tip ok'; tip.textContent='角度正确（≈45°示意）。可以进入下一工位。'; toast('拭子角度合格'); }
+        else if(a===80){ tip.className='tip fail'; tip.textContent='角度过大——有损伤风险示意，请改选教学目标角度。'; toast('角度不合适', true); }
+        else { tip.className='tip warn'; tip.textContent='角度过浅，难以抵达鼻咽部。请改选。'; toast('角度不合适', true); }
+      };
+      if(S.swabAngle===+el.getAttribute('data-a')) el.classList.add('on');
+    });
+    const go=document.createElement('button');
+    go.className='btn'; go.type='button'; go.textContent='采集完成 · 去疟原虫镜检';
+    go.onclick=()=>{
+      if(S.locked) return;
+      if(S.swabAngle==null){ toast('请先选择拭子角度', true); return; }
+      if(!S.swabOk) toast('角度未达标：本项将扣分，仍可继续', true);
+      S.step='malaria'; paint();
+    };
+    const row=document.createElement('div'); row.className='row'; row.appendChild(go);
+    body.appendChild(row);
+  }
+
+  function buildMalaria(body){
+    if(!ensurePpeOrFail()){ body.innerHTML='<p class="tip fail">已锁死。</p>'; return; }
+    body.innerHTML =
+      '<h2>疟原虫镜检 · 血涂片找环状体</h2>'+
+      '<p class="lead">送检：<strong>阿远</strong>（疫区发热线索）。点选你认为是<strong>环状体</strong>的目标。把<strong>杂质</strong>标成环状体 = 硬否决。</p>'+
+      renderStage('lab')+
+      '<div class="smear" id="smear" aria-label="血涂片视野">'+
+        '<div class="hint-lab">油镜示意视野 · 黄亮带环=环状体候选 · 灰斑=杂质</div>'+
+      '</div>'+
+      '<div class="tip warn" id="malTip">点选所有环状体（共 3 个）。误点杂质将锁死。</div>'+
+      '<div class="emr"><div><span class="k">玻片</span> <span class="v">阿远 · 厚/薄血膜示意</span></div>'+
+      '<div><span class="k">任务</span> <span class="v">识别环状体，排除染渣/血小板样杂质</span></div></div>';
+    const smear=$('smear');
+    SMEAR_SPOTS.forEach(sp=>{
+      const el=document.createElement('div');
+      el.className='spot '+sp.type;
+      el.style.left=sp.left+'%';
+      el.style.top=sp.top+'%';
+      el.style.width=sp.size+'px';
+      el.style.height=sp.size+'px';
+      el.title=sp.type==='ring'?'候选结构':'可疑斑点';
+      el.onclick=()=>{
+        if(S.locked) return;
+        if(S.malariaPicked[sp.id]) return;
+        S.malariaPicked[sp.id]=true;
+        if(sp.type==='junk'){
+          el.classList.add('wrong');
+          addVeto('malaria_junk', '硬否决：将杂质标记为环状体');
+          hardLock('杂质当环状体');
+          const tip=$('malTip'); tip.className='tip fail'; tip.textContent='杂质被当成环状体——镜检红线触发。';
+          return;
+        }
+        el.classList.add('picked');
+        refreshMalTip();
+      };
+      if(S.malariaPicked[sp.id]){
+        el.classList.add(sp.type==='junk'?'wrong':'picked');
+      }
+      smear.appendChild(el);
+    });
+    function refreshMalTip(){
+      const rings=SMEAR_SPOTS.filter(s=>s.type==='ring');
+      const n=rings.filter(s=>S.malariaPicked[s.id]).length;
+      S.malariaOk = (n===rings.length);
+      const tip=$('malTip');
+      if(S.malariaOk){ tip.className='tip ok'; tip.textContent='3 个环状体均已正确标记，杂质未误点。'; toast('镜检标记完成'); }
+      else { tip.className='tip warn'; tip.textContent='已标记环状体 '+n+'/'+rings.length+'。继续点选，勿点灰斑杂质。'; }
+    }
+    refreshMalTip();
+    const go=document.createElement('button');
+    go.className='btn'; go.type='button'; go.textContent='镜检完成 · 去 HIV 快速检测';
+    go.onclick=()=>{
+      if(S.locked) return;
+      if(!S.malariaOk){ toast('请找全环状体（且勿点杂质）', true); return; }
+      S.step='hiv'; paint();
+    };
+    const row=document.createElement('div'); row.className='row'; row.appendChild(go);
+    body.appendChild(row);
+  }
+
+  function buildHiv(body){
+    if(!ensurePpeOrFail()){ body.innerHTML='<p class="tip fail">已锁死。</p>'; return; }
+    body.innerHTML =
+      '<h2>HIV 胶体金快速检测 · 假阳性干扰</h2>'+
+      '<p class="lead">送检：<strong>小雨</strong>。本例试纸条出现 <strong>C 线 + 淡 T 线</strong>——可能是<strong>假阳性</strong>干扰。须走<strong>复测/确证</strong>路径；直接当确诊 = 硬否决。</p>'+
+      renderStage('lab')+
+      '<div class="strip-wrap">'+
+        '<div class="strip-card">'+
+          '<h3>试纸条判读（示意）</h3>'+
+          '<div class="strip-visual">'+
+            '<div class="band c" title="质控C"></div>'+
+            '<div class="band t" title="检测T" style="opacity:.55"></div>'+
+            '<span class="label l">C 质控</span><span class="label r">T 检测（淡）</span>'+
+          '</div>'+
+          '<div class="emr"><div><span class="k">外观</span> <span class="v">C 清晰 · T 浅淡</span></div>'+
+          '<div><span class="k">教学设定</span> <span class="v">假阳性干扰例⚠</span></div></div>'+
+        '</div>'+
+        '<div class="strip-card">'+
+          '<h3>你的处置</h3>'+
+          '<div class="choice-cards" id="hivChoices">'+
+            '<div class="choice" data-v="confirm_dx"><div class="t">判定确诊 HIV 阳性</div><div class="d">直接出报告通知患者「你确诊了」</div></div>'+
+            '<div class="choice" data-v="retest"><div class="t">按复测 / 确证路径</div><div class="d">复查快速试剂 + 送确证试验，不单凭一条淡带确诊</div></div>'+
+            '<div class="choice" data-v="ignore"><div class="t">当阴性丢掉</div><div class="d">看见淡带也当没看见</div></div>'+
+          '</div>'+
+          '<div class="tip warn" id="hivTip">先选处置路径。</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="gate">红线：假阳性场景下「直接当确诊」→ 锁死。正确：复测/确证，告知须 discrete（门诊伦理关已练）。</div>';
+    body.querySelectorAll('#hivChoices .choice').forEach(el=>{
+      el.onclick=()=>{
+        if(S.locked) return;
+        body.querySelectorAll('#hivChoices .choice').forEach(x=>x.classList.remove('on'));
+        el.classList.add('on');
+        const v=el.getAttribute('data-v');
+        S.hivChoice=v;
+        const tip=$('hivTip');
+        if(v==='confirm_dx'){
+          S.hivOk=false;
+          addVeto('hiv_false_pos', '硬否决：HIV 假阳性直接当确诊，未走复测/确证');
+          hardLock('HIV假阳性当确诊');
+          tip.className='tip fail'; tip.textContent='直接当确诊——红线触发。';
+          return;
+        }
+        if(v==='retest'){
+          S.hivOk=true;
+          tip.className='tip ok'; tip.textContent='正确：复测/确证路径，不单凭快速试纸淡带确诊。';
+          toast('HIV 路径正确');
+        } else {
+          S.hivOk=false;
+          tip.className='tip warn'; tip.textContent='淡 T 线不能当没看见——应进入复测/确证，本项不得分。';
+          toast('处置不当', true);
+        }
+      };
+      if(S.hivChoice===el.getAttribute('data-v')) el.classList.add('on');
+    });
+    const go=document.createElement('button');
+    go.className='btn'; go.type='button'; go.textContent='进入报告解读';
+    go.onclick=()=>{
+      if(S.locked) return;
+      if(!S.hivChoice){ toast('请先选择 HIV 处置', true); return; }
+      if(!S.hivOk) toast('HIV 路径未达标：本项将影响过关', true);
+      S.step='report'; paint();
+    };
+    const row=document.createElement('div'); row.className='row'; row.appendChild(go);
+    body.appendChild(row);
+  }
+
+  function buildReport(body){
+    if(!ensurePpeOrFail()){ body.innerHTML='<p class="tip fail">已锁死。</p>'; return; }
+    body.innerHTML =
+      '<h2>报告解读 · IgM 阳性但 PCR 阴性</h2>'+
+      '<p class="lead">综合报告出现矛盾结果。正确口径：<strong>窗口期 / 需复测</strong>等解释——<strong>禁止写成确诊</strong>。</p>'+
+      renderStage('lab')+
+      '<div class="emr">'+
+        '<div><span class="k">IgM</span> <span class="v">阳性</span></div>'+
+        '<div><span class="k">PCR</span> <span class="v">阴性</span></div>'+
+        '<div><span class="k">临床</span> <span class="v">发热门诊送检 · 轻症初筛后</span></div>'+
+      '</div>'+
+      '<div class="choice-cards" id="repChoices">'+
+        '<div class="choice" data-v="dx"><div class="t">确诊该病原体感染</div><div class="d">IgM+ 就足以确诊，PCR 阴性可忽略</div></div>'+
+        '<div class="choice" data-v="window"><div class="t">考虑窗口期 / 需复测</div><div class="d">结果不一致：结合病程复查 PCR/配对血清，不单凭 IgM 确诊</div></div>'+
+        '<div class="choice" data-v="neg"><div class="t">直接排除感染</div><div class="d">PCR 阴性 = 肯定没病，IgM 当假的扔掉且不复测</div></div>'+
+      '</div>'+
+      '<div class="tip warn" id="repTip">选择你的报告结论口径。</div>'+
+      '<div class="gate">红线：把 IgM+/PCR− 写成「确诊」→ 锁死。</div>';
+    body.querySelectorAll('#repChoices .choice').forEach(el=>{
+      el.onclick=()=>{
+        if(S.locked) return;
+        body.querySelectorAll('#repChoices .choice').forEach(x=>x.classList.remove('on'));
+        el.classList.add('on');
+        const v=el.getAttribute('data-v');
+        S.reportChoice=v;
+        const tip=$('repTip');
+        if(v==='dx'){
+          S.reportOk=false;
+          addVeto('igm_pcr_dx', '硬否决：IgM+/PCR− 写成确诊');
+          hardLock('IgM+/PCR−当确诊');
+          tip.className='tip fail'; tip.textContent='禁止当确诊——红线触发。';
+          return;
+        }
+        if(v==='window'){
+          S.reportOk=true;
+          tip.className='tip ok'; tip.textContent='口径正确：窗口期/需复测，结果不一致不作确诊。';
+          toast('报告口径正确');
+        } else {
+          S.reportOk=false;
+          tip.className='tip warn'; tip.textContent='PCR 阴性不能草率「排除且不复测」；IgM+ 仍需结合复测策略。本项不得分。';
+          toast('口径不完整', true);
+        }
+      };
+      if(S.reportChoice===el.getAttribute('data-v')) el.classList.add('on');
+    });
+    const go=document.createElement('button');
+    go.className='btn ok'; go.type='button'; go.textContent='提交 · 出成绩单';
+    go.onclick=()=>{
+      if(S.locked) return;
+      if(!S.reportChoice){ toast('请先选择报告口径', true); return; }
+      S.step='score'; paint();
+    };
+    const row=document.createElement('div'); row.className='row'; row.appendChild(go);
+    body.appendChild(row);
+  }
+
+  function standardReplay(){
+    if(S.vetoes.indexOf('no_ppe')>=0)
+      return '<p>标准动作：进实验区前在防护柜完成口罩+手套+实验服，气闸亮许可再操作。</p>';
+    if(S.vetoes.indexOf('malaria_junk')>=0)
+      return '<p>标准动作：只标记典型环状体；染渣/血小板样灰斑一律不点作原虫。</p>';
+    if(S.vetoes.indexOf('hiv_false_pos')>=0)
+      return '<p>标准动作：快速试纸（尤其淡 T 线）走复测/确证，绝不单条带出「确诊」。</p>';
+    if(S.vetoes.indexOf('igm_pcr_dx')>=0)
+      return '<p>标准动作：IgM+/PCR− 按窗口期或需复测解释，禁止写成确诊感染。</p>';
+    if(!S.swabOk)
+      return '<p>标准动作：鼻咽拭子沿鼻腔底向后，教学示意约 45°，避免过陡顶筛板方向。</p>';
+    if(!S.hivOk)
+      return '<p>标准动作：出现反应带（含淡带）进入复测/确证路径，不可当阴性丢掉。</p>';
+    if(!S.reportOk)
+      return '<p>标准动作：血清学与核酸不一致时写「需复测/窗口期可能」，并安排复查。</p>';
+    return '<p>对照红线逐项复核防护、镜检、HIV 路径与报告口径。</p>';
+  }
+
+  function buildScore(body){
+    let ppeScore = ppeReady() ? 20 : 0;
+    let swabScore = S.swabOk ? 20 : (S.swabAngle!=null ? 8 : 0);
+    let malScore = S.malariaOk ? 20 : 0;
+    let hivScore = S.hivOk ? 20 : 0;
+    let repScore = S.reportOk ? 20 : 0;
+    let total = ppeScore + swabScore + malScore + hivScore + repScore;
+    if(S.locked || S.vetoes.length){
+      // hard vetoes zero out pass; keep component numbers for feedback but cap total display intent
+      total = Math.min(total, 40);
+    }
+    // if hard veto, force fail
+    let pass = total>=70 && S.swabOk && S.malariaOk && S.hivOk && S.reportOk && ppeReady();
+    if(S.locked || S.vetoes.length) pass=false;
+
+    S.score={total,ppeScore,swabScore,malScore,hivScore,repScore,pass};
+
+    body.innerHTML =
+      '<h2>成绩单 · LAB-01 综合实训</h2>'+
+      '<div class="tip '+(pass?'ok':'fail')+'">'+(pass?'过关':'未过关')+' · 总分 <strong>'+total+'</strong> / 100'+
+        (S.locked?' · 本班已硬锁死':'')+'</div>'+
+      '<div class="score-grid">'+
+        '<div class="score-cell"><div class="k">防护进区</div><div class="v">'+ppeScore+'</div></div>'+
+        '<div class="score-cell"><div class="k">拭子角度</div><div class="v">'+swabScore+'</div></div>'+
+        '<div class="score-cell"><div class="k">疟原虫镜检</div><div class="v">'+malScore+'</div></div>'+
+        '<div class="score-cell"><div class="k">HIV 复测路径</div><div class="v">'+hivScore+'</div></div>'+
+        '<div class="score-cell"><div class="k">IgM/PCR 口径</div><div class="v">'+repScore+'</div></div>'+
+      '</div>'+
+      (!pass ? '<div class="replay-box"><strong>失败回放 · 一句标准动作</strong>'+standardReplay()+'</div>' : '')+
+      '<h3>暗线（学习后揭晓）</h3>'+
+      '<div class="case-box">小安：拭子角度规范 · 阿远：环状体 vs 杂质 · 小雨：HIV 假阳性须确证 · 综合：IgM+/PCR−≠确诊</div>'+
+      '<h3>硬否决记录</h3>'+
+      '<div class="tip '+(S.vetoes.length?'fail':'ok')+'">'+(S.vetoes.length?S.vetoes.join(' · '):'本班未触发硬否决')+'</div>'+
+      '<ul style="font-size:13px;color:var(--muted)">'+
+        '<li>未防护进实验区 → 当场锁死</li>'+
+        '<li>杂质当环状体 → 否决锁死</li>'+
+        '<li>HIV 假阳性直接当确诊 → 否决锁死</li>'+
+        '<li>IgM+/PCR− 写成确诊 → 否决锁死</li>'+
+      '</ul>'+
+      '<div class="gate">可返回发热门诊继续初筛练习；环境/手术室/ICU 仍排队。</div>';
+
+    const again=document.createElement('button');
+    again.className='btn'; again.type='button'; again.textContent='重开本班';
+    again.onclick=()=>{ startShift(); };
+    const toClinic=document.createElement('a');
+    toClinic.className='btn ghost'; toClinic.href='infect_fever_clinic.html';
+    toClinic.textContent='← 发热门诊';
+    toClinic.style.textDecoration='none'; toClinic.style.display='inline-block';
+    const hall=document.createElement('button');
+    hall.className='btn blue'; hall.type='button'; hall.textContent='回前厅';
+    hall.onclick=()=>backHall();
+    const row=document.createElement('div'); row.className='row';
+    row.appendChild(again); row.appendChild(toClinic); row.appendChild(hall);
+    body.appendChild(row);
+  }
+
+  // wire
+  $('btnStartShift').onclick=()=>startShift();
+  $('btnBackHall').onclick=()=>backHall();
+  renderHallStage();
+})();
+</script>
+</body>
+</html>

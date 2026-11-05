@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>手术室护理虚仿 · 无菌与核对时序 v0.1.0</title>
+<!--
+  v0.1.0 本地成品 · 短开场动线 + 硬否决锁死 + 成绩单标准动作回放
+  硬否决（小绿）：①跳洗手/刷手进无菌区 ②器械跨无菌界 ③锐器裸递 ④未完成 Time-out 开刀
+  病例（乳名不剧透）：阿清·择期清洁 / 阿月·剖宫产侧别核对 / 阿械·外来器械未灭菌陷阱 / 阿锐·锐器与计数
+  人物锚点：脚踩地 translate(-50%,-100%)，bottom 约 10–16%；禁止悬空
+-->
+<style>
+:root{
+  --bg:#eef2f6; --paper:#fffdf8; --ink:#1a2433; --muted:#5a6a7a;
+  --line:#c9d0d8; --accent:#0f766e; --accent2:#1f6fb2; --soft:#ecfdf5;
+  --red:#c0392b; --red-soft:#fdecea; --ok:#1b7a4a; --ok-soft:#e8f6ee;
+  --warn:#b45309; --warn-soft:#fff7ed; --shadow:0 2px 12px rgba(26,36,51,.1);
+  --violet:#6d28d9; font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);line-height:1.55}
+.wrap{max-width:980px;margin:0 auto;padding:12px 12px 72px}
+.topbar{
+  display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;justify-content:space-between;
+  margin-bottom:12px;padding:12px 14px;background:var(--paper);border:1px solid var(--line);
+  border-radius:14px;box-shadow:var(--shadow);
+}
+.topbar h1{margin:0;font-size:17px;font-weight:800}
+.topbar .sub{color:var(--muted);font-size:12px;margin-top:3px}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill{font-size:11px;border-radius:999px;padding:3px 10px;border:1px solid var(--line);background:#fff;color:var(--muted)}
+.pill.warn{background:var(--warn-soft);border-color:#fdba74;color:var(--warn);font-weight:700}
+.pill.ok{background:var(--ok-soft);border-color:#86efac;color:var(--ok);font-weight:700}
+.pill.red{background:var(--red-soft);border-color:#f5a9a0;color:var(--red);font-weight:700}
+.scene-banner{
+  position:relative;border-radius:14px;overflow:hidden;margin-bottom:12px;
+  background:linear-gradient(135deg,#0e7490 0%,#1e3a5f 55%,#0f766e 100%);
+  color:#fff;min-height:110px;padding:16px 18px;box-shadow:var(--shadow);
+}
+.scene-banner .tag{font-size:11px;opacity:.85;letter-spacing:.04em}
+.scene-banner h2{margin:4px 0 6px;font-size:20px}
+.scene-banner p{margin:0;font-size:13px;opacity:.92;max-width:620px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.card h2{margin:0 0 6px;font-size:16px}
+.card h3{margin:10px 0 6px;font-size:14px}
+.lead{color:var(--muted);font-size:13px;margin:0 0 10px}
+.hidden{display:none!important}
+.station-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.station{
+  border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff;text-align:left;
+  cursor:pointer;min-height:118px;
+}
+.station:hover{border-color:var(--accent);box-shadow:0 0 0 2px rgba(15,118,110,.15)}
+.station .n{font-size:11px;color:var(--muted);font-weight:700}
+.station .t{font-size:16px;font-weight:800;margin:4px 0}
+.station .d{font-size:12px;color:var(--muted);margin:0}
+.station .st{display:inline-block;margin-top:8px;font-size:11px;padding:2px 8px;border-radius:999px;background:#e5e7eb;color:#374151}
+.station.done .st{background:var(--ok-soft);color:var(--ok);font-weight:700}
+.station.fail .st{background:var(--red-soft);color:var(--red);font-weight:700}
+.steps{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.step-dot{font-size:11px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--muted)}
+.step-dot.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.step-dot.done{background:var(--ok-soft);border-color:#86efac;color:var(--ok)}
+.step-dot.fail{background:var(--red-soft);border-color:#f5a9a0;color:var(--red)}
+.case-box{background:#fff;border:1px dashed var(--line);border-radius:12px;padding:12px 14px;font-size:14px}
+.case-box strong{color:var(--accent2)}
+.choice-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin:10px 0}
+.choice{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff;cursor:pointer;text-align:left}
+.choice:hover{border-color:var(--accent)}
+.choice.on{border-color:var(--accent);background:var(--soft);box-shadow:0 0 0 2px rgba(15,118,110,.2)}
+.choice.locked{pointer-events:none;opacity:.7}
+.choice.dim{opacity:.45;pointer-events:none}
+.choice .t{font-weight:800;font-size:14px;margin:0 0 4px}
+.choice .d{font-size:12px;color:var(--muted);margin:0}
+.tip{margin-top:10px;padding:10px 12px;border-radius:10px;font-size:13px;background:#e8f1f8;border:1px solid #bfdbfe;color:#1e3a5f}
+.tip.ok{background:var(--ok-soft);border-color:#86efac;color:#14532d}
+.tip.fail{background:var(--red-soft);border-color:#f5a9a0;color:#7f1d1d}
+.tip.warn{background:var(--warn-soft);border-color:#fdba74;color:#7c2d12}
+.gate{border-left:4px solid var(--warn);padding:8px 12px;background:var(--warn-soft);border-radius:0 10px 10px 0;font-size:13px;margin:8px 0}
+.btn{border:none;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.btn.ok{background:var(--ok)}
+.btn.blue{background:var(--accent2)}
+.btn.danger{background:var(--red)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.scorebar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:10px 12px;background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:12px;font-size:13px}
+.badge{display:inline-block;font-size:11px;padding:2px 7px;border-radius:6px;background:#e5e7eb;color:#374151}
+.badge.red{background:var(--red-soft);color:var(--red)}
+.badge.ok{background:var(--ok-soft);color:var(--ok)}
+.toast{
+  position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(120%);
+  background:#1a2433;color:#fff;padding:10px 16px;border-radius:999px;font-size:13px;
+  font-weight:700;z-index:80;opacity:0;transition:transform .25s,opacity .25s;max-width:92vw;text-align:center;
+}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.fail{background:#7f1d1d}
+.lock-banner{
+  display:none;margin:10px 0;padding:12px;border-radius:12px;background:var(--red-soft);
+  border:1px solid #f5a9a0;color:#7f1d1d;font-weight:700;font-size:14px;
+}
+.lock-banner.show{display:block}
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+@media(max-width:560px){.score-grid{grid-template-columns:1fr}}
+.score-cell{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px}
+.score-cell .k{font-size:11px;color:var(--muted)}
+.score-cell .v{font-size:22px;font-weight:900}
+.footer-note{font-size:11px;color:var(--muted);margin-top:18px;text-align:center}
+.dialog{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0}
+.dialog .who{font-size:11px;color:var(--muted);margin:0 0 4px}
+.dialog .say{font-size:14px;margin:0}
+.stage{
+  position:relative;width:100%;height:240px;border-radius:14px;overflow:hidden;
+  border:1px solid var(--line);margin-bottom:12px;
+  background:linear-gradient(180deg,#bae6fd 0 48%,#e2e8f0 48% 54%,#94a3b8 54% 100%);
+  box-shadow:var(--shadow);
+}
+.stage.or{
+  background:linear-gradient(180deg,#cffafe 0 46%,#e2e8f0 46% 54%,#a8a29e 54% 100%);
+}
+.stage.scrub{
+  background:linear-gradient(180deg,#a5f3fc 0 50%,#cbd5e1 50% 56%,#78716c 56% 100%);
+}
+.stage.sterile{
+  background:linear-gradient(180deg,#e0f2fe 0 44%,#f8fafc 44% 58%,#94a3b8 58% 100%);
+}
+.stage .floor-line{
+  position:absolute;left:0;right:0;bottom:12%;height:2px;background:rgba(15,23,42,.18);pointer-events:none;
+}
+.stage .prop{
+  position:absolute;transform:translate(-50%,-100%);text-align:center;pointer-events:none;
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.15));
+}
+.stage .prop .box{
+  background:#fff;border:1px solid #64748b;border-radius:8px;padding:6px 8px;font-size:11px;font-weight:800;color:#0f172a;
+  white-space:nowrap;
+}
+.stage .prop .ico{font-size:28px;line-height:1;display:block}
+.stage .fig{
+  position:absolute;transform:translate(-50%,-100%);text-align:center;cursor:default;
+  filter:drop-shadow(0 2px 3px rgba(0,0,0,.2));
+}
+.stage .fig .avatar{
+  width:42px;height:42px;border-radius:50%;margin:0 auto 2px;display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:900;font-size:14px;border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,.2);
+}
+.stage .fig .name{font-size:11px;font-weight:800;background:rgba(255,255,255,.92);padding:1px 6px;border-radius:4px;white-space:nowrap}
+.stage .fig .sub{font-size:10px;color:#334155;background:rgba(255,255,255,.75);padding:0 5px;border-radius:3px;margin-top:1px}
+.stage-caption{font-size:11px;color:var(--muted);margin:0 0 8px}
+.check-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin:10px 0}
+.check-item{
+  border:1px dashed var(--line);border-radius:12px;padding:12px 10px;background:#fff;cursor:pointer;text-align:left;
+}
+.check-item.on{border-style:solid;border-color:var(--ok);background:var(--ok-soft)}
+.check-item .lab{font-size:13px;font-weight:800}
+.check-item .hint{font-size:11px;color:var(--muted);margin-top:3px}
+.zone-map{
+  position:relative;height:200px;border-radius:12px;border:1px solid var(--line);overflow:hidden;margin:10px 0;
+  background:linear-gradient(180deg,#f1f5f9 0 40%,#fff 40% 70%,#e2e8f0 70% 100%);
+}
+.zone{
+  position:absolute;border:2px dashed #94a3b8;border-radius:10px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;
+  background:rgba(255,255,255,.7);
+}
+.zone.sterile{border-color:#0f766e;background:rgba(236,253,245,.85);color:#065f46}
+.zone.contam{border-color:#b45309;background:rgba(255,247,237,.9);color:#7c2d12}
+.zone.on{box-shadow:0 0 0 3px rgba(15,118,110,.35)}
+.zone.bad{box-shadow:0 0 0 3px rgba(192,57,43,.4);border-color:var(--red)}
+.replay{
+  background:#0f172a;color:#e2e8f0;border-radius:12px;padding:12px 14px;font-size:13px;margin:8px 0;
+}
+.replay .beat{margin:6px 0;padding-left:8px;border-left:3px solid #22d3ee}
+.replay .beat b{color:#fde68a}
+.emr{
+  background:#0f172a;color:#e2e8f0;border-radius:12px;padding:12px 14px;font-size:13px;
+  font-family:ui-monospace,Menlo,Consolas,monospace;margin:8px 0;
+}
+.emr .k{color:#94a3b8}
+.emr .v{color:#fde68a}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div>
+      <h1>手术室护理虚仿 · 无菌与核对时序 <span class="badge ok">v0.1.0</span></h1>
+      <div class="sub">高职护理 · 刷手→穿衣戴手套→无菌界→WHO Time-out→锐器安全传递 · 硬否决锁死 · 本地不挂网</div>
+    </div>
+    <div class="pills">
+      <span class="pill warn">本地样板</span>
+      <span class="pill">WHO SSC</span>
+      <span class="pill">脚踩地站位</span>
+    </div>
+  </div>
+
+  <div id="viewHall">
+    <div class="scene-banner">
+      <div class="tag">手术室护理 · 无菌与核对 · v0.1.0</div>
+      <h2>动线：换鞋更衣 → 刷手池 → 无菌台 → Time-out → 传递</h2>
+      <p>跳过刷手进无菌区、器械跨界、锐器裸递、未完成 Time-out 就开刀——四条红线当场锁死本例。</p>
+    </div>
+    <div class="card">
+      <h2>手术部走廊动线（人物脚踩地）</h2>
+      <p class="lead">左换鞋区 → 刷手池（必过）→ 无菌间门 → 手术间。选乳名进本例开场，不能跳刷手直接上台。</p>
+      <div class="stage" id="hallStage" aria-label="手术部走廊动线"></div>
+      <p class="stage-caption">脚锚：换鞋 12% / 刷手池 38% / 你 55% / 无菌间门 78% / 手术间 92% · bottom≈12–16% · translate(-50%,-100%)</p>
+      <h2>今日台次</h2>
+      <p class="lead">4 例短情景。乳名不剧透暗线。每例：开场→刷手→穿衣戴手套→无菌界→Time-out→传递→成绩单。</p>
+      <div class="station-grid" id="caseGrid"></div>
+      <div class="gate">红线：跳洗手/刷手进无菌区锁死；器械跨无菌界锁死；锐器裸递锁死；未完成 Time-out 开刀锁死。</div>
+    </div>
+  </div>
+
+  <div id="viewPlay" class="hidden">
+    <div class="scorebar">
+      <div>
+        <strong id="playTitle">手术间</strong>
+        <span class="badge" id="playCaseBadge">—</span>
+      </div>
+      <div class="pills">
+        <span class="pill" id="scrubBadge">刷手：未过</span>
+        <span class="pill" id="gownBadge">穿戴：未就绪</span>
+        <span class="pill" id="toBadge">Time-out：未完</span>
+        <span class="pill" id="vetoBadge">否决：0</span>
+      </div>
+    </div>
+    <div class="steps" id="stepDots"></div>
+    <div class="lock-banner" id="lockBanner"></div>
+    <div class="card" id="stepCard">
+      <div id="stepBody"></div>
+    </div>
+    <div class="row">
+      <button class="btn ghost" type="button" id="btnHall">回大厅</button>
+      <button class="btn ghost" type="button" id="btnRestart">重开本例</button>
+    </div>
+  </div>
+
+  <p class="footer-note">教学示意 · 非临床操作替代 · 指南条款以文字描述为准（⚠数值不写死）· 不挂 Pages · 小绿红线 · v0.1.0 · 2026-11-05 Asia/Shanghai</p>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  'use strict';
+  const VERSION = 'v0.1.0';
+  const STEPS = [
+    {id:'intro', label:'开场'},
+    {id:'scrub', label:'刷手'},
+    {id:'gown', label:'穿衣戴手套'},
+    {id:'field', label:'无菌界'},
+    {id:'timeout', label:'Time-out'},
+    {id:'pass', label:'传递'},
+    {id:'score', label:'成绩单'}
+  ];
+
+  const LAYOUT = {
+    hall:{
+      shoe:{left:12, bottom:12, role:'换鞋区', color:'#64748b', sub:'更衣换鞋'},
+      sink:{left:38, bottom:14, role:'刷手池', color:'#0e7490', sub:'必过'},
+      you:{left:55, bottom:12, role:'你', color:'#0f766e', sub:'巡回/器械'},
+      door:{left:78, bottom:16, role:'无菌间门', color:'#334155', sub:'刷手后进'},
+      or:{left:92, bottom:15, role:'手术间', color:'#1e3a5f', sub:'台次'}
+    },
+    scrub:{
+      you:{left:28, bottom:12, role:'你', color:'#0f766e', sub:'刷手前'},
+      sink:{left:52, bottom:14, role:'刷手池', color:'#0e7490', sub:'外科洗手'},
+      door:{left:86, bottom:16, role:'手术间门', color:'#334155', sub:'未刷手不开'}
+    },
+    or:{
+      table:{left:48, bottom:22, role:'无菌台', color:'#0f766e', sub:'无菌界内'},
+      you:{left:28, bottom:12, role:'你·器械', color:'#0f766e', sub:'已刷手'},
+      circ:{left:72, bottom:12, role:'巡回', color:'#1f6fb2', sub:'台下'},
+      patient:{left:55, bottom:10, role:'患者', color:'#b45309', sub:'已麻醉示意'}
+    }
+  };
+
+  const INTRO_BEATS = [
+    {tag:'拍 1 / 4 · 换鞋', title:'手术部入口', say:'鞋柜前：换手术室专用鞋、戴帽子口罩。巡回喊：「今天台次紧，刷手别省。」', stage:'hall'},
+    {tag:'拍 2 / 4 · 更衣', title:'更衣室', say:'换洗手衣、戴圆帽。老师叮嘱：「没刷手别进无菌区，器械别跨无菌界。」', stage:'hall'},
+    {tag:'拍 3 / 4 · 刷手池', title:'刷手间走廊', say:'刷手池灯亮着。跳过刷手直接进手术间 = 硬否决锁死。', stage:'scrub'},
+    {tag:'拍 4 / 4 · 门外', title:'手术间门外', say:'门上贴着 WHO 手术安全核对：Sign-in → Time-out → Sign-out。先刷手，再穿无菌衣戴手套。', stage:'scrub'}
+  ];
+
+  /* 标准动作回放（失败成绩单一句/短序列） */
+  const REPLAY = [
+    {t:'刷手', d:'外科洗手/刷手完成后再进无菌区，不可跳过。'},
+    {t:'穿戴', d:'无菌衣→戴无菌手套（协助或闭合式），保持手在腰以上无菌区。'},
+    {t:'无菌界', d:'污染器械不入无菌台；手与物不越过无菌界。'},
+    {t:'Time-out', d:'切皮前全体暂停：核对患者身份、手术部位（含侧别）、术式。'},
+    {t:'锐器', d:'刀/剪/缝针用弯盘或持针器传递，禁止徒手裸递。'},
+    {t:'计数', d:'关键节点清点纱布、器械、缝针，数目相符再关腹/关切口。'}
+  ];
+
+  const CASES = [
+    {
+      id:'aqing', nick:'阿清', age:'32 岁 · 择期', blurb:'择期腹腔镜台次，巡回说「先刷手」。',
+      secret:'clean_elective', secretLabel:'暗线：择期清洁手术（阑尾/腹腔镜示意）· 强调完整刷手→无菌→Time-out 主路径',
+      briefing:'择期台。患者已入室，麻醉准备中。你的角色：器械护士。',
+      siteLabel:'右下腹（示意）', procedure:'择期腹腔镜探查/阑尾切除（示意）',
+      sideCheck:false,
+      foreignTrap:false,
+      timeoutItems:['identity','site','procedure'],
+      softHints:['护目镜未戴可软扣','纱布计数不清可软扣']
+    },
+    {
+      id:'ayue', nick:'阿月', age:'28 岁 · 产科', blurb:'剖宫产台，腕带与侧别要盯紧。',
+      secret:'csection_side', secretLabel:'暗线：剖宫产 + 核对侧别/身份（Time-out 三要素缺一不可）',
+      briefing:'急诊转择期剖宫产示意。巡回强调：身份、术式、切口侧别必须 Time-out 喊清。',
+      siteLabel:'下腹正中（剖宫产切口示意）', procedure:'子宫下段剖宫产（示意）',
+      sideCheck:true,
+      foreignTrap:false,
+      timeoutItems:['identity','site','procedure','side'],
+      softHints:['侧别贴纸未再核可软扣','未戴护目可软扣']
+    },
+    {
+      id:'axie', nick:'阿械', age:'45 岁 · 骨科会诊台', blurb:'外来器械箱刚到，台上催着开。',
+      secret:'foreign_unsterile', secretLabel:'暗线：外来器械未灭菌/未确认灭菌指示陷阱 —— 不可直接上台',
+      briefing:'骨科会诊台。厂家送来一套外来器械。灭菌指示未确认前不得进入无菌台。',
+      siteLabel:'左膝（示意）', procedure:'关节镜探查（示意）',
+      sideCheck:true,
+      foreignTrap:true,
+      timeoutItems:['identity','site','procedure','side'],
+      softHints:['外来器械指示卡未拍照存档可软扣','计数表未双签可软扣']
+    },
+    {
+      id:'arui', nick:'阿锐', age:'50 岁 · 普外', blurb:'切开后传递频繁，锐器与纱布要盯。',
+      secret:'sharp_count', secretLabel:'暗线：锐器安全传递 + 纱布/缝针计数（软扣与硬否决并存）',
+      briefing:'开腹台示意。传递高峰：刀、剪、缝针。禁止裸递；关腹前必须计数相符。',
+      siteLabel:'上腹正中（示意）', procedure:'开腹探查（示意）',
+      sideCheck:false,
+      foreignTrap:false,
+      timeoutItems:['identity','site','procedure'],
+      softHints:['计数不清软扣','未戴护目软扣','Sign-out 未报可软扣']
+    }
+  ];
+
+  const S = {
+    caseId:null, step:'intro', introBeat:0,
+    scrubDone:false, gownOn:false, glovesOn:false, goggles:false,
+    fieldOk:false, timeoutDone:{},
+    passOk:false, countOk:false, foreignChecked:false,
+    locked:false, vetoes:[], soft:[],
+    results:{}, score:null
+  };
+
+  function $(id){ return document.getElementById(id); }
+  function caseObj(){ return CASES.find(c=>c.id===S.caseId); }
+
+  function toast(msg, fail){
+    const el=$('toast');
+    el.textContent=msg;
+    el.className='toast show'+(fail?' fail':'');
+    clearTimeout(toast._t);
+    toast._t=setTimeout(()=>{ el.classList.remove('show'); }, 2800);
+  }
+
+  function softDeduct(code){
+    if(S.soft.indexOf(code)>=0) return;
+    S.soft.push(code);
+    toast('软扣：'+code, false);
+    updateBadges();
+  }
+
+  function addVeto(code, msg){
+    if(S.vetoes.indexOf(code)>=0) return;
+    S.vetoes.push(code);
+    updateBadges();
+    toast(msg || ('硬否决：'+code), true);
+  }
+
+  function hardLock(reason, code){
+    if(code) addVeto(code, reason);
+    else toast(reason, true);
+    S.locked=true;
+    const b=$('lockBanner');
+    b.textContent='⛔ 本例已锁死 · '+reason+'（请重开本例或回大厅）';
+    b.classList.add('show');
+    updateBadges();
+    S.step='score';
+    paint();
+  }
+
+  function updateBadges(){
+    const scrubEl=$('scrubBadge');
+    scrubEl.textContent='刷手：'+(S.scrubDone?'已过':'未过');
+    scrubEl.className='pill '+(S.scrubDone?'ok':'');
+    const gownReady=S.gownOn && S.glovesOn;
+    const gownEl=$('gownBadge');
+    gownEl.textContent='穿戴：'+(gownReady?'就绪':'未就绪');
+    gownEl.className='pill '+(gownReady?'ok':'');
+    const need=caseObj()?caseObj().timeoutItems:[];
+    const toOk=need.length && need.every(k=>S.timeoutDone[k]);
+    const toEl=$('toBadge');
+    toEl.textContent='Time-out：'+(toOk?'完成':'未完');
+    toEl.className='pill '+(toOk?'ok':'');
+    const v=$('vetoBadge');
+    v.textContent='否决：'+S.vetoes.length;
+    v.className='pill '+(S.vetoes.length?'red':'');
+  }
+
+  function fig(parent, item, labelOverride){
+    const d=document.createElement('div');
+    d.className='fig';
+    d.style.left=item.left+'%';
+    d.style.bottom=item.bottom+'%';
+    const av=document.createElement('div');
+    av.className='avatar';
+    av.style.background=item.color;
+    av.textContent=(labelOverride||item.role).slice(0,2);
+    const nm=document.createElement('div');
+    nm.className='name';
+    nm.textContent=labelOverride||item.role;
+    const sub=document.createElement('div');
+    sub.className='sub';
+    sub.textContent=item.sub||'';
+    d.appendChild(av); d.appendChild(nm); d.appendChild(sub);
+    parent.appendChild(d);
+  }
+
+  function prop(parent, left, bottom, ico, text){
+    const d=document.createElement('div');
+    d.className='prop';
+    d.style.left=left+'%'; d.style.bottom=bottom+'%';
+    d.innerHTML='<span class="ico">'+ico+'</span><div class="box">'+text+'</div>';
+    parent.appendChild(d);
+  }
+
+  function drawStage(el, key, highlight){
+    el.innerHTML='';
+    el.className='stage '+(key==='scrub'?'scrub':(key==='or'||key==='sterile'?'or':''));
+    const line=document.createElement('div');
+    line.className='floor-line';
+    el.appendChild(line);
+    const L=LAYOUT[key==='sterile'?'or':key]||LAYOUT.hall;
+    Object.keys(L).forEach(k=>{
+      const it=L[k];
+      if(k==='sink'||k==='table'||k==='shoe'||k==='door'||k==='or'){
+        const ico=k==='sink'?'🚰':(k==='table'?'🛏️':(k==='shoe'?'👟':'🚪'));
+        prop(el, it.left, it.bottom, ico, it.role);
+      } else {
+        fig(el, it, highlight && highlight[k]);
+      }
+    });
+  }
+
+  function paintHallStage(){
+    drawStage($('hallStage'), 'hall');
+  }
+
+  function renderCaseGrid(){
+    const grid=$('caseGrid');
+    grid.innerHTML='';
+    CASES.forEach((c,i)=>{
+      const b=document.createElement('button');
+      b.type='button';
+      b.className='station'+(S.results[c.id]==='pass'?' done':(S.results[c.id]==='fail'?' fail':''));
+      const st=S.results[c.id]==='pass'?'已过关':(S.results[c.id]==='fail'?'已锁死/未过':'待开');
+      b.innerHTML='<div class="n">台次 '+(i+1)+'</div><div class="t">'+c.nick+'</div><div class="d">'+c.blurb+'</div><span class="st">'+st+'</span>';
+      b.onclick=()=>startCase(c.id);
+      grid.appendChild(b);
+    });
+  }
+
+  function resetState(){
+    S.scrubDone=false; S.gownOn=false; S.glovesOn=false; S.goggles=false;
+    S.fieldOk=false; S.timeoutDone={}; S.passOk=false; S.countOk=false;
+    S.foreignChecked=false; S.locked=false; S.vetoes=[]; S.soft=[];
+    S.score=null; S.introBeat=0; S.step='intro';
+    const b=$('lockBanner');
+    b.classList.remove('show'); b.textContent='';
+  }
+
+  function startCase(id){
+    resetState();
+    S.caseId=id;
+    $('viewHall').classList.add('hidden');
+    $('viewPlay').classList.remove('hidden');
+    const c=caseObj();
+    $('playCaseBadge').textContent=c.nick;
+    $('playTitle').textContent='手术间 · '+c.nick;
+    updateBadges();
+    paint();
+  }
+
+  function goHall(){
+    $('viewPlay').classList.add('hidden');
+    $('viewHall').classList.remove('hidden');
+    renderCaseGrid();
+  }
+
+  function paintDots(){
+    const box=$('stepDots');
+    box.innerHTML='';
+    const order=STEPS.map(s=>s.id);
+    const cur=order.indexOf(S.step);
+    STEPS.forEach((s,i)=>{
+      const d=document.createElement('span');
+      d.className='step-dot'+(i===cur?' on':(i<cur?' done':''));
+      if(S.locked && s.id!=='score') d.classList.add('fail');
+      d.textContent=s.label;
+      box.appendChild(d);
+    });
+  }
+
+  function paint(){
+    paintDots();
+    updateBadges();
+    const body=$('stepBody');
+    body.innerHTML='';
+    if(S.step==='intro') buildIntro(body);
+    else if(S.step==='scrub') buildScrub(body);
+    else if(S.step==='gown') buildGown(body);
+    else if(S.step==='field') buildField(body);
+    else if(S.step==='timeout') buildTimeout(body);
+    else if(S.step==='pass') buildPass(body);
+    else if(S.step==='score') buildScore(body);
+  }
+
+  function buildIntro(body){
+    const c=caseObj();
+    const beat=INTRO_BEATS[S.introBeat]||INTRO_BEATS[0];
+    const stage=document.createElement('div');
+    stage.className='stage';
+    stage.id='introStage';
+    body.appendChild(stage);
+    drawStage(stage, beat.stage==='scrub'?'scrub':'hall');
+
+    body.insertAdjacentHTML('beforeend',
+      '<div class="dialog"><div class="who">'+beat.tag+'</div><h3 style="margin:0 0 4px">'+beat.title+'</h3><p class="say">'+beat.say+'</p></div>'+
+      '<div class="case-box">本例：<strong>'+c.nick+'</strong> · '+c.age+'<br/>'+c.briefing+'</div>'+
+      '<div class="gate">开场只讲动线：未刷手进无菌区 / 冲进手术间上台 = 硬否决。</div>'
+    );
+
+    const row=document.createElement('div');
+    row.className='row';
+    const skip=document.createElement('button');
+    skip.type='button'; skip.className='btn danger';
+    skip.textContent='跳过刷手 · 直接进手术间上台';
+    skip.onclick=()=>{
+      hardLock('跳洗手/刷手进无菌区', 'skip_scrub');
+    };
+    const next=document.createElement('button');
+    next.type='button'; next.className='btn';
+    if(S.introBeat < INTRO_BEATS.length-1){
+      next.textContent='下一拍';
+      next.onclick=()=>{ S.introBeat++; paint(); };
+    } else {
+      next.textContent='去刷手池';
+      next.className='btn ok';
+      next.onclick=()=>{ S.step='scrub'; paint(); };
+    }
+    row.appendChild(skip); row.appendChild(next);
+    body.appendChild(row);
+  }
+
+  function buildScrub(body){
+    const c=caseObj();
+    const stage=document.createElement('div');
+    stage.className='stage scrub';
+    body.appendChild(stage);
+    drawStage(stage, 'scrub');
+
+    body.insertAdjacentHTML('beforeend',
+      '<h2>刷手池 · 外科洗手/刷手</h2>'+
+      '<p class="lead">按教学步骤完成刷手示意。未完成就进无菌区 = 硬否决。</p>'+
+      '<div class="emr"><span class="k">台次</span> <span class="v">'+c.nick+'</span> · <span class="k">术式示意</span> <span class="v">'+c.procedure+'</span></div>'+
+      '<div class="check-grid" id="scrubChecks"></div>'+
+      '<div class="tip warn" id="scrubTip">点齐必要步骤后再进手术间。企图未刷手进间 → 锁死。</div>'
+    );
+
+    const items=[
+      {id:'cap_mask', lab:'帽子口罩已戴好', hint:'刷手前确认'},
+      {id:'wash', lab:'按六步/外科刷手流程洗手', hint:'示意完成即可（⚠时长按本院规范）'},
+      {id:'dry', lab:'无菌巾擦干', hint:'从指尖向肘'},
+      {id:'keep', lab:'双手保持胸前无菌姿势', hint:'勿垂至腰下'}
+    ];
+    const done={};
+    const box=$('scrubChecks');
+    items.forEach(it=>{
+      const el=document.createElement('div');
+      el.className='check-item';
+      el.innerHTML='<div class="lab">'+it.lab+'</div><div class="hint">'+it.hint+'</div>';
+      el.onclick=()=>{
+        if(S.locked) return;
+        done[it.id]=!done[it.id];
+        el.classList.toggle('on', !!done[it.id]);
+        const need=['cap_mask','wash','dry','keep'];
+        if(need.every(k=>done[k])){
+          S.scrubDone=true;
+          $('scrubTip').className='tip ok';
+          $('scrubTip').textContent='刷手完成。可以进手术间穿无菌衣戴手套。';
+          updateBadges();
+        }
+      };
+      box.appendChild(el);
+    });
+
+    const row=document.createElement('div');
+    row.className='row';
+    const rush=document.createElement('button');
+    rush.type='button'; rush.className='btn danger';
+    rush.textContent='不等了 · 直接进无菌区上台';
+    rush.onclick=()=>{
+      hardLock('跳洗手/刷手进无菌区', 'skip_scrub');
+    };
+    const go=document.createElement('button');
+    go.type='button'; go.className='btn ok'; go.textContent='刷手完成 · 进手术间';
+    go.onclick=()=>{
+      if(!S.scrubDone){
+        hardLock('跳洗手/刷手进无菌区', 'skip_scrub');
+        return;
+      }
+      S.step='gown'; paint();
+    };
+    row.appendChild(rush); row.appendChild(go);
+    body.appendChild(row);
+  }
+
+  function buildGown(body){
+    const stage=document.createElement('div');
+    stage.className='stage or';
+    body.appendChild(stage);
+    drawStage(stage, 'or');
+
+    body.insertAdjacentHTML('beforeend',
+      '<h2>穿无菌衣 · 戴无菌手套</h2>'+
+      '<p class="lead">正确顺序：无菌衣 → 手套。先戴手套再穿衣 = 软扣；未穿戴完整进入无菌操作可拦。</p>'+
+      '<div class="choice-cards" id="gownChoices"></div>'+
+      '<div class="tip" id="gownTip">先选穿戴动作。护目镜建议戴上（未戴软扣）。</div>'
+    );
+
+    const choices=[
+      {id:'gown_first', t:'先穿无菌衣，再戴无菌手套', d:'标准顺序', ok:true},
+      {id:'glove_first', t:'先戴无菌手套，再穿无菌衣', d:'顺序错误', soft:'穿戴顺序错误'},
+      {id:'no_gown', t:'只戴手套，不穿无菌衣就上台', d:'不完整', veto:'skip_scrub'},
+      {id:'goggles', t:'加戴护目镜/面屏', d:'职业防护（建议）', goggle:true}
+    ];
+
+    const box=$('gownChoices');
+    choices.forEach(ch=>{
+      const el=document.createElement('button');
+      el.type='button'; el.className='choice';
+      el.innerHTML='<div class="t">'+ch.t+'</div><div class="d">'+ch.d+'</div>';
+      el.onclick=()=>{
+        if(S.locked) return;
+        if(ch.veto){
+          hardLock('未完成无菌穿戴即进入无菌操作（等同跳过刷手/无菌准备）', 'skip_scrub');
+          return;
+        }
+        if(ch.soft){ softDeduct(ch.soft); }
+        if(ch.goggle){
+          S.goggles=true;
+          el.classList.add('on');
+          toast('已戴护目镜');
+          updateBadges();
+          return;
+        }
+        if(ch.ok){
+          S.gownOn=true; S.glovesOn=true;
+          el.classList.add('on');
+          $('gownTip').className='tip ok';
+          $('gownTip').textContent='穿戴就绪。下一关识别无菌界。';
+          updateBadges();
+        } else if(ch.soft){
+          // still allow proceed but mark soft; treat as partial: gown+gloves after soft
+          S.gownOn=true; S.glovesOn=true;
+          el.classList.add('on');
+          $('gownTip').className='tip warn';
+          $('gownTip').textContent='顺序有误已软扣，穿戴勉强就绪——下一关更要盯无菌界。';
+          updateBadges();
+        }
+      };
+      box.appendChild(el);
+    });
+
+    const row=document.createElement('div');
+    row.className='row';
+    const go=document.createElement('button');
+    go.type='button'; go.className='btn ok'; go.textContent='穿戴完成 · 铺台/无菌界';
+    go.onclick=()=>{
+      if(!(S.gownOn&&S.glovesOn)){
+        toast('请先完成无菌衣+手套', true);
+        return;
+      }
+      if(!S.goggles && S.soft.indexOf('未戴护目')<0) softDeduct('未戴护目');
+      S.step='field'; paint();
+    };
+    row.appendChild(go);
+    body.appendChild(row);
+  }
+
+  function buildField(body){
+    const c=caseObj();
+    body.insertAdjacentHTML('beforeend',
+      '<h2>无菌台与无菌界</h2>'+
+      '<p class="lead">绿区=无菌台面；橙区=污染/非无菌。把器械放到正确区域。跨界污染 = 硬否决。</p>'+
+      '<div class="zone-map" id="zoneMap">'+
+        '<div class="zone sterile" id="zSterile" style="left:8%;top:10%;width:55%;height:55%">无菌台面（无菌界内）<br/><span style="font-weight:500;font-size:11px">已灭菌器械、无菌敷料</span></div>'+
+        '<div class="zone contam" id="zContam" style="left:68%;top:18%;width:26%;height:50%">污染台/环钳区<br/><span style="font-weight:500;font-size:11px">用过/未灭菌</span></div>'+
+      '</div>'+
+      '<div class="choice-cards" id="fieldChoices"></div>'+
+      '<div class="tip warn" id="fieldTip">选择你要执行的动作。</div>'
+    );
+
+    const actions=[
+      {id:'place_ok', t:'将已灭菌器械包打开放上无菌台', d:'正确', ok:true},
+      {id:'cross', t:'把刚才碰过非无菌面的钳子直接放回无菌台', d:'跨无菌界 / 污染入台', veto:'cross_field'},
+      {id:'reach', t:'隔着无菌台伸手去够台下污染弯盘', d:'手越过无菌界取污染', veto:'cross_field'},
+      {id:'foreign_ok', t:'（外来器械）先核灭菌指示/包外指示，合格再上台', d:c.foreignTrap?'本例关键':'一般台可跳过', foreign:true},
+      {id:'foreign_bad', t:'外来器械箱未开指示，直接拆上无菌台', d:'未灭菌/未确认陷阱', foreignBad:true}
+    ];
+
+    const box=$('fieldChoices');
+    actions.forEach(a=>{
+      if(a.foreign && !c.foreignTrap) return;
+      if(a.foreignBad && !c.foreignTrap) return;
+      const el=document.createElement('button');
+      el.type='button'; el.className='choice';
+      el.innerHTML='<div class="t">'+a.t+'</div><div class="d">'+a.d+'</div>';
+      el.onclick=()=>{
+        if(S.locked) return;
+        if(a.veto){
+          $('zSterile').classList.add('bad');
+          hardLock('器械跨无菌界（污染入无菌台 / 越过无菌界）', 'cross_field');
+          return;
+        }
+        if(a.foreignBad){
+          hardLock('器械跨无菌界：未确认灭菌的外来器械进入无菌台', 'cross_field');
+          return;
+        }
+        if(a.foreign){
+          S.foreignChecked=true;
+          el.classList.add('on');
+          toast('外来器械灭菌指示已核');
+          $('fieldTip').className='tip ok';
+          $('fieldTip').textContent='外来器械核验通过，可与无菌台共处。';
+          return;
+        }
+        if(a.ok){
+          if(c.foreignTrap && !S.foreignChecked){
+            toast('本例外来器械尚未核灭菌指示', true);
+            $('fieldTip').className='tip warn';
+            $('fieldTip').textContent='先核外来器械灭菌指示，再完成铺台。';
+            return;
+          }
+          S.fieldOk=true;
+          el.classList.add('on');
+          $('zSterile').classList.add('on');
+          $('fieldTip').className='tip ok';
+          $('fieldTip').textContent='无菌界识别正确。进入 Time-out。';
+        }
+      };
+      box.appendChild(el);
+    });
+
+    const row=document.createElement('div');
+    row.className='row';
+    const go=document.createElement('button');
+    go.type='button'; go.className='btn ok'; go.textContent='无菌界确认 · 开始 Time-out';
+    go.onclick=()=>{
+      if(!S.fieldOk){
+        toast('请先正确完成无菌台铺设/识别', true);
+        return;
+      }
+      if(c.foreignTrap && !S.foreignChecked){
+        toast('外来器械灭菌未核，不能进 Time-out', true);
+        return;
+      }
+      S.step='timeout'; paint();
+    };
+    row.appendChild(go);
+    body.appendChild(row);
+  }
+
+  function buildTimeout(body){
+    const c=caseObj();
+    body.insertAdjacentHTML('beforeend',
+      '<h2>WHO Time-out · 切皮前暂停核对</h2>'+
+      '<p class="lead">全体安静。必须核对：患者身份、手术部位（含侧别如适用）、术式。未完成就让刀切开 = 硬否决。</p>'+
+      '<div class="emr">'+
+        '<div><span class="k">腕带姓名/ID</span> · <span class="v">'+c.nick+'（教学示意）</span></div>'+
+        '<div><span class="k">拟手术部位</span> · <span class="v">'+c.siteLabel+'</span></div>'+
+        '<div><span class="k">拟术式</span> · <span class="v">'+c.procedure+'</span></div>'+
+      '</div>'+
+      '<div class="check-grid" id="toChecks"></div>'+
+      '<div class="tip warn" id="toTip">点齐 Time-out 要素。切勿未核完就递刀开皮。</div>'
+    );
+
+    const items=[
+      {id:'identity', lab:'核对患者身份（腕带=病历=口头）', hint:'Sign-in/Time-out 共通'},
+      {id:'site', lab:'核对手术部位（皮肤标记可见）', hint:'部位正确'},
+      {id:'procedure', lab:'核对术式与同意书一致', hint:'术式无误'},
+      {id:'side', lab:'核对侧别（左/右）并大声确认', hint:'剖宫产/骨科等必做', needSide:true}
+    ];
+    const box=$('toChecks');
+    items.forEach(it=>{
+      if(it.needSide && !c.sideCheck) return;
+      const el=document.createElement('div');
+      el.className='check-item'+(S.timeoutDone[it.id]?' on':'');
+      el.innerHTML='<div class="lab">'+it.lab+'</div><div class="hint">'+it.hint+'</div>';
+      el.onclick=()=>{
+        if(S.locked) return;
+        S.timeoutDone[it.id]=!S.timeoutDone[it.id];
+        el.classList.toggle('on', !!S.timeoutDone[it.id]);
+        const need=c.timeoutItems;
+        if(need.every(k=>S.timeoutDone[k])){
+          $('toTip').className='tip ok';
+          $('toTip').textContent='Time-out 完成。可以进入器械传递。';
+        } else {
+          $('toTip').className='tip warn';
+          $('toTip').textContent='仍有未核项。未完成不得开刀。';
+        }
+        updateBadges();
+      };
+      box.appendChild(el);
+    });
+
+    const row=document.createElement('div');
+    row.className='row';
+    const cut=document.createElement('button');
+    cut.type='button'; cut.className='btn danger';
+    cut.textContent='Time-out 没完 · 先递刀开皮';
+    cut.onclick=()=>{
+      const need=c.timeoutItems;
+      if(!need.every(k=>S.timeoutDone[k])){
+        hardLock('未完成 Time-out 开刀（身份/部位/术式未核完）', 'no_timeout');
+      } else {
+        toast('Time-out 已完成，请走「完成核对」按钮');
+      }
+    };
+    const go=document.createElement('button');
+    go.type='button'; go.className='btn ok'; go.textContent='Time-out 完成 · 进入传递';
+    go.onclick=()=>{
+      const need=c.timeoutItems;
+      if(!need.every(k=>S.timeoutDone[k])){
+        hardLock('未完成 Time-out 开刀', 'no_timeout');
+        return;
+      }
+      S.step='pass'; paint();
+    };
+    row.appendChild(cut); row.appendChild(go);
+    body.appendChild(row);
+  }
+
+  function buildPass(body){
+    const c=caseObj();
+    body.insertAdjacentHTML('beforeend',
+      '<h2>器械传递 · 锐器安全</h2>'+
+      '<p class="lead">刀、剪、缝针必须经弯盘或持针器传递。徒手裸递 = 硬否决。关腹/关切口前完成计数。</p>'+
+      '<div class="choice-cards" id="passChoices"></div>'+
+      '<div class="check-grid" id="countChecks"></div>'+
+      '<div class="tip warn" id="passTip">选择传递方式；并完成计数勾选。</div>'
+    );
+
+    const actions=[
+      {id:'basin', t:'手术刀放入弯盘，递给术者', d:'锐器安全传递', ok:true},
+      {id:'holder', t:'缝针用持针器夹持传递', d:'锐器安全传递', ok:true},
+      {id:'bare', t:'徒手把刀尖朝向对方递过去', d:'锐器裸递', veto:'bare_sharp'},
+      {id:'bare2', t:'手心托着缝针直接塞给助手', d:'锐器裸递', veto:'bare_sharp'}
+    ];
+    const box=$('passChoices');
+    actions.forEach(a=>{
+      const el=document.createElement('button');
+      el.type='button'; el.className='choice';
+      el.innerHTML='<div class="t">'+a.t+'</div><div class="d">'+a.d+'</div>';
+      el.onclick=()=>{
+        if(S.locked) return;
+        if(a.veto){
+          hardLock('锐器裸递（徒手递刀/剪/针）', 'bare_sharp');
+          return;
+        }
+        if(a.ok){
+          S.passOk=true;
+          el.classList.add('on');
+          $('passTip').className='tip ok';
+          $('passTip').textContent='锐器传递正确。请完成计数勾选后出成绩单。';
+        }
+      };
+      box.appendChild(el);
+    });
+
+    const counts=[
+      {id:'gauze', lab:'纱布/敷料数目与术前相符'},
+      {id:'inst', lab:'器械数目与术前相符'},
+      {id:'needle', lab:'缝针数目与术前相符'},
+      {id:'signout', lab:'Sign-out：术式/计数/标本口头确认'}
+    ];
+    const done={};
+    const cb=$('countChecks');
+    counts.forEach(it=>{
+      const el=document.createElement('div');
+      el.className='check-item';
+      el.innerHTML='<div class="lab">'+it.lab+'</div>';
+      el.onclick=()=>{
+        if(S.locked) return;
+        done[it.id]=!done[it.id];
+        el.classList.toggle('on', !!done[it.id]);
+        S.countOk=['gauze','inst','needle'].every(k=>done[k]);
+        if(done.signout===false || (it.id==='signout' && !done.signout)){
+          /* noop */
+        }
+        if(!done.signout && ['gauze','inst','needle'].every(k=>done[k])){
+          // allow finish but soft if no signout
+        }
+      };
+      cb.appendChild(el);
+    });
+
+    // stash for score
+    S._countDone=done;
+
+    const row=document.createElement('div');
+    row.className='row';
+    const go=document.createElement('button');
+    go.type='button'; go.className='btn ok'; go.textContent='结案 · 出成绩单';
+    go.onclick=()=>{
+      if(!S.passOk){
+        toast('请先完成正确的锐器传递', true);
+        return;
+      }
+      if(!S.countOk){
+        softDeduct('计数不清');
+      }
+      if(!S._countDone.signout){
+        softDeduct('Sign-out 未报');
+      }
+      S.step='score'; paint();
+    };
+    row.appendChild(go);
+    body.appendChild(row);
+  }
+
+  function calcScore(){
+    let score=100;
+    if(S.vetoes.length) score=Math.min(score, 28);
+    score -= S.vetoes.length*28;
+    score -= S.soft.length*6;
+    if(!S.scrubDone) score -= 20;
+    if(!(S.gownOn&&S.glovesOn)) score -= 12;
+    if(!S.fieldOk) score -= 12;
+    const c=caseObj();
+    const toOk=c && c.timeoutItems.every(k=>S.timeoutDone[k]);
+    if(!toOk) score -= 16;
+    if(!S.passOk) score -= 14;
+    if(!S.countOk) score -= 8;
+    score=Math.max(0, Math.min(100, score));
+    const pass = S.vetoes.length===0 && S.scrubDone && S.gownOn && S.glovesOn && S.fieldOk && toOk && S.passOk && score>=60;
+    return {score, pass, toOk};
+  }
+
+  function buildScore(body){
+    const c=caseObj();
+    const r=calcScore();
+    S.score=r;
+    S.results[c.id]=r.pass?'pass':'fail';
+
+    body.insertAdjacentHTML('beforeend',
+      '<h2>成绩单 · '+c.nick+' · '+VERSION+'</h2>'+
+      '<div class="'+(r.pass?'tip ok':'tip fail')+'">'+(r.pass
+        ? ('<strong>过关</strong> · '+r.score+' 分')
+        : ('<strong>未过关'+(S.locked?' / 本例已硬锁死':'')+'</strong> · '+r.score+' 分'))+
+      '</div>'+
+      '<div class="score-grid">'+
+        '<div class="score-cell"><div class="k">得分</div><div class="v">'+r.score+'</div></div>'+
+        '<div class="score-cell"><div class="k">硬否决</div><div class="v" style="font-size:14px">'+(S.vetoes.length?S.vetoes.join('、'):'无')+'</div></div>'+
+        '<div class="score-cell"><div class="k">软扣</div><div class="v" style="font-size:14px">'+(S.soft.length?S.soft.join('、'):'无')+'</div></div>'+
+        '<div class="score-cell"><div class="k">Time-out</div><div class="v" style="font-size:14px">'+(r.toOk?'完成':'未完')+'</div></div>'+
+      '</div>'+
+      '<div class="case-box">'+c.secretLabel+'</div>'+
+      '<h3>硬否决记录</h3>'+
+      '<div class="tip '+(S.vetoes.length?'fail':'ok')+'">'+(S.vetoes.length?S.vetoes.map(v=>{
+        const map={skip_scrub:'跳洗手/刷手进无菌区',cross_field:'器械跨无菌界',bare_sharp:'锐器裸递',no_timeout:'未完成 Time-out 开刀'};
+        return map[v]||v;
+      }).join(' · '):'本例未触发硬否决')+'</div>'
+    );
+
+    if(!r.pass || S.locked){
+      const one = S.vetoes[0];
+      const oneMap={
+        skip_scrub:'标准动作：完成外科洗手/刷手并保持无菌姿势后，再进入无菌区。',
+        cross_field:'标准动作：污染器械留在污染区；手与无菌物不越过无菌界；外来器械须确认灭菌指示后再上台。',
+        bare_sharp:'标准动作：刀/剪/缝针经弯盘或持针器传递，禁止徒手裸递。',
+        no_timeout:'标准动作：切皮前全体 Time-out——身份、部位（含侧别）、术式核对完毕再递刀。'
+      };
+      body.insertAdjacentHTML('beforeend',
+        '<h3>一句标准动作回放</h3>'+
+        '<div class="replay"><div class="beat"><b>回放</b> · '+(oneMap[one]||REPLAY.map(x=>x.t+'：'+x.d).slice(0,1).map(()=>REPLAY[0].d)[0])+'</div></div>'
+      );
+    }
+
+    body.insertAdjacentHTML('beforeend',
+      '<h3>标准流程短回放（可再看）</h3>'+
+      '<div class="replay" id="replayBox"></div>'
+    );
+    const rb=$('replayBox');
+    REPLAY.forEach(b=>{
+      const d=document.createElement('div');
+      d.className='beat';
+      d.innerHTML='<b>'+b.t+'</b> · '+b.d;
+      rb.appendChild(d);
+    });
+
+    const row=document.createElement('div');
+    row.className='row';
+    const again=document.createElement('button');
+    again.type='button'; again.className='btn ghost'; again.textContent='再看一遍回放';
+    again.onclick=()=>{ toast('回放已在上方'); window.scrollTo({top:rb.offsetTop-40,behavior:'smooth'}); };
+    const re=document.createElement('button');
+    re.type='button'; re.className='btn'; re.textContent='重开本例';
+    re.onclick=()=>startCase(c.id);
+    const hall=document.createElement('button');
+    hall.type='button'; hall.className='btn ok'; hall.textContent='回大厅选例';
+    hall.onclick=goHall;
+    row.appendChild(again); row.appendChild(re); row.appendChild(hall);
+    body.appendChild(row);
+  }
+
+  $('btnHall').onclick=goHall;
+  $('btnRestart').onclick=()=>{ if(S.caseId) startCase(S.caseId); };
+
+  paintHallStage();
+  renderCaseGrid();
+})();
+</script>
+</body>
+</html>
