@@ -2,1166 +2,1471 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>传染病虚仿 · 发热门诊轻症初筛 v0.2.1</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"/>
+<title>传染病虚仿 · 发热门诊 360 · v0.3.1-360</title>
 <!--
-  v0.2.1 软改 · 查体改坐诊椅/卧诊床（不再「立于诊床上」）· 开场/红线同 v0.2.0
-  硬否决/硬门槛（同 v0.1）：①未防护接触 ②流病史不问全不给诊断分 ③布病须问到生肉等才亮 ④HIV告知伦理未完成不得过
-  病例（乳名不剧透）：小安·上感 / 阿牧·布病陷阱 / 小雨·HIV告知 / 阿远·疟疾线索⚠
-  人物锚点：脚踩地 translate(-50%,-100%)，对标儿科 v≈0.71 热点做法；禁止悬空
+  v0.3.1-360 · 清水河同级加深：房间透视示意全景 + 候诊景内动画 · 硬锁不变
+  备份平面版：infect_fever_clinic_flat_v020.html
+  硬锁：①大厅未过分诊(体温+流调)不能进防护走廊 ②未戴防护进候诊/诊室→否决并强制回防护柜
+  原红线：未防护接触 · 流病史不问全诊断分0 · 布病陷阱 · HIV走廊宣读锁死 · HIV告知未完成不过关
+  病例：小安/阿牧/小雨/阿远 · 示意全景可后换真片 · 本刀不挂 Pages
 -->
 <style>
 :root{
-  --bg:#eef2f6; --paper:#fffdf8; --ink:#1a2433; --muted:#5a6a7a;
-  --line:#c9d0d8; --accent:#0f766e; --accent2:#1f6fb2; --soft:#ecfdf5;
-  --red:#c0392b; --red-soft:#fdecea; --ok:#1b7a4a; --ok-soft:#e8f6ee;
-  --warn:#b45309; --warn-soft:#fff7ed; --shadow:0 2px 12px rgba(26,36,51,.1);
-  --violet:#6d28d9; font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  --pri:#0f766e; --pri2:#1f6fb2; --warn:#b45309; --red:#c0392b; --ok:#1b7a4a;
+  --ink:#0f172a; --muted:#64748b; --paper:#fffdf8; --line:#c9d0d8;
+  font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
 }
 *{box-sizing:border-box}
-html,body{margin:0;background:var(--bg);color:var(--ink);line-height:1.55}
-.wrap{max-width:980px;margin:0 auto;padding:12px 12px 72px}
-.topbar{
-  display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;justify-content:space-between;
-  margin-bottom:12px;padding:12px 14px;background:var(--paper);border:1px solid var(--line);
-  border-radius:14px;box-shadow:var(--shadow);
-}
-.topbar h1{margin:0;font-size:17px;font-weight:800}
-.topbar .sub{color:var(--muted);font-size:12px;margin-top:3px}
-.pills{display:flex;flex-wrap:wrap;gap:6px}
-.pill{font-size:11px;border-radius:999px;padding:3px 10px;border:1px solid var(--line);background:#fff;color:var(--muted)}
-.pill.warn{background:var(--warn-soft);border-color:#fdba74;color:var(--warn);font-weight:700}
-.pill.ok{background:var(--ok-soft);border-color:#86efac;color:var(--ok);font-weight:700}
-.pill.red{background:var(--red-soft);border-color:#f5a9a0;color:var(--red);font-weight:700}
-.scene-banner{
-  position:relative;border-radius:14px;overflow:hidden;margin-bottom:12px;
-  background:linear-gradient(135deg,#0f766e 0%,#1e3a5f 55%,#6d28d9 100%);
-  color:#fff;min-height:110px;padding:16px 18px;box-shadow:var(--shadow);
-}
-.scene-banner.with-pano{
-  background-image:linear-gradient(90deg,rgba(15,23,42,.82),rgba(15,118,110,.55)),url('pano_clinic.jpg');
-  background-size:cover;background-position:center;
-}
-.scene-banner .tag{font-size:11px;opacity:.85;letter-spacing:.04em}
-.scene-banner h2{margin:4px 0 6px;font-size:20px}
-.scene-banner p{margin:0;font-size:13px;opacity:.92;max-width:560px}
-.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px;box-shadow:var(--shadow)}
-.card h2{margin:0 0 6px;font-size:16px}
-.card h3{margin:10px 0 6px;font-size:14px}
-.lead{color:var(--muted);font-size:13px;margin:0 0 10px}
-.hidden{display:none!important}
-.station-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
-.station{
-  border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff;text-align:left;
-  cursor:pointer;min-height:118px;
-}
-.station:hover{border-color:var(--accent);box-shadow:0 0 0 2px rgba(15,118,110,.15)}
-.station .n{font-size:11px;color:var(--muted);font-weight:700}
-.station .t{font-size:16px;font-weight:800;margin:4px 0}
-.station .d{font-size:12px;color:var(--muted);margin:0}
-.station .st{display:inline-block;margin-top:8px;font-size:11px;padding:2px 8px;border-radius:999px;background:#e5e7eb;color:#374151}
-.station.done .st{background:var(--ok-soft);color:var(--ok);font-weight:700}
-.station.fail .st{background:var(--red-soft);color:var(--red);font-weight:700}
-.steps{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
-.step-dot{font-size:11px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--muted)}
-.step-dot.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
-.step-dot.done{background:var(--ok-soft);border-color:#86efac;color:var(--ok)}
-.step-dot.fail{background:var(--red-soft);border-color:#f5a9a0;color:var(--red)}
-.case-box{background:#fff;border:1px dashed var(--line);border-radius:12px;padding:12px 14px;font-size:14px}
-.case-box strong{color:var(--accent2)}
-.emr{
-  background:#0f172a;color:#e2e8f0;border-radius:12px;padding:12px 14px;font-size:13px;
-  font-family:ui-monospace,Menlo,Consolas,monospace;margin:8px 0;
-}
-.emr .k{color:#94a3b8}
-.emr .v{color:#fde68a}
-.choice-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin:10px 0}
-.choice{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff;cursor:pointer;text-align:left}
-.choice:hover{border-color:var(--accent)}
-.choice.on{border-color:var(--accent);background:var(--soft);box-shadow:0 0 0 2px rgba(15,118,110,.2)}
-.choice.locked{pointer-events:none;opacity:.7}
-.choice.dim{opacity:.45;pointer-events:none}
-.choice .t{font-weight:800;font-size:14px;margin:0 0 4px}
-.choice .d{font-size:12px;color:var(--muted);margin:0}
-.tip{margin-top:10px;padding:10px 12px;border-radius:10px;font-size:13px;background:#e8f1f8;border:1px solid #bfdbfe;color:#1e3a5f}
-.tip.ok{background:var(--ok-soft);border-color:#86efac;color:#14532d}
-.tip.fail{background:var(--red-soft);border-color:#f5a9a0;color:#7f1d1d}
-.tip.warn{background:var(--warn-soft);border-color:#fdba74;color:#7c2d12}
-.gate{border-left:4px solid var(--warn);padding:8px 12px;background:var(--warn-soft);border-radius:0 10px 10px 0;font-size:13px;margin:8px 0}
-.btn{border:none;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff}
-.btn:disabled{opacity:.45;cursor:not-allowed}
+html,body{margin:0;height:100%;overflow:hidden;background:#0b1220;color:#e2e8f0}
+#pano{position:fixed;inset:0;touch-action:none;cursor:grab}
+#pano.drag{cursor:grabbing}
+#pano .fb2d{position:absolute;inset:0;background-repeat:repeat-x;background-position:center}
+#hsLayer{position:fixed;inset:0;pointer-events:none;z-index:5}
+.hs{position:absolute;left:0;top:0;pointer-events:auto;border:none;background:none;padding:0;display:flex;align-items:center;gap:6px;transform:translate(-50%,-50%);will-change:transform;cursor:pointer;white-space:nowrap}
+.hs .dot{width:38px;height:38px;border-radius:50%;background:rgba(15,118,110,.92);border:3px solid #fff;color:#fff;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 12px rgba(0,0,0,.45);flex:0 0 38px}
+.hs .lb{background:rgba(10,25,40,.82);color:#fff;border-radius:10px;padding:3px 9px;font-size:13px;line-height:1.3;text-align:left;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.hs .lb b{display:block;font-size:14px}.hs .lb i{font-style:normal;color:#a7f3d0;font-size:12px}
+.hs.next .dot{background:#f0a020;animation:pulse 1.2s ease-in-out infinite}
+.hs.done .dot{background:#1b7a4a}
+.hs.lock .dot{background:#64748b}
+.hs.jump .dot{background:#1f6fb2}
+.hs.jump.next .dot{background:#3b82f6;animation:pulse 1.2s ease-in-out infinite}
+.hs.fail .dot{background:#c0392b}
+.ann{position:absolute;left:0;top:0;pointer-events:none;font-size:12px;color:#0f172a;background:rgba(255,255,255,.88);border-radius:6px;padding:2px 8px;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.25);white-space:nowrap}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+#hud{position:fixed;left:12px;right:12px;top:10px;z-index:8;display:flex;flex-wrap:wrap;gap:8px;align-items:center;pointer-events:none}
+#hud .chip{pointer-events:none;background:rgba(15,23,42,.78);border:1px solid rgba(148,163,184,.35);border-radius:999px;padding:5px 12px;font-size:12px;color:#e2e8f0}
+#hud .chip b{color:#5eead4}
+#hud .chip.warn{border-color:#fdba74;color:#fdba74}
+#hud .chip.ok{border-color:#86efac;color:#86efac}
+#hud .chip.red{border-color:#fca5a5;color:#fca5a5}
+#tipbar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:8;background:rgba(15,23,42,.75);padding:6px 14px;border-radius:999px;font-size:12px;color:#cbd5e1;pointer-events:none}
+#btnBack,#btnHome,#btnHelp{position:fixed;z-index:9;border:none;border-radius:12px;padding:8px 12px;font-weight:700;cursor:pointer;background:rgba(15,23,42,.85);color:#fff;border:1px solid rgba(148,163,184,.4);font-size:13px}
+#btnBack{left:12px;bottom:52px}
+#btnHome{right:12px;bottom:52px}
+#btnHelp{right:12px;top:52px}
+#fader{position:fixed;inset:0;background:#0b1220;opacity:0;pointer-events:none;transition:opacity .35s;z-index:20}
+#fader.on{opacity:1}
+#cover{position:fixed;inset:0;z-index:30;background:linear-gradient(160deg,#0f766e 0%,#0f172a 45%,#1e3a5f 100%);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}
+#cover.hide{display:none}
+.cover-card{max-width:560px;width:100%;background:rgba(255,253,248,.96);color:var(--ink);border-radius:18px;padding:22px 22px 18px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.cover-card h1{margin:0 0 6px;font-size:22px}
+.cover-card .ver{display:inline-block;background:#ecfdf5;color:#065f46;border:1px solid #86efac;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:800;margin-bottom:10px}
+.cover-card p{margin:0 0 10px;font-size:14px;color:#334155;line-height:1.55}
+.cover-card ul{margin:0 0 14px;padding-left:18px;font-size:13px;color:#475569}
+.cover-card .row{display:flex;flex-wrap:wrap;gap:8px}
+.btn{border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;background:var(--pri);color:#fff}
 .btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
 .btn.ok{background:var(--ok)}
-.btn.blue{background:var(--accent2)}
+.btn.blue{background:var(--pri2)}
 .btn.danger{background:var(--red)}
-.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
-.scorebar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:10px 12px;background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:12px;font-size:13px}
-.badge{display:inline-block;font-size:11px;padding:2px 7px;border-radius:6px;background:#e5e7eb;color:#374151}
-.badge.red{background:var(--red-soft);color:var(--red)}
-.badge.ok{background:var(--ok-soft);color:var(--ok)}
-.ppe-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:10px 0}
-.ppe-item{
-  border:1px dashed var(--line);border-radius:12px;padding:14px 10px;text-align:center;background:#fff;cursor:pointer;
-}
-.ppe-item.on{border-style:solid;border-color:var(--ok);background:var(--ok-soft)}
-.ppe-item .ico{font-size:28px;line-height:1}
-.ppe-item .lab{font-size:13px;font-weight:800;margin-top:6px}
-.ppe-item .hint{font-size:11px;color:var(--muted);margin-top:2px}
-.q-list{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
-.q-chip{
-  border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;
-  font-size:13px;cursor:pointer;font-weight:600;
-}
-.q-chip:hover{border-color:var(--accent2)}
-.q-chip.on{background:#dbeafe;border-color:var(--accent2);color:#1e3a8a}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+#panel{position:fixed;right:12px;top:56px;bottom:96px;width:min(420px,94vw);z-index:15;background:var(--paper);color:var(--ink);border-radius:16px;border:1px solid var(--line);box-shadow:0 12px 40px rgba(0,0,0,.35);display:flex;flex-direction:column;overflow:hidden}
+#panel.hide{display:none}
+#panel .ph{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);background:#f8fafc}
+#panel .ph h2{margin:0;font-size:15px;flex:1}
+#panel .pb{flex:1;overflow:auto;padding:12px 14px;font-size:13px;line-height:1.55}
+#panel .pf{padding:10px 12px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px;background:#f8fafc}
+.gate{border-left:4px solid var(--warn);padding:8px 10px;background:#fff7ed;border-radius:0 10px 10px 0;font-size:12px;margin:8px 0;color:#7c2d12}
+.tip{margin:8px 0;padding:8px 10px;border-radius:10px;font-size:12px;background:#e8f1f8;border:1px solid #bfdbfe;color:#1e3a5f}
+.tip.ok{background:#e8f6ee;border-color:#86efac;color:#14532d}
+.tip.fail{background:#fdecea;border-color:#f5a9a0;color:#7f1d1d}
+.tip.warn{background:#fff7ed;border-color:#fdba74;color:#7c2d12}
+.emr{background:#0f172a;color:#e2e8f0;border-radius:10px;padding:10px;font-size:12px;font-family:ui-monospace,Menlo,Consolas,monospace;margin:8px 0}
+.emr .k{color:#94a3b8}.emr .v{color:#fde68a}
+.choice-cards{display:grid;gap:8px;margin:8px 0}
+.choice{border:1px solid var(--line);border-radius:12px;padding:10px;background:#fff;cursor:pointer;text-align:left}
+.choice:hover{border-color:var(--pri)}
+.choice.on{border-color:var(--pri);background:#ecfdf5;box-shadow:0 0 0 2px rgba(15,118,110,.2)}
+.choice.dim{opacity:.45;pointer-events:none}
+.choice .t{font-weight:800;font-size:13px;margin:0 0 3px}
+.choice .d{font-size:11px;color:var(--muted);margin:0}
+.ppe-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}
+.ppe-item{border:1px dashed var(--line);border-radius:12px;padding:12px 8px;text-align:center;background:#fff;cursor:pointer}
+.ppe-item.on{border-style:solid;border-color:var(--ok);background:#e8f6ee}
+.ppe-item .ico{font-size:26px}.ppe-item .lab{font-size:12px;font-weight:800;margin-top:4px}
+.q-list{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.q-chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 10px;font-size:12px;cursor:pointer;font-weight:600}
+.q-chip.on{background:#dbeafe;border-color:var(--pri2);color:#1e3a8a}
 .q-chip.req.on{background:#ecfdf5;border-color:#34d399;color:#065f46}
-.ans-log{margin-top:8px;max-height:180px;overflow:auto;font-size:13px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
-.ans-log .line{margin:4px 0;padding:4px 0;border-bottom:1px dashed #e5e7eb}
-.ans-log .q{color:var(--accent2);font-weight:700}
-.ans-log .a{color:var(--ink)}
-.body-wrap{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0}
-@media(max-width:720px){.body-wrap{grid-template-columns:1fr}}
-.body-fig{
-  position:relative;background:linear-gradient(180deg,#dbeafe 0 58%,#cbd5e1 58% 62%,#94a3b8 62% 100%);
-  border:1px solid var(--line);border-radius:12px;min-height:300px;overflow:hidden;
-}
-.body-fig .bed{
-  position:absolute;left:12%;right:28%;bottom:12%;height:22%;
-  background:linear-gradient(180deg,#f1f5f9,#94a3b8);border-radius:10px 10px 4px 4px;
-  border:1px solid #64748b;box-shadow:0 4px 0 #475569;
-}
-.body-fig .chair{
-  position:absolute;right:8%;bottom:12%;width:22%;height:34%;
-  background:linear-gradient(180deg,#cbd5e1 0 28%,#94a3b8 28% 100%);
-  border-radius:8px 8px 4px 4px;border:1px solid #64748b;box-shadow:0 3px 0 #475569;
-}
-.body-fig .bed-label{
-  position:absolute;left:50%;bottom:4%;transform:translateX(-50%);
-  font-size:10px;color:#334155;background:rgba(255,255,255,.9);padding:1px 8px;border-radius:4px;white-space:nowrap;
-}
-.body-svg{position:absolute;left:42%;bottom:26%;width:48%;max-width:190px;height:auto;transform:translateX(-50%)}
+.ans-log{max-height:140px;overflow:auto;font-size:12px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px;margin:6px 0}
+.ans-log .q{color:var(--pri2);font-weight:700}
+.body-fig{position:relative;background:linear-gradient(180deg,#dbeafe 0 58%,#cbd5e1 58% 62%,#94a3b8 62% 100%);border:1px solid var(--line);border-radius:12px;min-height:220px;overflow:hidden;margin:8px 0}
+.body-fig .bed{position:absolute;left:12%;right:28%;bottom:10%;height:20%;background:linear-gradient(180deg,#f1f5f9,#94a3b8);border-radius:8px;border:1px solid #64748b}
+.body-fig .chair{position:absolute;right:8%;bottom:10%;width:22%;height:32%;background:linear-gradient(180deg,#cbd5e1 0 28%,#94a3b8 28% 100%);border-radius:8px;border:1px solid #64748b}
+.body-svg{position:absolute;left:42%;bottom:22%;width:48%;max-width:160px;transform:translateX(-50%)}
 .site-btn{fill:rgba(31,111,178,.15);stroke:#1f6fb2;stroke-width:2;cursor:pointer}
-.site-btn:hover{fill:rgba(15,118,110,.35)}
 .site-btn.done{fill:rgba(27,122,74,.35);stroke:#1b7a4a}
-.findings{font-size:13px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-height:180px}
-.findings .item{margin:6px 0;padding:6px 8px;border-radius:8px;background:#f8fafc;border-left:3px solid var(--accent2)}
-.findings .empty{color:var(--muted)}
-.toast{
-  position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(120%);
-  background:#1a2433;color:#fff;padding:10px 16px;border-radius:999px;font-size:13px;
-  font-weight:700;z-index:80;opacity:0;transition:transform .25s,opacity .25s;max-width:92vw;text-align:center;
-}
+.findings{font-size:12px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px;max-height:120px;overflow:auto}
+.findings .item{margin:4px 0;padding:4px 6px;border-left:3px solid var(--pri2);background:#f8fafc}
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0}
+.score-cell{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px}
+.score-cell .k{font-size:11px;color:var(--muted)}.score-cell .v{font-size:20px;font-weight:900}
+.toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%) translateY(120%);background:#1a2433;color:#fff;padding:10px 16px;border-radius:999px;font-size:13px;font-weight:700;z-index:40;opacity:0;transition:transform .25s,opacity .25s;max-width:92vw;text-align:center;pointer-events:none}
 .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
 .toast.fail{background:#7f1d1d}
-.lock-banner{
-  display:none;margin:10px 0;padding:12px;border-radius:12px;background:var(--red-soft);
-  border:1px solid #f5a9a0;color:#7f1d1d;font-weight:700;font-size:14px;
-}
+.toast.ok{background:#14532d}
+.lock-banner{display:none;margin:8px 0;padding:10px;border-radius:10px;background:#fdecea;border:1px solid #f5a9a0;color:#7f1d1d;font-weight:700;font-size:13px}
 .lock-banner.show{display:block}
-.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
-@media(max-width:560px){.score-grid{grid-template-columns:1fr}}
-.score-cell{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px}
-.score-cell .k{font-size:11px;color:var(--muted)}
-.score-cell .v{font-size:22px;font-weight:900}
-.footer-note{font-size:11px;color:var(--muted);margin-top:18px;text-align:center}
-.dialog{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0}
+.case-pick{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+.case-pick button{border:1px solid var(--line);border-radius:12px;padding:10px;background:#fff;cursor:pointer;text-align:left}
+.case-pick button.on{border-color:var(--pri);background:#ecfdf5}
+.case-pick .n{font-weight:800;font-size:14px}.case-pick .d{font-size:11px;color:var(--muted)}
+.vitals-row{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.vital{background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:12px}
+.vital b{color:var(--pri2)}
+.dialog{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px;margin:8px 0}
 .dialog .who{font-size:11px;color:var(--muted);margin:0 0 4px}
-.dialog .say{font-size:14px;margin:0}
-.progress-epi{font-size:12px;color:var(--muted);margin:6px 0}
-.progress-epi b{color:var(--ok)}
-/* —— 动线舞台：人物脚踩地 translate(-50%,-100%) —— */
-.stage{
-  position:relative;width:100%;height:240px;border-radius:14px;overflow:hidden;
-  border:1px solid var(--line);margin-bottom:12px;
-  background:linear-gradient(180deg,#bfdbfe 0 52%,#86efac 52% 56%,#a8a29e 56% 100%);
-  box-shadow:var(--shadow);
-}
-.stage.clinic{
-  background:linear-gradient(180deg,#e0f2fe 0 48%,#cbd5e1 48% 54%,#94a3b8 54% 100%);
-}
-.stage.corridor{
-  background:linear-gradient(180deg,#fef3c7 0 50%,#d6d3d1 50% 56%,#a8a29e 56% 100%);
-}
-.stage .floor-line{
-  position:absolute;left:0;right:0;bottom:12%;height:2px;background:rgba(15,23,42,.18);pointer-events:none;
-}
-.stage .prop{
-  position:absolute;transform:translate(-50%,-100%);text-align:center;pointer-events:none;
-  filter:drop-shadow(0 2px 2px rgba(0,0,0,.15));
-}
-.stage .prop .box{
-  background:#fff;border:1px solid #64748b;border-radius:8px;padding:6px 8px;font-size:11px;font-weight:800;color:#0f172a;
-  white-space:nowrap;
-}
-.stage .prop .ico{font-size:28px;line-height:1;display:block}
-.stage .fig{
-  position:absolute;transform:translate(-50%,-100%);text-align:center;cursor:default;
-  filter:drop-shadow(0 2px 3px rgba(0,0,0,.2));
-}
-.stage .fig .avatar{
-  width:44px;height:44px;border-radius:50%;margin:0 auto 2px;display:flex;align-items:center;justify-content:center;
-  font-weight:900;font-size:15px;color:#fff;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25);
-}
-.stage .fig .name{
-  font-size:11px;font-weight:800;background:rgba(255,255,255,.92);border-radius:6px;padding:1px 6px;
-  color:#0a1a30;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.2);
-}
-.stage .fig .sub{font-size:9px;color:#334155;background:rgba(255,255,255,.8);border-radius:4px;padding:0 4px;margin-top:1px}
-.stage .fig.clickable{cursor:pointer}
-.stage .fig.clickable:hover .avatar{transform:scale(1.06)}
-.stage .fig.dim{opacity:.4;filter:grayscale(.4)}
-.stage .fig.lock .avatar{outline:2px solid #c0392b}
-.stage .ann{
-  position:absolute;transform:translate(-50%,-100%);pointer-events:none;
-  font-size:11px;color:#0a1a30;background:rgba(255,255,255,.9);border-radius:6px;padding:2px 7px;
-  white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.2);font-weight:700;
-}
-.stage-caption{font-size:12px;color:var(--muted);margin:-4px 0 10px}
-.beat-card{
-  background:#0f172a;color:#e2e8f0;border-radius:12px;padding:14px 16px;margin:8px 0;min-height:88px;
-}
-.beat-card .tag{font-size:11px;color:#94a3b8;letter-spacing:.04em}
-.beat-card h3{margin:4px 0 6px;font-size:16px;color:#f8fafc}
-.beat-card p{margin:0;font-size:13px;color:#cbd5e1}
-.replay-box{
-  margin-top:10px;padding:12px;border-radius:12px;background:#ecfdf5;border:1px solid #86efac;font-size:13px;color:#14532d;
-}
-.replay-box strong{display:block;margin-bottom:4px}
-.coord-note{font-size:10px;color:var(--muted);margin-top:6px}
+.replay-box{margin-top:8px;padding:10px;border-radius:10px;background:#ecfdf5;border:1px solid #86efac;font-size:12px;color:#14532d}
+.hidden{display:none!important}
+.badge{display:inline-block;font-size:11px;padding:2px 7px;border-radius:6px;background:#e5e7eb;color:#374151}
+.badge.ok{background:#e8f6ee;color:var(--ok)}
+.footer-mini{font-size:11px;color:#94a3b8;margin-top:8px}
+
+#fxLayer{position:fixed;inset:0;pointer-events:none;z-index:4;overflow:hidden}
+.fx-sil{position:absolute;left:0;top:0;width:36px;height:78px;transform:translate(-50%,-100%);
+  background:linear-gradient(180deg,#1e293b 0 18%,#334155 18% 42%,#1e293b 42% 100%);
+  border-radius:18px 18px 8px 8px;opacity:.88;box-shadow:0 4px 10px rgba(0,0,0,.35);
+  will-change:transform}
+.fx-sil::before{content:"";position:absolute;left:50%;top:4px;width:22px;height:22px;margin-left:-11px;
+  border-radius:50%;background:#0f172a}
+.fx-sil .arm{position:absolute;top:28px;width:10px;height:28px;background:#334155;border-radius:4px}
+.fx-sil .arm.l{left:-6px;transform:rotate(12deg)}.fx-sil .arm.r{right:-6px;transform:rotate(-12deg)}
+.fx-board{position:absolute;left:0;top:0;min-width:120px;padding:6px 10px;border-radius:8px;
+  background:#0f172a;color:#fef08a;font-weight:900;font-size:14px;letter-spacing:.04em;
+  border:2px solid #facc15;box-shadow:0 0 12px rgba(250,204,21,.45);transform:translate(-50%,-50%);
+  text-align:center;will-change:opacity,box-shadow}
+.fx-board.flash{opacity:.35;box-shadow:0 0 22px rgba(250,204,21,.9);border-color:#fff}
+.fx-board .sub{display:block;font-size:10px;color:#94a3b8;font-weight:600;margin-top:2px}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="topbar">
-    <div>
-      <h1>传染病虚仿 · 发热门诊轻症初筛 <span class="badge ok">v0.2.1</span></h1>
-      <div class="sub">演示版 · 短情景开场 · 动线站位（分诊→防护柜→诊桌）· 感控红线 · 实验室后置 · 本地不挂网</div>
-    </div>
-    <div class="pills">
-      <span class="pill warn">本地样板</span>
-      <span class="pill">开场必过防护柜</span>
-      <span class="pill">脚踩地站位</span>
-    </div>
-  </div>
+<div id="pano"></div>
+<div id="hsLayer"></div>
+<div id="fxLayer"></div>
+<div id="hud"></div>
+<div id="tipbar">🖱 拖动环视 · 滚轮缩放　📱 单指拖 · 双指缩放　点橙色热点做任务</div>
+<button id="btnBack" type="button">↩ 返回</button>
+<button id="btnHome" type="button">🏠 大厅</button>
+<button id="btnHelp" type="button">红线</button>
+<div id="fader"></div>
 
-  <div id="viewHall">
-    <div class="scene-banner with-pano">
-      <div class="tag">发热门诊 · 轻症初筛 · v0.2.1</div>
-      <h2>动线：分诊 → 防护柜 → 再进诊</h2>
-      <p>候诊嘈杂、分诊催促——先过防护物资柜（口罩+手套），再进诊室接触。跳过防护柜进诊 = 硬否决。</p>
-    </div>
-    <div class="card">
-      <h2>门诊大厅动线（人物脚踩地）</h2>
-      <p class="lead">布局按真实动线：左分诊台 → 中防护柜 → 右候诊椅 → 诊室门。点乳名进本例开场，不能直接跳进诊室。</p>
-      <div class="stage" id="hallStage" aria-label="发热门诊大厅动线"></div>
-      <p class="stage-caption">脚锚：分诊护士 left 12% / 防护柜 36% / 候诊群 58–78% / 诊室门 90% · bottom 对齐地坪线（≈12% 离底）· transform:translate(-50%,-100%)</p>
-      <h2>今日候诊</h2>
-      <p class="lead">首批 4 例轻症初筛。选例后播放 3～4 拍开场，再强制过防护柜。模块2实验室：见 <a href="infect_lab.html">infect_lab.html</a>。</p>
-      <div class="station-grid" id="caseGrid"></div>
-      <div class="gate">红线：未戴口罩/手套接触→当场挂科；流病史不问全→诊断分记 0；布病须问到生肉等才亮；HIV 告知伦理未完成不得过关。</div>
-    </div>
-  </div>
+<div id="panel" class="hide">
+  <div class="ph"><h2 id="pTitle">面板</h2><button class="btn ghost" type="button" id="pClose" style="padding:6px 10px">关闭</button></div>
+  <div class="pb" id="pBody"></div>
+  <div class="pf" id="pFoot"></div>
+</div>
 
-  <div id="viewPlay" class="hidden">
-    <div class="scorebar">
-      <div>
-        <strong id="playTitle">诊室</strong>
-        <span class="badge" id="playCaseBadge">—</span>
-      </div>
-      <div class="pills">
-        <span class="pill" id="ppeBadge">防护：未就绪</span>
-        <span class="pill" id="epiBadge">流病：0</span>
-        <span class="pill" id="vetoBadge">否决：0</span>
-      </div>
-    </div>
-    <div class="steps" id="stepDots"></div>
-    <div class="lock-banner" id="lockBanner"></div>
-    <div class="card" id="stepCard">
-      <div id="stepBody"></div>
-    </div>
+<div id="cover">
+  <div class="cover-card">
+    <div class="ver">v0.3.1-360 · 清水河同级样板 · 本地不挂网</div>
+    <h1>传染病虚仿 · 发热门诊轻症初筛</h1>
+    <p>走进 360：大厅分诊 → 防护柜走廊 → 候诊 → 诊室。每景有顶/地/门窗与家具透视示意；候诊有人影晃动与叫号闪烁。可后换真片。</p>
+    <ul>
+      <li>空间锁：未过分诊不能进防护走廊</li>
+      <li>空间锁：未戴口罩+手套进候诊/诊室 → 硬否决并强制回防护柜</li>
+      <li>医学红线：流病史不问全诊断分 0 · 布病陷阱 · HIV 走廊宣读锁死</li>
+      <li>四例：小安 / 阿牧 / 小雨 / 阿远（大厅选例，诊室深玩）</li>
+    </ul>
     <div class="row">
-      <button class="btn ghost" type="button" id="btnHall">回大厅</button>
-      <button class="btn ghost" type="button" id="btnRestart">重开本例</button>
+      <button class="btn" type="button" id="btnStart">进入发热门诊大厅</button>
+      <button class="btn ghost" type="button" id="btnFlat">打开平面旧版备份</button>
     </div>
+    <p class="footer-mini">教学示意⚠ · 非临床指南替代 · 引擎对标清水河 pano.html · Asia/Shanghai</p>
   </div>
-
-  <p class="footer-note">教学示意 · 病名/检测/用药均⚠ · 非临床指南替代 · 不挂 Pages · 小绿红线 · v0.2.1 演示版 · 2026-11-05 Asia/Shanghai</p>
 </div>
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 <script>
 (function(){
-  'use strict';
-  const VERSION = 'v0.2.1';
-  const STEPS = [
-    {id:'intro', label:'开场'},
-    {id:'ppe', label:'防护柜'},
-    {id:'chief', label:'接诊'},
-    {id:'hx', label:'流病问诊'},
-    {id:'exam', label:'查体'},
-    {id:'dx', label:'初筛'},
-    {id:'ethic', label:'伦理'},
-    {id:'score', label:'成绩单'}
-  ];
+'use strict';
+const VERSION = 'v0.3.1-360';
+const $ = (s)=>document.querySelector(s);
+const $$ = (s)=>[...document.querySelectorAll(s)];
 
-  /* 动线坐标：left/bottom 百分比；fig 用 translate(-50%,-100%) 脚踩地坪 */
-  const LAYOUT = {
-    hall:{
-      triage:{left:12, bottom:12, role:'分诊护士', color:'#0f766e', sub:'叫号/测温'},
-      ppe:{left:36, bottom:14, role:'防护柜', color:'#b45309', sub:'口罩·手套'},
-      waitA:{left:58, bottom:12, role:'候诊', color:'#1f6fb2', sub:'发热'},
-      waitB:{left:70, bottom:12, role:'候诊', color:'#6d28d9', sub:'焦急'},
-      waitC:{left:78, bottom:11, role:'家长', color:'#475569', sub:'催问'},
-      door:{left:90, bottom:16, role:'诊室门', color:'#334155', sub:'须过防护柜'}
-    },
-    corridor:{
-      you:{left:28, bottom:12, role:'你', color:'#0f766e', sub:'学员'},
-      ppe:{left:52, bottom:14, role:'防护柜', color:'#b45309', sub:'先穿戴'},
-      door:{left:86, bottom:16, role:'诊室门', color:'#334155', sub:'未防护不开'}
-    },
-    clinic:{
-      desk:{left:22, bottom:18, role:'诊桌', color:'#64748b', sub:'病历/电脑'},
-      doc:{left:30, bottom:12, role:'你·接诊', color:'#0f766e', sub:'已防护'},
-      bed:{left:72, bottom:20, role:'诊床', color:'#94a3b8', sub:'患者位'},
-      patient:{left:72, bottom:12, role:'患者', color:'#b45309', sub:'坐/卧诊床'}
+/* ========== 病例与问诊（自平面母本迁入） ========== */
+const Q_BANK = {
+  onset:{id:'onset',label:'发热多久了？怎样起的？'},
+  pattern:{id:'pattern',label:'发热规律？有没有寒战盗汗？'},
+  cough:{id:'cough',label:'有没有咳嗽、咽痛、流鼻涕？'},
+  gi:{id:'gi',label:'有没有腹痛、腹泻、恶心？'},
+  travel:{id:'travel',label:'近一个月有没有外出旅行 / 去过外地或境外？',epi:true},
+  animal:{id:'animal',label:'有没有接触牲畜、宠物或野生动物？',epi:true},
+  meat:{id:'meat',label:'近期有没有吃过未煮熟的肉、生肉或羊奶？',epi:true,brucellaKey:true},
+  contact:{id:'contact',label:'周围有没有类似发热病人？同住人情况？',epi:true},
+  sex:{id:'sex',label:'（私密）近期高危性行为 / 性伴情况？',epi:true,sensitive:true},
+  tb:{id:'tb',label:'有没有长期咳嗽、盗汗、消瘦或结核接触？',epi:true},
+  bite:{id:'bite',label:'有没有被蚊虫叮咬 / 在疫区露宿？',epi:true},
+  drug:{id:'drug',label:'用过什么药？有没有自行吃抗生素？'},
+  allergy:{id:'allergy',label:'药物过敏史？'}
+};
+
+const CASES = [
+  {id:'xiaoan',nick:'小安',age:'28 岁 · 文员',blurb:'主诉发热 2 天，精神尚可。',
+   secret:'uri',secretLabel:'普通上感 / 病毒性咽炎方向（轻症）',
+   chief:'医生你好……我发烧两天了，有点嗓子疼，流鼻涕。',
+   vitals:'T 38.2℃  P 88  R 18  BP 118/72  SpO₂ 98%',
+   answers:{onset:'两天了，昨天晚上开始明显。',pattern:'低中热，没有大寒战，也不盗汗。',cough:'流鼻涕、咽痛，偶干咳，没有黄痰。',gi:'胃口还行，没有腹泻。',travel:'最近都在本市上班，没去外地。',animal:'家里没有养宠物，也没接触牲畜。',meat:'没有啊，都是食堂熟食。',contact:'同事有人感冒，但不确定。',sex:'（犹豫）没有特殊情况……我想先看病。',tb:'没有长期咳嗽，也没有结核病人接触。',bite:'没注意到特殊叮咬。',drug:'吃过布洛芬，退了一点。',allergy:'青霉素不过敏。'},
+   exam:{pharynx:{label:'咽部',find:'咽充血，扁桃体 I°，未见脓苔。'},lung:{label:'肺部听诊',find:'双肺呼吸音清，未闻及干湿啰音。'},lymph:{label:'浅表淋巴结',find:'未触及明显肿大。'},abdomen:{label:'腹部',find:'软，无压痛，肝脾未及。'},skin:{label:'皮肤',find:'无皮疹、无瘀点。'},heart:{label:'心脏',find:'心律齐，无杂音。'}},
+   requiredExam:['pharynx','lung'],requiredEpi:['travel','animal','meat','contact'],
+   dxOptions:[
+     {id:'uri',label:'上呼吸道感染 / 病毒性咽炎方向',ok:true,d:'流病史阴性 + 咽充血为主'},
+     {id:'pneumonia',label:'社区获得性肺炎',ok:false,d:'肺部无啰音，暂不优先'},
+     {id:'brucella',label:'布鲁氏菌病可能',ok:false,needMeat:true,d:'须有生肉/牲畜线索'},
+     {id:'malaria',label:'疟疾可能⚠',ok:false,d:'无疫区旅行/蚊叮线索'}
+   ],needEthic:false},
+  {id:'amu',nick:'阿牧',age:'35 岁 · 牧场帮工',blurb:'反复发热一周，说「可能是感冒」。',
+   secret:'brucella',secretLabel:'布鲁氏菌病可能（生肉/牲畜陷阱）',
+   chief:'大夫，我烧一周了，时好时坏……会不会就是感冒？',
+   vitals:'T 38.6℃  P 92  R 20  BP 122/78  SpO₂ 97%',
+   answers:{onset:'差不多七八天了，断断续续。',pattern:'有时候晚上更高，出汗多，偶发冷。',cough:'不太咳，嗓子还行。',gi:'有点没胃口，关节酸。',travel:'一直在牧区附近干活，没出国。',animal:'嗯……羊、牛都接触过，帮着接生。',meat:'前阵子吃过烤得比较嫩的羊肉，有点粉红……羊奶也喝过。',contact:'工友里好像也有人乏力，不确定发烧。',sex:'没有要说的。',tb:'没有长期咳嗽。',bite:'牧区蚊子多，但说不上特殊。',drug:'吃过几天头孢，不太管用。',allergy:'否认。'},
+   exam:{pharynx:{label:'咽部',find:'轻度充血，无脓苔。'},lung:{label:'肺部听诊',find:'清，无明显啰音。'},lymph:{label:'浅表淋巴结',find:'颈侧可及黄豆大淋巴结，轻压痛。'},abdomen:{label:'腹部',find:'右上腹轻压痛，脾缘似可触及（示意）。'},skin:{label:'皮肤',find:'无典型皮疹。'},joint:{label:'关节',find:'右膝轻压痛，无红肿积液。'},heart:{label:'心脏',find:'心律齐。'}},
+   requiredExam:['lymph','abdomen','joint'],requiredEpi:['travel','animal','meat','contact'],
+   dxOptions:[
+     {id:'uri',label:'普通上感',ok:false,d:'病程偏长 + 流病高危，不宜草率'},
+     {id:'brucella',label:'布鲁氏菌病可能',ok:true,needMeat:true,d:'生肉/羊奶/牲畜接触后才应点亮'},
+     {id:'tb',label:'活动性结核可能',ok:false,d:'线索不足'},
+     {id:'typhoid',label:'伤寒方向',ok:false,d:'可鉴别，但本例陷阱指向布病'}
+   ],needEthic:false,brucellaTrap:true},
+  {id:'xiaoyu',nick:'小雨',age:'24 岁 · 自由职业',blurb:'发热伴咽痛，要求「快点开药」。',
+   secret:'hiv',secretLabel:'需 HIV 相关告知伦理（初筛阳性示意⚠）',
+   chief:'医生，我发烧加嗓子疼……能不能直接开点药？别开太多检查。',
+   vitals:'T 38.4℃  P 96  R 19  BP 110/68  SpO₂ 98%',
+   answers:{onset:'四五天了。',pattern:'中等热，有点乏力盗汗。',cough:'咽痛明显，轻微干咳。',gi:'胃口差。',travel:'本市，没旅行。',animal:'没有。',meat:'没有生肉。',contact:'不清楚。',sex:'（沉默后）……有过不安全性行为。请你保密。',tb:'没有。',bite:'没有。',drug:'自己买过退烧药。',allergy:'否认。'},
+   exam:{pharynx:{label:'咽部',find:'充血，可见少许白膜样分泌物（示意）。'},lung:{label:'肺部听诊',find:'清。'},lymph:{label:'浅表淋巴结',find:'颈部、腹股沟多枚淋巴结轻肿大。'},skin:{label:'皮肤',find:'躯干散在淡红斑丘疹（示意）。'},abdomen:{label:'腹部',find:'软，肝脾未及明显。'},mouth:{label:'口腔',find:'口腔黏膜白斑样改变（示意⚠）。'},heart:{label:'心脏',find:'齐。'}},
+   requiredExam:['pharynx','lymph','skin','mouth'],requiredEpi:['travel','animal','meat','sex','contact'],
+   dxOptions:[
+     {id:'uri',label:'普通上感',ok:false,d:'淋巴结+皮疹+高危史，需扩大鉴别'},
+     {id:'acute_hiv',label:'急性 HIV 感染可能⚠（需检测确认）',ok:true,d:'高危史+皮疹/淋巴结——仅作初筛方向'},
+     {id:'mono',label:'传染性单核细胞增多症方向',ok:false,d:'可鉴别，但本例须走告知伦理'},
+     {id:'covid',label:'COVID-19 可能⚠',ok:false,d:'需核酸，但非本例伦理主线'}
+   ],needEthic:true,pretestNote:'教学设定：快速初筛已回报「反应性」（未确认）。你必须完成规范告知，不得走廊大声宣读、不得强迫签字隐瞒。'},
+  {id:'ayuan',nick:'阿远',age:'30 岁 · 外贸',blurb:'刚回国，发热伴发冷。',
+   secret:'malaria',secretLabel:'疟疾线索⚠（疫区旅行）',
+   chief:'医生，我刚从东南亚回来……发烧还发冷，有点慌。',
+   vitals:'T 39.1℃  P 108  R 22  BP 108/66  SpO₂ 96%',
+   answers:{onset:'回国第二天开始烧。',pattern:'寒战→高热→出汗，像一波一波的。',cough:'不明显。',gi:'恶心，没有严重腹泻。',travel:'两周前在东南亚农村出差，有夜间户外活动。',animal:'没有牲畜接触。',meat:'没有吃生肉。',contact:'同行一人也有点不舒服。',sex:'否认相关。',tb:'没有。',bite:'被蚊子咬得很多，没吃预防药。',drug:'飞机上吃了退烧药。',allergy:'否认。'},
+   exam:{pharynx:{label:'咽部',find:'无明显充血。'},lung:{label:'肺部听诊',find:'清。'},abdomen:{label:'腹部',find:'脾脏轻度肿大（示意）。'},skin:{label:'皮肤',find:'略苍白，无出血点。'},neuro:{label:'神志/颈强',find:'神清，颈软（暂无重症脑型线索）。'},heart:{label:'心脏',find:'心动过速，齐。'},lymph:{label:'浅表淋巴结',find:'未及明显肿大。'}},
+   requiredExam:['abdomen','skin','neuro'],requiredEpi:['travel','bite','meat','animal','contact'],
+   dxOptions:[
+     {id:'uri',label:'普通上感',ok:false,d:'疫区+周期性寒战，不宜'},
+     {id:'malaria',label:'疟疾可能⚠（须血涂片/抗原）',ok:true,d:'旅行+蚊叮+寒战高热'},
+     {id:'covid',label:'COVID-19 可能⚠',ok:false,d:'需排查，但本例优先疟疾线索'},
+     {id:'brucella',label:'布鲁氏菌病可能',ok:false,needMeat:true,d:'无生肉/牲畜主线'}
+   ],needEthic:false}
+];
+
+/* ========== 场景表（清水河模式） ========== */
+const SCN = [
+  {k:'hall',n:'场景1 大厅分诊',short:'大厅'},
+  {k:'corridor',n:'场景2 防护柜走廊',short:'防护走廊'},
+  {k:'wait',n:'场景3 候诊区',short:'候诊'},
+  {k:'clinic',n:'场景4 诊室',short:'诊室'}
+];
+const SIDX = k => SCN.findIndex(s=>s.k===k);
+
+const HSD = {
+  hall:{
+    hot:[
+      {k:'triage',t:'分诊台',sub:'体温+流调要点',kind:'task',u:0.18,v:0.55},
+      {k:'pick',t:'今日候诊',sub:'选例（乳名）',kind:'task',u:0.42,v:0.58},
+      {k:'board',t:'感控告示',sub:'先防护再进诊',kind:'info',u:0.62,v:0.42},
+      {k:'j_corridor',t:'去防护柜走廊',sub:'→ 须先过分诊',kind:'jump',u:0.88,v:0.52}
+    ],
+    lab:[
+      {t:'发热门诊入口',u:0.08,v:0.40},
+      {t:'分诊护士台',u:0.18,v:0.70},
+      {t:'候诊椅区',u:0.48,v:0.72},
+      {t:'走廊入口',u:0.88,v:0.45}
+    ]
+  },
+  corridor:{
+    hot:[
+      {k:'ppe',t:'防护物资柜',sub:'口罩+手套必过',kind:'task',u:0.45,v:0.55},
+      {k:'j_hall',t:'回大厅',sub:'← 大厅',kind:'jump',u:0.08,v:0.50},
+      {k:'j_wait',t:'去候诊区',sub:'→ 须已防护',kind:'jump',u:0.78,v:0.52},
+      {k:'j_clinic_direct',t:'冲进诊室',sub:'未防护=硬否决',kind:'jump',u:0.92,v:0.48}
+    ],
+    lab:[
+      {t:'防护物资柜',u:0.45,v:0.70},
+      {t:'诊室门方向',u:0.92,v:0.40},
+      {t:'候诊区方向',u:0.78,v:0.40}
+    ]
+  },
+  wait:{
+    hot:[
+      {k:'anxiety',t:'候诊紧张',sub:'短动画/情景',kind:'task',u:0.35,v:0.58},
+      {k:'j_corridor2',t:'回防护柜',sub:'← 走廊',kind:'jump',u:0.10,v:0.50},
+      {k:'j_clinic',t:'进诊室',sub:'→ 接诊',kind:'jump',u:0.85,v:0.52}
+    ],
+    lab:[
+      {t:'候诊椅',u:0.40,v:0.72},
+      {t:'叫号屏',u:0.55,v:0.38},
+      {t:'诊室门',u:0.85,v:0.45}
+    ]
+  },
+  clinic:{
+    hot:[
+      {k:'chief',t:'接诊主诉',sub:'诊桌问诊',kind:'task',u:0.22,v:0.55},
+      {k:'hx',t:'流病问诊树',sub:'关键项必问',kind:'task',u:0.40,v:0.52},
+      {k:'exam',t:'点部位查体',sub:'坐/卧诊床',kind:'task',u:0.62,v:0.58},
+      {k:'dx',t:'初筛诊断',sub:'教学方向⚠',kind:'task',u:0.78,v:0.50},
+      {k:'ethic',t:'HIV告知伦理',sub:'小雨例必过',kind:'task',u:0.55,v:0.40},
+      {k:'score',t:'成绩单',sub:'结算本例',kind:'task',u:0.90,v:0.55},
+      {k:'j_wait2',t:'回候诊',sub:'← 候诊',kind:'jump',u:0.06,v:0.50}
+    ],
+    lab:[
+      {t:'诊桌/电脑',u:0.22,v:0.70},
+      {t:'诊床/诊椅',u:0.62,v:0.72},
+      {t:'洗手池',u:0.85,v:0.65}
+    ]
+  }
+};
+
+/* ========== 运行时状态 ========== */
+const S = {
+  at:null,
+  triage:{temp:false, epi:false}, // 体温+流调要点
+  caseId:null,
+  ppe:{mask:false,gloves:false,gown:false},
+  asked:{}, examed:{}, dx:null,
+  ethicDone:false, ethicChoices:{},
+  locked:false, vetoes:[], soft:[],
+  seen:{}, // hotspot done flags for info/tasks that are "opened"
+  clinicStep:{}, // chief/hx/exam/dx/ethic/score completion markers
+  results:{},
+  waitAnimDone:false
+};
+
+function caseObj(){ return CASES.find(c=>c.id===S.caseId); }
+function ppeReady(){ return !!(S.ppe.mask && S.ppe.gloves); }
+function triageDone(){ return !!(S.triage.temp && S.triage.epi); }
+function epiComplete(){ const c=caseObj(); return c ? c.requiredEpi.every(k=>S.asked[k]) : false; }
+function meatAsked(){ return !!S.asked.meat; }
+
+function toast(msg, kind){
+  const el=$('#toast');
+  el.textContent=msg;
+  el.className='toast show'+(kind==='fail'||kind===true?' fail':kind==='ok'?' ok':'');
+  clearTimeout(toast._t);
+  toast._t=setTimeout(()=>el.classList.remove('show'), 2800);
+}
+
+function addVeto(code, msg){
+  if(S.vetoes.indexOf(code)<0) S.vetoes.push(code);
+  toast(msg||('硬否决：'+code), 'fail');
+  refreshHud();
+}
+
+function hardLock(reason){
+  S.locked=true;
+  addVeto('locked', reason);
+  toast('本例已锁死 · '+reason, 'fail');
+  refreshHud();
+  openPanel('score');
+}
+
+/* ========== 示意全景生成（可后换真片）· v0.3.1 房间透视 ========== */
+function makePano(kind){
+  const W=2048, H=512;
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const g=cv.getContext('2d');
+  const pal = {
+    hall:{ceil:'#dbeafe', wall:'#e8eef6', wall2:'#d5dee9', floor:'#94a3b8', floor2:'#64748b', accent:'#0f766e'},
+    corridor:{ceil:'#fef3c7', wall:'#f5f0e6', wall2:'#e7e0d4', floor:'#a8a29e', floor2:'#78716c', accent:'#b45309'},
+    wait:{ceil:'#ede9fe', wall:'#f3f0ff', wall2:'#e4dff5', floor:'#a8a29e', floor2:'#78716c', accent:'#6d28d9'},
+    clinic:{ceil:'#ccfbf1', wall:'#e8f7f4', wall2:'#d5ebe6', floor:'#94a3b8', floor2:'#64748b', accent:'#0f766e'}
+  }[kind] || {ceil:'#e2e8f0',wall:'#f1f5f9',wall2:'#e2e8f0',floor:'#94a3b8',floor2:'#64748b',accent:'#334155'};
+
+  const ceilY=H*0.30, floorY=H*0.70;
+
+  // --- base bands: ceiling / wall / floor ---
+  const cg=g.createLinearGradient(0,0,0,ceilY);
+  cg.addColorStop(0,'#f8fafc'); cg.addColorStop(1,pal.ceil);
+  g.fillStyle=cg; g.fillRect(0,0,W,ceilY);
+  const wg=g.createLinearGradient(0,ceilY,0,floorY);
+  wg.addColorStop(0,pal.wall); wg.addColorStop(1,pal.wall2);
+  g.fillStyle=wg; g.fillRect(0,ceilY,W,floorY-ceilY);
+  const fg=g.createLinearGradient(0,floorY,0,H);
+  fg.addColorStop(0,pal.floor); fg.addColorStop(1,pal.floor2);
+  g.fillStyle=fg; g.fillRect(0,floorY,W,H-floorY);
+
+  // ceiling lights (every ~1/8 turn)
+  for(let i=0;i<8;i++){
+    const x=(i+0.5)*(W/8);
+    g.fillStyle='rgba(255,255,255,.85)';
+    g.beginPath(); g.ellipse(x, H*0.10, 48, 10, 0, 0, Math.PI*2); g.fill();
+    g.fillStyle='rgba(253,224,71,.25)';
+    g.beginPath(); g.ellipse(x, H*0.16, 70, 18, 0, 0, Math.PI*2); g.fill();
+  }
+  // wall panels / corners
+  for(let i=0;i<8;i++){
+    const x=i*(W/8);
+    g.strokeStyle='rgba(15,23,42,.12)'; g.lineWidth=2;
+    g.beginPath(); g.moveTo(x, ceilY); g.lineTo(x, floorY); g.stroke();
+    // baseboard
+    g.fillStyle='rgba(15,23,42,.18)'; g.fillRect(x, floorY-6, W/8, 6);
+    // crown molding
+    g.fillStyle='rgba(255,255,255,.35)'; g.fillRect(x, ceilY, W/8, 4);
+  }
+  // floor tile perspective (radial-ish lines + horizontals)
+  g.strokeStyle='rgba(255,255,255,.22)'; g.lineWidth=1;
+  for(let i=0;i<=16;i++){
+    const x=i*(W/16);
+    g.beginPath(); g.moveTo(W/2, floorY); g.lineTo(x, H); g.stroke();
+  }
+  for(let j=1;j<=5;j++){
+    const y=floorY + (H-floorY)*(j/5)*(j/5);
+    g.beginPath(); g.moveTo(0,y); g.lineTo(W,y); g.stroke();
+  }
+  // horizon seam
+  g.strokeStyle='rgba(15,23,42,.25)'; g.lineWidth=2;
+  g.beginPath(); g.moveTo(0,floorY); g.lineTo(W,floorY); g.stroke();
+  g.beginPath(); g.moveTo(0,ceilY); g.lineTo(W,ceilY); g.stroke();
+
+  // helpers — furniture with crude 3D (front + top + side)
+  function ux(u){ return ((u%1)+1)%1 * W; }
+  function box3(u, baseY, fw, fh, fd, color, label){
+    const x=ux(u), d=fd||Math.max(10, fw*0.18);
+    // side
+    g.fillStyle=shade(color,-28);
+    g.beginPath();
+    g.moveTo(x+fw/2, baseY); g.lineTo(x+fw/2+d, baseY-d*0.35);
+    g.lineTo(x+fw/2+d, baseY-fh-d*0.35); g.lineTo(x+fw/2, baseY-fh); g.closePath(); g.fill();
+    // top
+    g.fillStyle=shade(color,22);
+    g.beginPath();
+    g.moveTo(x-fw/2, baseY-fh); g.lineTo(x-fw/2+d, baseY-fh-d*0.35);
+    g.lineTo(x+fw/2+d, baseY-fh-d*0.35); g.lineTo(x+fw/2, baseY-fh); g.closePath(); g.fill();
+    // front
+    g.fillStyle=color;
+    g.fillRect(x-fw/2, baseY-fh, fw, fh);
+    g.strokeStyle='rgba(15,23,42,.35)'; g.strokeRect(x-fw/2, baseY-fh, fw, fh);
+    if(label){
+      g.fillStyle='#0f172a'; g.font='bold 14px sans-serif';
+      g.fillText(label, x-fw/2+6, baseY-fh+18);
     }
-  };
-
-  const INTRO_BEATS = [
-    {tag:'拍 1 / 4 · 分诊', title:'候诊区一阵紧张', say:'喇叭：「发热患者请到分诊台测温！」家长催着「能不能快点看病？」你刚到发热门诊。', stage:'hall'},
-    {tag:'拍 2 / 4 · 分诊台', title:'分诊护士把名单递过来', say:'「这位先接。记住——进诊室前必须过防护物资柜，口罩手套戴好再接触。」', stage:'hall'},
-    {tag:'拍 3 / 4 · 防护柜', title:'走廊防护物资柜', say:'柜门打开：医用口罩、手套、隔离衣。跳过这里直接进诊 = 感控硬否决。', stage:'corridor'},
-    {tag:'拍 4 / 4 · 诊室门外', title:'诊室门仍锁着', say:'门上贴着「先防护，再接诊」。完成口罩+手套后才能进诊动手。', stage:'corridor'}
-  ];
-
-  const Q_BANK = {
-    onset: {id:'onset', label:'发热多久了？怎样起的？', answer:'（患者）大概 X 天，自己测过体温。'},
-    pattern: {id:'pattern', label:'发热规律？有没有寒战盗汗？', answer:'（患者）有时夜里明显，偶有发冷。'},
-    cough: {id:'cough', label:'有没有咳嗽、咽痛、流鼻涕？', answer:'（患者）有点喉咙不舒服 / 偶咳。'},
-    gi: {id:'gi', label:'有没有腹痛、腹泻、恶心？', answer:'（患者）胃口差一点，没有明显拉肚子。'},
-    travel: {id:'travel', label:'近一个月有没有外出旅行 / 去过外地或境外？', epi:true, answer:'（见病例）'},
-    animal: {id:'animal', label:'有没有接触牲畜、宠物或野生动物？', epi:true, answer:'（见病例）'},
-    meat: {id:'meat', label:'近期有没有吃过未煮熟的肉、生肉或羊奶？', epi:true, brucellaKey:true, answer:'（见病例）'},
-    contact: {id:'contact', label:'周围有没有类似发热病人？同住人情况？', epi:true, answer:'（见病例）'},
-    sex: {id:'sex', label:'（私密）近期高危性行为 / 性伴情况？需知情同意后问', epi:true, sensitive:true, answer:'（见病例）'},
-    tb: {id:'tb', label:'有没有长期咳嗽、盗汗、消瘦或结核接触？', epi:true, answer:'（见病例）'},
-    bite: {id:'bite', label:'有没有被蚊虫叮咬 / 在疫区露宿？', epi:true, answer:'（见病例）'},
-    drug: {id:'drug', label:'用过什么药？有没有自行吃抗生素？', answer:'（患者）吃过一点退烧药。'},
-    allergy: {id:'allergy', label:'药物过敏史？', answer:'（患者）否认特殊过敏。'}
-  };
-
-  const CASES = [
-    {
-      id:'xiaoan', nick:'小安', age:'28 岁 · 文员', blurb:'主诉发热 2 天，精神尚可。',
-      secret:'uri', secretLabel:'普通上感 / 病毒性咽炎方向（轻症）',
-      chief:'医生你好……我发烧两天了，有点嗓子疼，流鼻涕。',
-      vitals:'T 38.2℃  P 88  R 18  BP 118/72  SpO₂ 98%',
-      answers:{
-        onset:'两天了，昨天晚上开始明显。', pattern:'低中热，没有大寒战，也不盗汗。',
-        cough:'流鼻涕、咽痛，偶干咳，没有黄痰。', gi:'胃口还行，没有腹泻。',
-        travel:'最近都在本市上班，没去外地。', animal:'家里没有养宠物，也没接触牲畜。',
-        meat:'没有啊，都是食堂熟食。', contact:'同事有人感冒，但不确定。',
-        sex:'（犹豫）没有特殊情况……我想先看病。', tb:'没有长期咳嗽，也没有结核病人接触。',
-        bite:'没注意到特殊叮咬。', drug:'吃过布洛芬，退了一点。', allergy:'青霉素不过敏。'
-      },
-      exam:{
-        pharynx:{label:'咽部', find:'咽充血，扁桃体 I°，未见脓苔。'},
-        lung:{label:'肺部听诊', find:'双肺呼吸音清，未闻及干湿啰音。'},
-        lymph:{label:'浅表淋巴结', find:'未触及明显肿大。'},
-        abdomen:{label:'腹部', find:'软，无压痛，肝脾未及。'},
-        skin:{label:'皮肤', find:'无皮疹、无瘀点。'},
-        heart:{label:'心脏', find:'心律齐，无杂音。'}
-      },
-      requiredExam:['pharynx','lung'], requiredEpi:['travel','animal','meat','contact'],
-      dxOptions:[
-        {id:'uri', label:'上呼吸道感染 / 病毒性咽炎方向', ok:true, d:'流病史阴性 + 咽充血为主，轻症初筛合理'},
-        {id:'pneumonia', label:'社区获得性肺炎', ok:false, d:'肺部无啰音，暂不优先'},
-        {id:'brucella', label:'布鲁氏菌病可能', ok:false, needMeat:true, d:'须有生肉/牲畜线索才考虑'},
-        {id:'malaria', label:'疟疾可能⚠', ok:false, d:'无疫区旅行/蚊叮线索'}
-      ],
-      needEthic:false
-    },
-    {
-      id:'amu', nick:'阿牧', age:'35 岁 · 牧场帮工', blurb:'反复发热一周，说「可能是感冒」。',
-      secret:'brucella', secretLabel:'布鲁氏菌病可能（生肉/牲畜陷阱）',
-      chief:'大夫，我烧一周了，时好时坏……会不会就是感冒？',
-      vitals:'T 38.6℃  P 92  R 20  BP 122/78  SpO₂ 97%',
-      answers:{
-        onset:'差不多七八天了，断断续续。', pattern:'有时候晚上更高，出汗多，偶发冷。',
-        cough:'不太咳，嗓子还行。', gi:'有点没胃口，关节酸。',
-        travel:'一直在牧区附近干活，没出国。', animal:'嗯……羊、牛都接触过，帮着接生。',
-        meat:'前阵子吃过烤得比较嫩的羊肉，有点粉红……羊奶也喝过。', contact:'工友里好像也有人乏力，不确定发烧。',
-        sex:'没有要说的。', tb:'没有长期咳嗽。', bite:'牧区蚊子多，但说不上特殊。',
-        drug:'吃过几天头孢，不太管用。', allergy:'否认。'
-      },
-      exam:{
-        pharynx:{label:'咽部', find:'轻度充血，无脓苔。'}, lung:{label:'肺部听诊', find:'清，无明显啰音。'},
-        lymph:{label:'浅表淋巴结', find:'颈侧可及黄豆大淋巴结，轻压痛。'},
-        abdomen:{label:'腹部', find:'右上腹轻压痛，脾缘似可触及（示意）。'},
-        skin:{label:'皮肤', find:'无典型皮疹。'}, joint:{label:'关节', find:'右膝轻压痛，无红肿积液。'},
-        heart:{label:'心脏', find:'心律齐。'}
-      },
-      requiredExam:['lymph','abdomen','joint'], requiredEpi:['travel','animal','meat','contact'],
-      dxOptions:[
-        {id:'uri', label:'普通上感', ok:false, d:'病程偏长 + 流病高危，不宜草率'},
-        {id:'brucella', label:'布鲁氏菌病可能', ok:true, needMeat:true, d:'生肉/羊奶/牲畜接触后才应点亮'},
-        {id:'tb', label:'活动性结核可能', ok:false, d:'线索不足，可鉴别但非本例最优'},
-        {id:'typhoid', label:'伤寒方向', ok:false, d:'可鉴别，但本例陷阱指向布病'}
-      ],
-      needEthic:false, brucellaTrap:true
-    },
-    {
-      id:'xiaoyu', nick:'小雨', age:'24 岁 · 自由职业', blurb:'发热伴咽痛，要求「快点开药」。',
-      secret:'hiv', secretLabel:'需 HIV 相关告知伦理（初筛阳性示意⚠）',
-      chief:'医生，我发烧加嗓子疼……能不能直接开点药？别开太多检查。',
-      vitals:'T 38.4℃  P 96  R 19  BP 110/68  SpO₂ 98%',
-      answers:{
-        onset:'四五天了。', pattern:'中等热，有点乏力盗汗。', cough:'咽痛明显，轻微干咳。', gi:'胃口差。',
-        travel:'本市，没旅行。', animal:'没有。', meat:'没有生肉。', contact:'不清楚。',
-        sex:'（沉默后）……有过不安全性行为。请你保密。', tb:'没有。', bite:'没有。',
-        drug:'自己买过退烧药。', allergy:'否认。'
-      },
-      exam:{
-        pharynx:{label:'咽部', find:'充血，可见少许白膜样分泌物（示意）。'}, lung:{label:'肺部听诊', find:'清。'},
-        lymph:{label:'浅表淋巴结', find:'颈部、腹股沟多枚淋巴结轻肿大。'},
-        skin:{label:'皮肤', find:'躯干散在淡红斑丘疹（示意）。'},
-        abdomen:{label:'腹部', find:'软，肝脾未及明显。'},
-        mouth:{label:'口腔', find:'口腔黏膜白斑样改变（示意⚠）。'}, heart:{label:'心脏', find:'齐。'}
-      },
-      requiredExam:['pharynx','lymph','skin','mouth'], requiredEpi:['travel','animal','meat','sex','contact'],
-      dxOptions:[
-        {id:'uri', label:'普通上感', ok:false, d:'淋巴结+皮疹+高危史，需扩大鉴别'},
-        {id:'acute_hiv', label:'急性 HIV 感染可能⚠（需检测确认）', ok:true, d:'高危史+皮疹/淋巴结——仅作初筛方向'},
-        {id:'mono', label:'传染性单核细胞增多症方向', ok:false, d:'可鉴别，但本例须走告知伦理'},
-        {id:'covid', label:'COVID-19 可能⚠', ok:false, d:'需核酸，但非本例伦理主线'}
-      ],
-      needEthic:true,
-      pretestNote:'教学设定：快速初筛已回报「反应性」（未确认）。你必须完成规范告知，不得走廊大声宣读、不得强迫签字隐瞒。'
-    },
-    {
-      id:'ayuan', nick:'阿远', age:'30 岁 · 外贸', blurb:'刚回国，发热伴发冷。',
-      secret:'malaria', secretLabel:'疟疾线索⚠（疫区旅行）',
-      chief:'医生，我刚从东南亚回来……发烧还发冷，有点慌。',
-      vitals:'T 39.1℃  P 108  R 22  BP 108/66  SpO₂ 96%',
-      answers:{
-        onset:'回国第二天开始烧。', pattern:'寒战→高热→出汗，像一波一波的。',
-        cough:'不明显。', gi:'恶心，没有严重腹泻。',
-        travel:'两周前在东南亚农村出差，有夜间户外活动。', animal:'没有牲畜接触。',
-        meat:'没有吃生肉。', contact:'同行一人也有点不舒服。', sex:'否认相关。', tb:'没有。',
-        bite:'被蚊子咬得很多，没吃预防药。', drug:'飞机上吃了退烧药。', allergy:'否认。'
-      },
-      exam:{
-        pharynx:{label:'咽部', find:'无明显充血。'}, lung:{label:'肺部听诊', find:'清。'},
-        abdomen:{label:'腹部', find:'脾脏轻度肿大（示意）。'}, skin:{label:'皮肤', find:'略苍白，无出血点。'},
-        neuro:{label:'神志/颈强', find:'神清，颈软（暂无重症脑型线索）。'},
-        heart:{label:'心脏', find:'心动过速，齐。'}, lymph:{label:'浅表淋巴结', find:'未及明显肿大。'}
-      },
-      requiredExam:['abdomen','skin','neuro'], requiredEpi:['travel','bite','meat','animal','contact'],
-      dxOptions:[
-        {id:'uri', label:'普通上感', ok:false, d:'疫区+周期性寒战，不宜'},
-        {id:'malaria', label:'疟疾可能⚠（须血涂片/抗原）', ok:true, d:'旅行+蚊叮+寒战高热'},
-        {id:'covid', label:'COVID-19 可能⚠', ok:false, d:'需排查，但本例优先疟疾线索'},
-        {id:'brucella', label:'布鲁氏菌病可能', ok:false, needMeat:true, d:'无生肉/牲畜主线'}
-      ],
-      needEthic:false
+    return x;
+  }
+  function shade(hex, amt){
+    // crude #rrggbb adjust
+    const n=parseInt(hex.slice(1),16);
+    let r=(n>>16)+amt, gg=((n>>8)&255)+amt, b=(n&255)+amt;
+    r=Math.max(0,Math.min(255,r)); gg=Math.max(0,Math.min(255,gg)); b=Math.max(0,Math.min(255,b));
+    return '#'+((1<<24)+(r<<16)+(gg<<8)+b).toString(16).slice(1);
+  }
+  function door(u, w, h, color, label, open){
+    const x=ux(u), y=floorY;
+    // frame
+    g.fillStyle='#57534e';
+    g.fillRect(x-w/2-6, y-h-8, w+12, h+8);
+    // leaf
+    g.fillStyle=color||'#78716c';
+    g.fillRect(x-w/2, y-h, w, h);
+    // glass pane
+    g.fillStyle='rgba(186,230,253,.55)';
+    g.fillRect(x-w/2+10, y-h+12, w-20, h*0.38);
+    // handle
+    g.fillStyle='#fbbf24';
+    g.fillRect(x+w/2-18, y-h*0.45, 8, 16);
+    if(open){
+      g.fillStyle='rgba(15,23,42,.35)';
+      g.beginPath();
+      g.moveTo(x+w/2, y-h); g.lineTo(x+w/2+28, y-h+10);
+      g.lineTo(x+w/2+28, y-10); g.lineTo(x+w/2, y); g.closePath(); g.fill();
     }
-  ];
+    if(label){
+      g.fillStyle='#fff'; g.font='bold 13px sans-serif';
+      g.fillText(label, x-w/2+8, y-h-14);
+    }
+  }
+  function windowPane(u, w, h){
+    const x=ux(u), y=ceilY+20;
+    g.fillStyle='#334155'; g.fillRect(x-w/2-4, y-4, w+8, h+8);
+    g.fillStyle='#7dd3fc'; g.fillRect(x-w/2, y, w, h);
+    g.strokeStyle='rgba(255,255,255,.5)'; g.lineWidth=2;
+    g.beginPath(); g.moveTo(x,y); g.lineTo(x,y+h); g.moveTo(x-w/2,y+h/2); g.lineTo(x+w/2,y+h/2); g.stroke();
+  }
+  function chair(u, scale){
+    const s=scale||1, x=ux(u), y=floorY;
+    const sw=34*s, sh=28*s, leg=22*s;
+    // legs
+    g.fillStyle='#57534e';
+    g.fillRect(x-sw/2+2, y-leg, 5, leg);
+    g.fillRect(x+sw/2-7, y-leg, 5, leg);
+    // seat
+    g.fillStyle='#64748b';
+    g.fillRect(x-sw/2, y-leg-sh*0.45, sw, sh*0.45);
+    // back
+    g.fillStyle='#475569';
+    g.fillRect(x-sw/2, y-leg-sh, sw, sh*0.55);
+  }
+  function personSil(u, tint){
+    const x=ux(u), y=floorY-4;
+    g.fillStyle=tint||'rgba(30,41,59,.75)';
+    // legs
+    g.fillRect(x-8, y-28, 7, 28); g.fillRect(x+2, y-28, 7, 28);
+    // torso
+    g.fillRect(x-12, y-58, 24, 32);
+    // head
+    g.beginPath(); g.arc(x, y-70, 10, 0, Math.PI*2); g.fill();
+  }
 
-  const S = {
-    caseId:null, step:'intro', introBeat:0,
-    ppe:{mask:false, gloves:false, gown:false},
-    asked:{}, examed:{}, dx:null,
-    ethicDone:false, ethicChoices:{},
-    locked:false, vetoes:[], soft:[],
-    touchedWithoutPpe:false, score:null,
-    results:{}
+  if(kind==='hall'){
+    windowPane(0.05, 90, 70); windowPane(0.32, 90, 70);
+    // triage desk
+    box3(0.18, floorY, 170, 70, 28, '#5eead4', '分诊台');
+    // monitor on desk
+    g.fillStyle='#0f172a';
+    const dx=ux(0.18);
+    g.fillRect(dx-30, floorY-70-38, 50, 34);
+    g.fillStyle='#67e8f9'; g.fillRect(dx-26, floorY-70-34, 42, 26);
+    // thermometer stand
+    box3(0.26, floorY, 36, 55, 12, '#fde68a', '');
+    // waiting chairs row
+    for(let i=0;i<5;i++) chair(0.40+i*0.035, 1);
+    // notice board
+    box3(0.62, floorY-40, 110, 70, 10, '#fef08a', '感控告示');
+    // corridor doorway
+    door(0.88, 90, 150, '#475569', '走廊 →', true);
+    // entrance label
+    door(0.02, 70, 140, '#0f766e', '入口', false);
+    // small plants
+    g.fillStyle='#166534'; g.beginPath(); g.ellipse(ux(0.72), floorY-20, 16, 22, 0, 0, Math.PI*2); g.fill();
+  } else if(kind==='corridor'){
+    // long corridor feel: repeating floor strips already drawn
+    // PPE cabinet — tall locker
+    const cx=box3(0.45, floorY, 120, 130, 28, '#fdba74', '防护物资柜');
+    // cabinet doors lines
+    g.strokeStyle='rgba(15,23,42,.35)';
+    g.beginPath(); g.moveTo(cx, floorY-130); g.lineTo(cx, floorY); g.stroke();
+    g.fillStyle='#fff'; g.font='bold 12px sans-serif';
+    g.fillText('口罩', cx-50, floorY-100);
+    g.fillText('手套', cx-50, floorY-78);
+    g.fillText('隔离衣', cx-50, floorY-56);
+    // wall hooks / signs
+    box3(0.30, floorY-90, 60, 40, 8, '#fecaca', '洗手');
+    // doors
+    door(0.08, 80, 145, '#64748b', '← 大厅', false);
+    door(0.78, 85, 145, '#a78bfa', '候诊 →', true);
+    door(0.92, 85, 150, '#475569', '诊室门', false);
+    // floor caution stripe
+    g.fillStyle='rgba(250,204,21,.55)';
+    g.fillRect(0, floorY+8, W, 10);
+    g.fillStyle='rgba(15,23,42,.55)'; g.font='bold 13px sans-serif';
+    g.fillText('清洁区 · 须戴防护', ux(0.45)-50, floorY+20);
+  } else if(kind==='wait'){
+    // call board on wall
+    const bx=ux(0.55);
+    g.fillStyle='#0f172a';
+    g.fillRect(bx-70, ceilY+18, 140, 56);
+    g.strokeStyle='#facc15'; g.lineWidth=3; g.strokeRect(bx-70, ceilY+18, 140, 56);
+    g.fillStyle='#fef08a'; g.font='bold 22px sans-serif';
+    g.fillText('请 A12 到诊', bx-58, ceilY+52);
+    g.fillStyle='#94a3b8'; g.font='12px sans-serif';
+    g.fillText('叫号屏', bx-20, ceilY+68);
+    // chair rows
+    for(let i=0;i<6;i++) chair(0.28+i*0.04, 1.05);
+    for(let i=0;i<5;i++) chair(0.48+i*0.04, 0.95);
+    // static silhouettes baked in (DOM animates live ones)
+    personSil(0.33, 'rgba(30,41,59,.55)');
+    personSil(0.38, 'rgba(51,65,85,.55)');
+    personSil(0.50, 'rgba(30,41,59,.45)');
+    // plant / TV
+    box3(0.15, floorY, 50, 40, 12, '#86efac', '');
+    door(0.10, 80, 145, '#64748b', '← 走廊', false);
+    door(0.85, 90, 150, '#0f766e', '诊室 →', true);
+    // poster
+    box3(0.68, floorY-50, 70, 55, 6, '#bfdbfe', '请戴口罩');
+  } else {
+    // clinic
+    windowPane(0.70, 100, 70);
+    // desk + computer
+    const deskX=box3(0.22, floorY, 160, 65, 30, '#67e8f9', '诊桌');
+    g.fillStyle='#0f172a'; g.fillRect(deskX-40, floorY-65-42, 55, 38);
+    g.fillStyle='#4ade80'; g.fillRect(deskX-36, floorY-65-38, 47, 30);
+    // doctor chair
+    chair(0.14, 1.1);
+    // exam bed
+    const bedX=ux(0.62);
+    // bed legs/frame
+    g.fillStyle='#64748b';
+    g.fillRect(bedX-95, floorY-8, 190, 8);
+    // mattress
+    g.fillStyle='#e2e8f0';
+    g.fillRect(bedX-90, floorY-38, 180, 30);
+    g.fillStyle='#cbd5e1';
+    g.fillRect(bedX-90, floorY-48, 50, 14); // pillow
+    g.strokeStyle='rgba(15,23,42,.35)'; g.strokeRect(bedX-90, floorY-38, 180, 30);
+    g.fillStyle='#0f172a'; g.font='bold 14px sans-serif';
+    g.fillText('诊床', bedX-20, floorY-18);
+    // side stool
+    chair(0.78, 0.85);
+    // sink
+    box3(0.88, floorY, 70, 55, 18, '#bae6fd', '洗手池');
+    g.fillStyle='#38bdf8'; g.beginPath(); g.ellipse(ux(0.88), floorY-40, 18, 8, 0, 0, Math.PI*2); g.fill();
+    // curtain rail
+    g.strokeStyle='#94a3b8'; g.lineWidth=3;
+    g.beginPath(); g.moveTo(ux(0.50), ceilY+8); g.lineTo(ux(0.75), ceilY+8); g.stroke();
+    g.fillStyle='rgba(165,180,252,.45)';
+    g.fillRect(ux(0.52), ceilY+8, 40, floorY-ceilY-20);
+    door(0.06, 80, 145, '#64748b', '← 候诊', false);
+    // wall chart
+    box3(0.40, floorY-70, 55, 50, 6, '#fecaca', '体格');
+  }
+
+  // title strip (subtle, top-left of unwrap)
+  g.fillStyle='rgba(15,23,42,.55)';
+  g.fillRect(16, 10, 420, 44);
+  g.fillStyle='#f8fafc'; g.font='bold 18px sans-serif';
+  const title={hall:'发热门诊 · 大厅分诊',corridor:'防护柜走廊',wait:'候诊区',clinic:'诊室'}[kind];
+  g.fillText(title, 28, 32);
+  g.font='12px sans-serif'; g.fillStyle='#cbd5e1';
+  g.fillText('示意房间透视 · 可换真 360 · '+VERSION, 28, 48);
+
+  return cv.toDataURL('image/jpeg', 0.88);
+}
+
+const PANO_IMG = {};
+['hall','corridor','wait','clinic'].forEach(k=>{ PANO_IMG[k]=makePano(k); });
+
+/* ========== Pano 引擎（清水河柱面精简版） ========== */
+const Pano = (()=>{
+  const el=$('#pano'); let gl=null, cam, scene3, mat, W=1, H=1;
+  let yaw=0, pitch=0, fov=58, vyaw=0, vpitch=0, auto=false, anim=null, drag=false, fb=null, cur='';
+  const TW=2048, TH=512, R=TW/(2*Math.PI), MAXH=Math.atan((TH/2)/R), TEX={};
+  let vtmp=null; const api={onFrame:null};
+  function init(){
+    try{ if(!window.THREE) throw new Error('no three'); gl=new THREE.WebGLRenderer({antialias:true,powerPreference:'low-power'}); }
+    catch(e){ gl=null; }
+    if(gl){
+      gl.setPixelRatio(Math.min(2, window.devicePixelRatio||1)); el.appendChild(gl.domElement);
+      if('outputColorSpace' in gl) gl.outputColorSpace=THREE.SRGBColorSpace;
+      scene3=new THREE.Scene(); cam=new THREE.PerspectiveCamera(fov,1,1,5000); vtmp=new THREE.Vector3();
+      const N=128, pos=[], uv=[], idx=[];
+      for(let i=0;i<=N;i++){ const t=i/N*2*Math.PI, x=R*Math.sin(t), z=-R*Math.cos(t); pos.push(x,TH/2,z,x,-TH/2,z); uv.push(i/N,1,i/N,0); }
+      for(let i=0;i<N;i++){ const a=2*i; idx.push(a,a+1,a+2,a+1,a+3,a+2); }
+      const geo=new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+      geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv,2));
+      geo.setIndex(idx);
+      mat=new THREE.MeshBasicMaterial({side:THREE.DoubleSide,color:0xffffff});
+      scene3.add(new THREE.Mesh(geo, mat));
+    } else {
+      fb=document.createElement('div'); fb.className='fb2d'; el.appendChild(fb);
+    }
+    resize(); window.addEventListener('resize', resize); bind(); requestAnimationFrame(loop);
+  }
+  function resize(){ W=window.innerWidth; H=window.innerHeight; if(gl) gl.setSize(W,H); fov=H>W?64:58; }
+  function texOf(k, cb){
+    if(TEX[k]) return cb(TEX[k]);
+    const im=new Image();
+    im.onload=()=>{
+      let t=null;
+      if(gl){ t=new THREE.Texture(im); t.minFilter=THREE.LinearFilter; t.magFilter=THREE.LinearFilter; t.generateMipmaps=false;
+        if('colorSpace' in t) t.colorSpace=THREE.SRGBColorSpace; t.needsUpdate=true; }
+      TEX[k]={t,src:im.src}; cb(TEX[k]);
+    };
+    im.src=PANO_IMG[k];
+  }
+  api.show=(k,u,cb)=>texOf(k,T=>{
+    cur=k;
+    if(gl){ mat.map=T.t; mat.needsUpdate=true; }
+    else fb.style.backgroundImage=`url(${T.src})`;
+    if(u!=null){ yaw=u*2*Math.PI; pitch=0; }
+    vyaw=vpitch=0; anim=null; cb&&cb();
+  });
+  api.preload=k=>texOf(k,()=>{});
+  api.lookTo=(u,ms=900)=>{
+    let to=u*2*Math.PI;
+    while(to-yaw>Math.PI) to-=2*Math.PI;
+    while(yaw-to>Math.PI) to+=2*Math.PI;
+    anim={from:yaw,to,p0:pitch,t0:performance.now(),dur:ms};
   };
-
-  function $(id){ return document.getElementById(id); }
-  function caseObj(){ return CASES.find(c=>c.id===S.caseId); }
-
-  function toast(msg, fail){
-    const el=$('toast');
-    el.textContent=msg;
-    el.className='toast show'+(fail?' fail':'');
-    clearTimeout(toast._t);
-    toast._t=setTimeout(()=>{ el.classList.remove('show'); }, 2800);
+  api.auto=v=>auto=v;
+  api.isGL=()=>!!gl;
+  api.cur=()=>cur;
+  function clamp(){
+    const fmax=Math.min(72, 2*MAXH*180/Math.PI-2); fov=Math.max(28, Math.min(fmax,fov));
+    const pm=Math.max(0, MAXH-fov*Math.PI/360); pitch=Math.max(-pm, Math.min(pm,pitch));
   }
-
-  function addVeto(code, msg){
-    if(S.vetoes.indexOf(code)>=0) return;
-    S.vetoes.push(code);
-    updateBadges();
-    toast(msg || ('硬否决：'+code), true);
+  function loop(now){
+    requestAnimationFrame(loop);
+    if(!drag){
+      if(anim){ const t=Math.min(1,(now-anim.t0)/anim.dur), e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+        yaw=anim.from+(anim.to-anim.from)*e; pitch=anim.p0*(1-e); if(t>=1) anim=null; }
+      else if(Math.abs(vyaw)>1e-5||Math.abs(vpitch)>1e-5){ yaw+=vyaw; pitch+=vpitch; vyaw*=0.9; vpitch*=0.9; }
+      if(auto) yaw+=0.0006;
+    }
+    clamp();
+    if(gl){ cam.fov=fov; cam.aspect=W/H; cam.updateProjectionMatrix(); cam.position.set(0,0,0);
+      cam.lookAt(Math.sin(yaw)*Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw)*Math.cos(pitch));
+      gl.render(scene3,cam); }
+    else if(fb){ const s=H/(TH*0.8)*(58/fov), bw=TW*s, off=yaw/(2*Math.PI)*bw-W/2;
+      fb.style.backgroundSize=`${bw}px ${TH*s}px`; fb.style.backgroundPosition=`${-off}px ${-(TH*s-H)/2}px`; }
+    api.onFrame&&api.onFrame();
   }
-
-  function hardLock(reason){
-    S.locked=true;
-    const b=$('lockBanner');
-    b.textContent='本例已锁死 · '+reason+'（请重开本例或回大厅）';
-    b.classList.add('show');
-    updateBadges();
-    S.step='score';
-    paint();
+  api.project=(u,v)=>{
+    if(gl){
+      const t=u*2*Math.PI; let d=((t-yaw)%(2*Math.PI)+3*Math.PI)%(2*Math.PI)-Math.PI;
+      if(Math.abs(d)>1.35) return null;
+      vtmp.set(R*Math.sin(t),(0.5-v)*TH,-R*Math.cos(t)).project(cam);
+      return [(vtmp.x+1)/2*W, (1-vtmp.y)/2*H];
+    }
+    const s=H/(TH*0.8)*(58/fov), bw=TW*s, off=yaw/(2*Math.PI)*bw-W/2;
+    let x=((u*bw-off)%bw+bw)%bw; if(x>W+200) x-=bw;
+    return [x, v*TH*s-(TH*s-H)/2];
+  };
+  function bind(){
+    const pts=new Map(); let lx=0,ly=0,p0=0,f0=0;
+    el.addEventListener('pointerdown', e=>{
+      try{ el.setPointerCapture(e.pointerId);}catch(_){}
+      pts.set(e.pointerId,[e.clientX,e.clientY]); anim=null; auto=false;
+      if(pts.size===1){ drag=true; lx=e.clientX; ly=e.clientY; vyaw=vpitch=0; el.classList.add('drag'); }
+      else if(pts.size===2){ const [a,b]=[...pts.values()]; p0=Math.hypot(a[0]-b[0],a[1]-b[1]); f0=fov; }
+    });
+    el.addEventListener('pointermove', e=>{
+      if(!pts.has(e.pointerId)) return; pts.set(e.pointerId,[e.clientX,e.clientY]);
+      if(pts.size>=2){ const [a,b]=[...pts.values()]; const d=Math.hypot(a[0]-b[0],a[1]-b[1]); if(p0>0&&d>0) fov=f0*p0/d; return; }
+      if(!drag) return; const k=(fov*Math.PI/180)/H, dx=e.clientX-lx, dy=e.clientY-ly;
+      yaw-=dx*k; pitch+=dy*k; vyaw=-dx*k; vpitch=dy*k; lx=e.clientX; ly=e.clientY;
+    });
+    const up=e=>{ pts.delete(e.pointerId); if(!pts.size){ drag=false; el.classList.remove('drag'); }
+      else if(pts.size===1){ const [p]=[...pts.values()]; lx=p[0]; ly=p[1]; drag=true; p0=0; } };
+    el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+    el.addEventListener('wheel', e=>{ e.preventDefault(); fov*=1+Math.sign(e.deltaY)*0.07; }, {passive:false});
   }
+  api.init=init;
+  return api;
+})();
 
-  function updateBadges(){
-    const ready = S.ppe.mask && S.ppe.gloves;
-    $('ppeBadge').textContent = ready ? '防护：口罩+手套✓' : '防护：未就绪';
-    $('ppeBadge').className = 'pill '+(ready?'ok':'warn');
+/* ========== 导览 / 热点状态 ========== */
+function hsDone(k){
+  if(k==='triage') return triageDone();
+  if(k==='pick') return !!S.caseId;
+  if(k==='board') return !!S.seen.board;
+  if(k==='ppe') return ppeReady();
+  if(k==='anxiety') return !!S.waitAnimDone;
+  if(k==='chief') return !!S.clinicStep.chief;
+  if(k==='hx') return epiComplete() || !!S.clinicStep.hx; // allow proceed but score penalizes
+  if(k==='exam') return !!S.clinicStep.exam;
+  if(k==='dx') return !!S.dx;
+  if(k==='ethic'){
     const c=caseObj();
-    let epiN=0, epiNeed=0;
-    if(c){ epiNeed=c.requiredEpi.length; epiN=c.requiredEpi.filter(k=>S.asked[k]).length; }
-    $('epiBadge').textContent='流病：'+epiN+'/'+epiNeed;
-    $('epiBadge').className='pill '+(c && epiN>=epiNeed?'ok':'');
-    $('vetoBadge').textContent='否决：'+S.vetoes.length;
-    $('vetoBadge').className='pill '+(S.vetoes.length?'red':'');
+    if(!c || !c.needEthic) return true;
+    return !!S.ethicDone;
   }
+  if(k==='score') return !!S.clinicStep.score;
+  return !!S.seen[k];
+}
 
-  function epiComplete(){
-    const c=caseObj(); if(!c) return false;
-    return c.requiredEpi.every(k=>S.asked[k]);
+function hsState(sk, i){
+  const h=HSD[sk].hot[i];
+  if(h.kind==='jump'){
+    if(h.k==='j_corridor') return triageDone() ? 'next' : 'lock';
+    if(h.k==='j_wait' || h.k==='j_clinic' || h.k==='j_clinic_direct'){
+      if(!ppeReady()) return 'lock';
+      return 'next';
+    }
+    return 'active';
   }
-  function meatAsked(){ return !!S.asked.meat; }
-  function ppeReady(){ return S.ppe.mask && S.ppe.gloves; }
+  if(hsDone(h.k)) return 'done';
+  // highlight first unfinished task
+  const tasks=HSD[sk].hot.filter(x=>x.kind!=='jump');
+  const first=tasks.find(x=>!hsDone(x.k));
+  if(first && first.k===h.k) return 'next';
+  // ethic hidden-ish when not needed
+  if(h.k==='ethic'){
+    const c=caseObj();
+    if(!c || !c.needEthic) return 'done';
+  }
+  return 'active';
+}
 
-  function ensurePpeOrFail(){
-    if(ppeReady()) return true;
-    S.touchedWithoutPpe=true;
-    addVeto('no_ppe', '硬否决：未戴口罩/手套就接触患者 —— 感控红线');
-    hardLock('未防护接触患者');
+const Tour = {
+  sk:null, els:[], anns:[],
+  build(sk){
+    const layer=$('#hsLayer'); layer.innerHTML=''; this.sk=sk;
+    this.els=HSD[sk].hot.map((h,i)=>{
+      if(h.k==='ethic'){
+        const c=caseObj();
+        if(c && !c.needEthic){ /* still create but mark done */ }
+      }
+      const b=document.createElement('button');
+      b.className='hs'+(h.kind==='jump'?' jump':'');
+      b.dataset.k=h.k;
+      b.innerHTML=`<span class="dot"></span><span class="lb"><b>${esc(h.t)}</b><i>${esc(h.sub)}</i></span>`;
+      b.onclick=()=>clickHot(sk,i);
+      layer.appendChild(b);
+      return {el:b,u:h.u,v:h.v,h};
+    });
+    this.anns=HSD[sk].lab.map(a=>{
+      const d=document.createElement('div'); d.className='ann'; d.textContent=a.t; layer.appendChild(d);
+      return {el:d,u:a.u,v:a.v};
+    });
+    this.refresh();
+  },
+  refresh(){
+    if(!this.sk) return;
+    const sk=this.sk; let n=0;
+    this.els.forEach((o,i)=>{
+      const st=hsState(sk,i), h=o.h;
+      o.el.className='hs'+(h.kind==='jump'?' jump':'')+' '+st;
+      if(h.kind!=='jump') n++;
+      const nums='①②③④⑤⑥⑦⑧⑨';
+      o.el.querySelector('.dot').textContent = h.kind==='jump' ? '➜' : st==='done'?'✔':st==='lock'?'🔒':nums[n-1]||'•';
+      if(h.k==='ethic'){
+        const c=caseObj();
+        o.el.style.display = (!c || !c.needEthic) ? 'none' : '';
+      }
+    });
+    refreshHud();
+  },
+  place(){
+    const show = $('#cover').classList.contains('hide');
+    const placeOne=(o, jump)=>{
+      const p = show && Pano.project(o.u, o.v);
+      if(!p){ o.el.style.visibility='hidden'; return; }
+      o.el.style.visibility='visible';
+      o.el.style.transform = jump
+        ? `translate(${p[0]}px,${p[1]}px) translate(-22px,-50%)`
+        : `translate(${p[0]}px,${p[1]}px) translate(-19px,-50%)`;
+    };
+    this.els.forEach(o=>placeOne(o, o.h.kind==='jump'));
+    this.anns.forEach(o=>{
+      const p = show && Pano.project(o.u, o.v);
+      if(!p){ o.el.style.visibility='hidden'; return; }
+      o.el.style.visibility='visible';
+      o.el.style.transform=`translate(${p[0]}px,${p[1]-14}px) translate(-50%,-100%)`;
+    });
+  }
+};
+
+/* ========== 候诊景内短动画（人影晃动 + 叫号闪） ========== */
+const WaitFX = (()=>{
+  let layer=null, sils=[], board=null, on=false, t0=0;
+  const SIL = [
+    {u:0.33, v:0.78, amp:5, phase:0},
+    {u:0.38, v:0.79, amp:7, phase:1.2},
+    {u:0.50, v:0.77, amp:4, phase:2.1}
+  ];
+  const BOARD = {u:0.55, v:0.36};
+  function ensure(){
+    if(layer) return;
+    layer = $('#fxLayer');
+    if(!layer){
+      layer=document.createElement('div'); layer.id='fxLayer';
+      document.body.appendChild(layer);
+    }
+  }
+  function clear(){
+    if(layer) layer.innerHTML='';
+    sils=[]; board=null;
+  }
+  function start(){
+    ensure(); clear(); on=true; t0=performance.now();
+    SIL.forEach((s,i)=>{
+      const el=document.createElement('div');
+      el.className='fx-sil';
+      el.innerHTML='<span class="arm l"></span><span class="arm r"></span>';
+      el.style.opacity = String(0.75 + (i%2)*0.1);
+      layer.appendChild(el);
+      sils.push({el, ...s});
+    });
+    board=document.createElement('div');
+    board.className='fx-board';
+    board.innerHTML='请 <b id="fxNum">A12</b> 到诊<span class="sub">叫号中 · 景内动画</span>';
+    layer.appendChild(board);
+  }
+  function stop(){ on=false; clear(); }
+  function tick(){
+    if(!on || S.at!=='wait'){ if(layer && layer.childNodes.length) clear(); return; }
+    const now=performance.now();
+    const show = $('#cover').classList.contains('hide');
+    sils.forEach(s=>{
+      const sway = Math.sin((now-t0)/380 + s.phase) * s.amp;
+      const bob = Math.sin((now-t0)/520 + s.phase*0.7) * 3;
+      const p = show && Pano.project(s.u, s.v);
+      if(!p){ s.el.style.visibility='hidden'; return; }
+      s.el.style.visibility='visible';
+      s.el.style.transform = `translate(${p[0]+sway}px,${p[1]+bob}px) translate(-50%,-100%)`;
+    });
+    if(board){
+      const p = show && Pano.project(BOARD.u, BOARD.v);
+      if(!p){ board.style.visibility='hidden'; }
+      else {
+        board.style.visibility='visible';
+        board.style.transform = `translate(${p[0]}px,${p[1]}px) translate(-50%,-50%)`;
+        // flash ~1.2Hz
+        const flash = (Math.sin((now-t0)/420) > 0.35);
+        board.classList.toggle('flash', flash);
+        const n = $('#fxNum');
+        if(n){
+          // alternate numbers lightly
+          const tickN = Math.floor((now-t0)/2400) % 3;
+          n.textContent = ['A12','A13','B07'][tickN];
+        }
+      }
+    }
+  }
+  return {start, stop, tick, isOn:()=>on};
+})();
+
+Pano.onFrame=()=>{ Tour.place(); WaitFX.tick(); };
+
+
+function esc(s){ return String(s||'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+
+function refreshHud(){
+  const sc = SCN[SIDX(S.at)] || {n:'—'};
+  const c = caseObj();
+  $('#hud').innerHTML =
+    `<span class="chip"><b>${esc(sc.n)}</b> · ${VERSION}</span>`+
+    `<span class="chip ${triageDone()?'ok':'warn'}">分诊：${triageDone()?'✓':'未过'}</span>`+
+    `<span class="chip ${ppeReady()?'ok':'warn'}">防护：${ppeReady()?'口罩+手套✓':'未就绪'}</span>`+
+    `<span class="chip">${c?('病例：'+c.nick):'病例：未选'}</span>`+
+    `<span class="chip ${S.vetoes.length?'red':''}">否决：${S.vetoes.length}</span>`+
+    (S.locked?'<span class="chip red">已锁死</span>':'');
+}
+
+/* ========== 场景进入 / 空间锁 ========== */
+function bounceToCorridor(reason){
+  addVeto('no_ppe', reason || '硬否决：未戴防护进入候诊/诊室');
+  S.locked = true; // 硬否决锁死本例（与平面版一致），并强制回防护柜
+  toast('未防护进入清洁区 → 硬否决，强制返回防护柜', 'fail');
+  enterScene('corridor', {instant:false, force:true});
+  setTimeout(()=>{ openPanel('ppe'); }, 500);
+}
+
+function enterScene(k, opt={}){
+  // 空间锁 1：大厅未过分诊 → 不能进防护走廊
+  if(k==='corridor' && !opt.force && !triageDone()){
+    toast('🔒 请先在大厅完成分诊（体温+流调要点）', 'fail');
+    Pano.lookTo(HSD.hall.hot.find(h=>h.k==='triage').u);
     return false;
   }
-
-  function paintDots(){
-    const box=$('stepDots');
-    const c=caseObj();
-    const list = STEPS.filter(s=>{
-      if(s.id==='ethic' && !(c && c.needEthic)) return false;
-      return true;
-    });
-    const idx = list.findIndex(s=>s.id===S.step);
-    box.innerHTML = list.map((s,i)=>{
-      let cls='step-dot';
-      if(S.locked && s.id===S.step) cls+=' fail';
-      else if(i<idx) cls+=' done';
-      else if(i===idx) cls+=' on';
-      return '<span class="'+cls+'">'+s.label+'</span>';
-    }).join('');
-  }
-
-  function figHTML(left, bottom, label, sub, color, extraCls){
-    return '<div class="fig '+(extraCls||'')+'" style="left:'+left+'%;bottom:'+bottom+'%">'+
-      '<div class="avatar" style="background:'+color+'">'+(label.slice(0,1))+'</div>'+
-      '<div class="name">'+label+'</div>'+
-      (sub?'<div class="sub">'+sub+'</div>':'')+
-      '</div>';
-  }
-  function propHTML(left, bottom, ico, lab){
-    return '<div class="prop" style="left:'+left+'%;bottom:'+bottom+'%">'+
-      '<span class="ico">'+ico+'</span><div class="box">'+lab+'</div></div>';
-  }
-  function annHTML(left, bottom, text){
-    return '<div class="ann" style="left:'+left+'%;bottom:'+(bottom+10)+'%">'+text+'</div>';
-  }
-
-  function renderHallStage(){
-    const L=LAYOUT.hall;
-    const el=$('hallStage');
-    if(!el) return;
-    el.innerHTML =
-      '<div class="floor-line"></div>'+
-      figHTML(L.triage.left, L.triage.bottom, L.triage.role, L.triage.sub, L.triage.color)+
-      propHTML(L.ppe.left, L.ppe.bottom, '🧰', '防护物资柜')+
-      annHTML(L.ppe.left, L.ppe.bottom, '必过')+
-      figHTML(L.waitA.left, L.waitA.bottom, '小安', '候诊', '#1f6fb2')+
-      figHTML(L.waitB.left, L.waitB.bottom, '阿牧', '候诊', '#6d28d9')+
-      figHTML(L.waitC.left, L.waitC.bottom, '小雨', '催问', '#475569')+
-      propHTML(L.door.left, L.door.bottom, '🚪', '诊室门')+
-      annHTML(L.door.left, L.door.bottom, '未防护不开');
-  }
-
-  function renderStage(kind, highlight){
-    // returns HTML string for intro/ppe/clinic mini-stage
-    let L, cls, extra='';
-    if(kind==='hall'){ L=LAYOUT.hall; cls='stage'; }
-    else if(kind==='corridor'){ L=LAYOUT.corridor; cls='stage corridor'; }
-    else { L=LAYOUT.clinic; cls='stage clinic'; }
-    let html='<div class="'+cls+'" style="height:200px">'+'<div class="floor-line"></div>';
-    if(kind==='hall'){
-      html+=figHTML(L.triage.left, L.triage.bottom, L.triage.role, L.triage.sub, L.triage.color, highlight==='triage'?'':'');
-      html+=propHTML(L.ppe.left, L.ppe.bottom, '🧰', '防护柜');
-      html+=figHTML(L.waitA.left, L.waitA.bottom, '候诊', '发热', '#1f6fb2');
-      html+=propHTML(L.door.left, L.door.bottom, '🚪', '诊室');
-    } else if(kind==='corridor'){
-      html+=figHTML(L.you.left, L.you.bottom, '你', ppeReady()?'已防护':'未防护', '#0f766e');
-      html+=propHTML(L.ppe.left, L.ppe.bottom, '🧰', '防护物资柜');
-      html+=propHTML(L.door.left, L.door.bottom, '🚪', ppeReady()?'可进诊':'锁着');
-      if(!ppeReady()) html+=annHTML(L.door.left, L.door.bottom, '先过防护柜');
-    } else {
-      const c=caseObj();
-      html+=propHTML(L.desk.left, L.desk.bottom, '🖥️', '诊桌');
-      html+=figHTML(L.doc.left, L.doc.bottom, '你', '接诊·已防护', '#0f766e');
-      html+=propHTML(L.bed.left, L.bed.bottom, '🛏️', '诊床');
-      html+=figHTML(L.patient.left, L.patient.bottom, c?c.nick:'患者', '坐/卧', '#b45309');
+  // 空间锁 2：未防护进候诊/诊室 → 硬否决并强制回防护柜
+  if((k==='wait' || k==='clinic') && !opt.force){
+    if(!ppeReady()){
+      bounceToCorridor(k==='clinic' ? '硬否决：未戴防护冲进诊室' : '硬否决：未戴防护进入候诊区');
+      return false;
     }
-    html+='</div>';
-    return html;
   }
-
-  function renderHall(){
-    $('viewHall').classList.remove('hidden');
-    $('viewPlay').classList.add('hidden');
-    renderHallStage();
-    const grid=$('caseGrid');
-    grid.innerHTML = CASES.map((c,i)=>{
-      const r=S.results[c.id];
-      let st='待接诊', cls='';
-      if(r){ if(r.pass){ st='已过关'; cls='done'; } else { st='未过/锁死'; cls='fail'; } }
-      return '<button type="button" class="station '+cls+'" data-id="'+c.id+'">'+
-        '<div class="n">候诊 '+(i+1)+'</div>'+
-        '<div class="t">'+c.nick+'</div>'+
-        '<p class="d">'+c.age+' · '+c.blurb+'</p>'+
-        '<span class="st">'+st+'</span></button>';
-    }).join('');
-    grid.querySelectorAll('.station').forEach(btn=>{
-      btn.onclick=()=>startCase(btn.getAttribute('data-id'));
+  const doit=()=>{
+    const nx = HSD[k].hot.find(h=>hsState(k, HSD[k].hot.indexOf(h))==='next') || HSD[k].hot[0];
+    Pano.show(k, nx?nx.u:0, ()=>{
+      S.at=k; Tour.build(k); $('#fader').classList.remove('on');
+      if(k==='wait') WaitFX.start(); else WaitFX.stop();
+      if(!opt.noIntro) sceneIntro(k);
+      const i=SIDX(k); if(SCN[i+1]) Pano.preload(SCN[i+1].k);
+      refreshHud();
     });
-  }
+  };
+  $('#cover').classList.add('hide');
+  Pano.auto(false);
+  if(opt.instant) doit();
+  else { $('#fader').classList.add('on'); setTimeout(doit, 380); }
+  return true;
+}
 
-  function resetCaseState(){
-    S.step='intro';
-    S.introBeat=0;
-    S.ppe={mask:false, gloves:false, gown:false};
-    S.asked={}; S.examed={}; S.dx=null;
-    S.ethicDone=false; S.ethicChoices={};
-    S.locked=false; S.vetoes=[]; S.soft=[];
-    S.touchedWithoutPpe=false; S.score=null;
-    $('lockBanner').classList.remove('show');
-    $('lockBanner').textContent='';
-  }
+function sceneIntro(k){
+  if(S.seen['intro_'+k]) return;
+  S.seen['intro_'+k]=1;
+  if(k==='hall') toast('👆 先点橙色「分诊台」完成体温+流调，再去防护走廊');
+  if(k==='corridor') toast('先点「防护物资柜」戴口罩+手套，再进候诊/诊室');
+  if(k==='wait') toast('候诊区：人影晃动 + 叫号闪烁（景内）；可点「候诊紧张」看对白');
+  if(k==='clinic') toast(caseObj()?('诊室接诊 · '+caseObj().nick):'请先回大厅选例');
+}
 
-  function startCase(id){
-    S.caseId=id;
-    resetCaseState();
-    $('viewHall').classList.add('hidden');
-    $('viewPlay').classList.remove('hidden');
-    const c=caseObj();
-    $('playTitle').textContent='发热门诊 · '+c.nick;
-    $('playCaseBadge').textContent=c.age;
-    paint();
-  }
-
-  function paint(){
-    paintDots();
-    updateBadges();
-    const body=$('stepBody');
-    if(S.step==='intro') buildIntro(body);
-    else if(S.step==='ppe') buildPpe(body);
-    else if(S.step==='chief') buildChief(body);
-    else if(S.step==='hx') buildHx(body);
-    else if(S.step==='exam') buildExam(body);
-    else if(S.step==='dx') buildDx(body);
-    else if(S.step==='ethic') buildEthic(body);
-    else if(S.step==='score') buildScore(body);
-  }
-
-  function buildIntro(body){
-    const c=caseObj();
-    const beat=INTRO_BEATS[S.introBeat] || INTRO_BEATS[0];
-    body.innerHTML =
-      '<h2>短情景开场 · '+c.nick+'</h2>'+
-      '<p class="lead">演示向 4 拍：分诊紧张感 → 防护柜 → 诊室门。开场结束仍须完成防护才能接诊。</p>'+
-      renderStage(beat.stage)+
-      '<div class="beat-card"><div class="tag">'+beat.tag+' · 候诊 '+c.nick+'</div>'+
-      '<h3>'+beat.title+'</h3><p>'+beat.say+'</p></div>'+
-      '<div class="gate">开场只讲动线，不稀释红线：未过防护柜 → 进不了诊 / 硬否决。</div>';
-    const skipDoor=document.createElement('button');
-    skipDoor.className='btn danger'; skipDoor.type='button';
-    skipDoor.textContent='不管了 · 冲进诊室接触患者';
-    skipDoor.onclick=()=>{
-      if(S.locked) return;
-      // 开场就企图跳过防护柜进诊 → 硬否决
-      addVeto('no_ppe', '硬否决：跳过防护柜直接进诊接触');
-      hardLock('未过防护柜进诊');
-    };
-    const next=document.createElement('button');
-    next.className='btn'; next.type='button';
-    next.textContent = S.introBeat < INTRO_BEATS.length-1 ? '下一拍' : '去防护物资柜';
-    next.onclick=()=>{
-      if(S.locked) return;
-      if(S.introBeat < INTRO_BEATS.length-1){ S.introBeat++; paint(); }
-      else { S.step='ppe'; paint(); }
-    };
-    const row=document.createElement('div'); row.className='row';
-    row.appendChild(skipDoor); row.appendChild(next);
-    body.appendChild(row);
-  }
-
-  function buildPpe(body){
-    const c=caseObj();
-    body.innerHTML =
-      '<h2>防护物资柜 · 必过关卡</h2>'+
-      '<p class="lead">走廊动线：你站在防护柜前。至少戴好<strong>医用口罩</strong>与<strong>手套</strong>，诊室门才开。隔离衣可选。</p>'+
-      renderStage('corridor')+
-      '<div class="case-box">候诊人：<strong>'+c.nick+'</strong> · '+c.age+'<br/>主诉线索：发热（详情进诊后再问）</div>'+
-      '<div class="ppe-grid">'+
-        ppeCard('mask','😷','医用口罩','必需')+
-        ppeCard('gloves','🧤','手套','必需')+
-        ppeCard('gown','🥼','隔离衣','建议')+
-      '</div>'+
-      '<div class="tip warn" id="ppeTip">先点选防护装备。未就绪就去接触 → 硬否决锁死。</div>'+
-      '<p class="coord-note">站位：你 left 28%/bottom 12% · 防护柜 52%/14% · 诊室门 86%/16% · 脚锚 translate(-50%,-100%)</p>';
-    body.querySelectorAll('.ppe-item').forEach(el=>{
-      el.onclick=()=>{
-        if(S.locked) return;
-        const k=el.getAttribute('data-k');
-        S.ppe[k]=!S.ppe[k];
-        el.classList.toggle('on', S.ppe[k]);
-        updateBadges();
-        const tip=$('ppeTip');
-        // refresh corridor stage state
-        const stageWrap=body.querySelector('.stage');
-        if(stageWrap){
-          const tmp=document.createElement('div');
-          tmp.innerHTML=renderStage('corridor');
-          stageWrap.replaceWith(tmp.firstChild);
-        }
-        if(ppeReady()){ tip.className='tip ok'; tip.textContent='口罩+手套已就绪，诊室门可开。'; }
-        else { tip.className='tip warn'; tip.textContent='还缺必需防护——诊室门不开。'; }
-      };
-      if(S.ppe[el.getAttribute('data-k')]) el.classList.add('on');
-    });
-    const skip=document.createElement('button');
-    skip.className='btn danger'; skip.type='button'; skip.textContent='不等了 · 直接进诊接触';
-    skip.onclick=()=>{
-      if(S.locked) return;
-      if(!ensurePpeOrFail()) return;
-      S.step='chief'; paint();
-    };
-    const go=document.createElement('button');
-    go.className='btn ok'; go.type='button'; go.textContent='防护就绪 · 进诊室';
-    go.onclick=()=>{
-      if(S.locked) return;
-      if(!ppeReady()){ toast('诊室门未开：请先戴口罩和手套', true); return; }
-      S.step='chief'; paint();
-    };
-    const row=document.createElement('div'); row.className='row';
-    row.appendChild(skip); row.appendChild(go);
-    body.appendChild(row);
-  }
-
-  function ppeCard(k, ico, lab, hint){
-    return '<div class="ppe-item" data-k="'+k+'"><div class="ico">'+ico+'</div><div class="lab">'+lab+'</div><div class="hint">'+hint+'</div></div>';
-  }
-
-  function buildChief(body){
-    if(!ensurePpeOrFail()){ body.innerHTML='<p class="tip fail">已因未防护接触锁死。</p>'; return; }
-    const c=caseObj();
-    body.innerHTML =
-      '<h2>接诊 · 主诉</h2>'+
-      '<p class="lead">诊室动线：你在诊桌侧，患者<strong>坐诊椅</strong>或<strong>卧诊床</strong>（臀/躯干承重，不悬空）。</p>'+
-      renderStage('clinic')+
-      '<div class="emr"><div><span class="k">患者</span> <span class="v">'+c.nick+' · '+c.age+'</span></div>'+
-      '<div><span class="k">生命体征</span> <span class="v">'+c.vitals+'</span></div>'+
-      '<div><span class="k">主诉</span> <span class="v">发热</span></div></div>'+
-      '<div class="dialog"><p class="who">'+c.nick+'</p><p class="say">「'+c.chief+'」</p></div>'+
-      '<div class="gate">下一步用问诊树挖流病史。旅行 / 动物 / 生肉 / 接触史等关键项不问全，诊断分记 0。</div>'+
-      '<p class="coord-note">诊桌 22%/18% · 你 30%/12% · 诊床&患者 72%/20%·12% · 脚锚 translate(-50%,-100%)</p>';
-    const row=document.createElement('div'); row.className='row';
-    const btn=document.createElement('button');
-    btn.className='btn'; btn.type='button'; btn.textContent='开始流病问诊';
-    btn.onclick=()=>{ if(S.locked) return; S.step='hx'; paint(); };
-    row.appendChild(btn); body.appendChild(row);
-  }
-
-  function buildHx(body){
-    if(!ensurePpeOrFail()){ body.innerHTML='<p class="tip fail">已锁死。</p>'; return; }
-    const c=caseObj();
-    const keys = ['onset','pattern','cough','gi','travel','animal','meat','contact','bite','tb','sex','drug','allergy'];
-    body.innerHTML =
-      '<h2>流病 / 病史问诊树</h2>'+
-      renderStage('clinic')+
-      '<p class="lead">主诉发热——点选问题追问。绿色标记为流病关键项。</p>'+
-      '<div class="progress-epi" id="epiProg"></div>'+
-      '<div class="q-list" id="qList"></div>'+
-      '<div class="ans-log" id="ansLog"><div class="empty" style="color:var(--muted)">回答会出现在这里。</div></div>'+
-      '<div class="tip" id="hxTip">先把流病关键项问全，再进入查体。</div>';
-    const qList=$('qList');
-    keys.forEach(k=>{
-      const meta=Q_BANK[k];
-      const chip=document.createElement('button');
-      chip.type='button';
-      chip.className='q-chip'+(meta.epi?' req':'')+(S.asked[k]?' on':'');
-      chip.textContent=(meta.epi?'◎ ':'')+meta.label;
-      chip.onclick=()=>{
-        if(S.locked) return;
-        if(!ensurePpeOrFail()) return;
-        S.asked[k]=true;
-        chip.classList.add('on');
-        renderAnsLog();
-        refreshEpiProg();
-        if(k==='meat' && c.brucellaTrap){ toast('生肉/羊奶史已记录——鉴别时留意'); }
-      };
-      qList.appendChild(chip);
-    });
-    function renderAnsLog(){
-      const log=$('ansLog');
-      const askedKeys=keys.filter(k=>S.asked[k]);
-      if(!askedKeys.length){ log.innerHTML='<div style="color:var(--muted)">回答会出现在这里。</div>'; return; }
-      log.innerHTML=askedKeys.map(k=>{
-        const meta=Q_BANK[k];
-        const ans=c.answers[k] || meta.answer;
-        return '<div class="line"><span class="q">问：'+meta.label+'</span><br/><span class="a">答：'+ans+'</span></div>';
-      }).join('');
+function clickHot(sk, i){
+  const h=HSD[sk].hot[i], st=hsState(sk,i);
+  Pano.lookTo(h.u, 700);
+  if(st==='lock'){
+    if(h.k==='j_corridor'){ toast('🔒 未过分诊（体温+流调）——走廊入口锁死', 'fail'); return; }
+    if(h.k==='j_wait' || h.k==='j_clinic' || h.k==='j_clinic_direct'){
+      // 空间硬锁：未防护企图进入候诊/诊室 → 否决并强制留在/回到防护柜
+      bounceToCorridor(h.k==='j_wait' ? '硬否决：未戴防护进入候诊区' : '硬否决：未戴防护冲进诊室');
+      return;
     }
-    function refreshEpiProg(){
-      const need=c.requiredEpi;
-      const n=need.filter(k=>S.asked[k]).length;
-      $('epiProg').innerHTML='流病关键进度：<b>'+n+'/'+need.length+'</b>　（'+need.map(k=>S.asked[k]?('✓'+labelEpi(k)):('·'+labelEpi(k))).join(' ')+'）';
-      updateBadges();
-      const tip=$('hxTip');
-      if(epiComplete()){ tip.className='tip ok'; tip.textContent='流病关键项已齐，可以查体。'; }
-      else { tip.className='tip warn'; tip.textContent='还剩流病关键项未问。强行诊断将导致诊断分为 0。'; }
-    }
-    renderAnsLog(); refreshEpiProg();
-    const force=document.createElement('button');
-    force.className='btn ghost'; force.type='button'; force.textContent='不问了 · 直接查体';
-    force.onclick=()=>{ if(S.locked) return; S.step='exam'; paint(); toast('流病史未问全：诊断分将记 0', true); };
-    const go=document.createElement('button');
-    go.className='btn'; go.type='button'; go.textContent='去查体';
-    go.onclick=()=>{
-      if(S.locked) return;
-      if(!epiComplete()) toast('建议问全流病关键项（否则诊断分=0）', true);
-      S.step='exam'; paint();
+    toast('🔒 当前不可用', 'fail');
+    return;
+  }
+  if(h.kind==='jump') return doJump(h.k);
+  openPanel(h.k);
+}
+
+function doJump(k){
+  if(k==='j_corridor') enterScene('corridor');
+  else if(k==='j_hall' || k==='j_hall2') enterScene('hall');
+  else if(k==='j_wait' || k==='j_wait2') enterScene('wait');
+  else if(k==='j_clinic' || k==='j_clinic_direct'){
+    if(k==='j_clinic_direct' && !ppeReady()){ bounceToCorridor('硬否决：未防护冲进诊室'); return; }
+    if(!S.caseId){ toast('请先在大厅「今日候诊」选例', 'fail'); enterScene('hall'); return; }
+    enterScene('clinic');
+  }
+  else if(k==='j_corridor2') enterScene('corridor');
+}
+
+/* ========== 面板内容 ========== */
+function openPanel(key){
+  $('#panel').classList.remove('hide');
+  const titleMap={
+    triage:'分诊台 · 体温+流调要点', pick:'今日候诊 · 选例', board:'感控告示',
+    ppe:'防护物资柜 · 必过', anxiety:'候诊紧张情景',
+    chief:'接诊 · 主诉', hx:'流病 / 病史问诊树', exam:'虚拟查体', dx:'初筛诊断',
+    ethic:'HIV 相关告知伦理', score:'成绩单', help:'红线说明'
+  };
+  $('#pTitle').textContent=titleMap[key]||key;
+  const body=$('#pBody'), foot=$('#pFoot');
+  body.innerHTML=''; foot.innerHTML='';
+  if(key==='triage') buildTriage(body,foot);
+  else if(key==='pick') buildPick(body,foot);
+  else if(key==='board') buildBoard(body,foot);
+  else if(key==='ppe') buildPpe(body,foot);
+  else if(key==='anxiety') buildAnxiety(body,foot);
+  else if(key==='chief') buildChief(body,foot);
+  else if(key==='hx') buildHx(body,foot);
+  else if(key==='exam') buildExam(body,foot);
+  else if(key==='dx') buildDx(body,foot);
+  else if(key==='ethic') buildEthic(body,foot);
+  else if(key==='score') buildScore(body,foot);
+  else if(key==='help') buildHelp(body,foot);
+  Tour.refresh();
+}
+function closePanel(){ $('#panel').classList.add('hide'); }
+
+function addFootBtn(foot, label, cls, fn){
+  const b=document.createElement('button'); b.type='button'; b.className='btn '+(cls||''); b.textContent=label; b.onclick=fn; foot.appendChild(b); return b;
+}
+
+function buildTriage(body, foot){
+  body.innerHTML=
+    '<p>分诊门槛：完成<strong>体温测量</strong>与<strong>流调要点勾选</strong>后，才能解锁「去防护柜走廊」。</p>'+
+    '<div class="vitals-row">'+
+      '<div class="vital">示意体温 <b id="tvTemp">'+(S.triage.temp?'38.1℃ ✓':'未测')+'</b></div>'+
+      '<div class="vital">流调要点 <b id="tvEpi">'+(S.triage.epi?'已问 ✓':'未问')+'</b></div>'+
+    '</div>'+
+    '<div class="gate">小绿硬锁：大厅未过分诊 → 不能进防护柜走廊（跳转热点锁死/回弹）。</div>'+
+    '<div class="tip" id="triTip">先点下方两项。</div>';
+  addFootBtn(foot,'测量体温','',()=>{
+    S.triage.temp=true; $('#tvTemp').textContent='38.1℃ ✓'; updateTriTip(); Tour.refresh(); toast('体温已登记','ok');
+  });
+  addFootBtn(foot,'问流调要点（旅居/接触）','blue',()=>{
+    S.triage.epi=true; $('#tvEpi').textContent='已问 ✓'; updateTriTip(); Tour.refresh(); toast('流调要点已勾','ok');
+  });
+  addFootBtn(foot, triageDone()?'分诊完成 · 看向走廊':'关闭','ghost',()=>{
+    closePanel();
+    if(triageDone()){ const j=HSD.hall.hot.find(h=>h.k==='j_corridor'); if(j) Pano.lookTo(j.u); toast('✔ 分诊完成，点蓝色 ➜ 去防护柜走廊','ok'); }
+  });
+  function updateTriTip(){
+    const tip=$('#triTip');
+    if(triageDone()){ tip.className='tip ok'; tip.textContent='分诊门槛已过，走廊跳转已解锁。'; }
+    else { tip.className='tip warn'; tip.textContent='体温与流调要点都要完成。'; }
+  }
+  updateTriTip();
+}
+
+function buildPick(body, foot){
+  body.innerHTML='<p>选今日候诊乳名（不剧透病种）。深玩在诊室完成。</p><div class="case-pick" id="casePick"></div>';
+  const box=$('#casePick');
+  CASES.forEach(c=>{
+    const r=S.results[c.id];
+    const b=document.createElement('button'); b.type='button';
+    b.className=S.caseId===c.id?'on':'';
+    b.innerHTML=`<div class="n">${esc(c.nick)}</div><div class="d">${esc(c.age)} · ${esc(c.blurb)}</div><div class="d">${r?(r.pass?'已过关':'未过/锁死'):'待接诊'}</div>`;
+    b.onclick=()=>{
+      // 换例时重置医学进度，保留分诊；防护按新例重来更合理——重置防护与医学
+      S.caseId=c.id;
+      resetCaseMedical(false);
+      box.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+      Tour.refresh(); refreshHud();
+      toast('已选候诊：'+c.nick+' · 请过防护柜再进诊','ok');
     };
-    const row=document.createElement('div'); row.className='row';
-    row.appendChild(force); row.appendChild(go);
-    body.appendChild(row);
-  }
+    box.appendChild(b);
+  });
+  addFootBtn(foot,'关闭','ghost', closePanel);
+}
 
-  function labelEpi(k){
-    const m={travel:'旅行',animal:'动物',meat:'生肉',contact:'接触',sex:'高危性史',bite:'蚊叮',tb:'结核'};
-    return m[k]||k;
-  }
+function resetCaseMedical(resetTriage){
+  if(resetTriage) S.triage={temp:false,epi:false};
+  S.ppe={mask:false,gloves:false,gown:false};
+  S.asked={}; S.examed={}; S.dx=null;
+  S.ethicDone=false; S.ethicChoices={};
+  S.locked=false; S.vetoes=[]; S.soft=[];
+  S.clinicStep={}; S.waitAnimDone=false;
+}
 
-  function buildExam(body){
-    if(!ensurePpeOrFail()){ body.innerHTML='<p class="tip fail">已锁死。</p>'; return; }
-    const c=caseObj();
-    body.innerHTML =
-      '<h2>虚拟查体 · 点部位</h2>'+
-      '<p class="lead">患者<strong>坐诊椅</strong>或<strong>卧诊床</strong>（臀/躯干承重，不悬空）。点击人形热点揭开体征。</p>'+
-      '<div class="body-wrap">'+
-        '<div class="body-fig" id="bodyFig"><div class="bed"></div><div class="chair" title="诊椅"></div><div class="bed-label">诊床 / 诊椅 · 坐或卧</div></div>'+
-        '<div class="findings" id="findings"><div class="empty">查体发现将显示在这里。</div></div>'+
-      '</div>'+
-      '<div class="tip" id="examTip">先点关键部位。</div>';
-    drawBody($('bodyFig'), c);
-    refreshFindings();
-    const go=document.createElement('button');
-    go.className='btn'; go.type='button'; go.id='btnExamNext';
-    go.textContent='查体完成 · 初筛诊断';
-    go.onclick=()=>{
-      if(S.locked) return;
-      const miss=c.requiredExam.filter(k=>!S.examed[k]);
-      if(miss.length){ toast('关键部位未查完', true); return; }
-      S.step='dx'; paint();
+function buildBoard(body, foot){
+  S.seen.board=1; Tour.refresh();
+  body.innerHTML=
+    '<div class="gate">动线：分诊 → 防护柜（口罩+手套）→ 候诊 → 诊室。跳过防护进诊 = 硬否决。</div>'+
+    '<ul><li>未过分诊不能进走廊</li><li>未防护进候诊/诊室 → 否决并强制回防护柜</li><li>流病史不问全 → 诊断分 0</li><li>HIV 走廊公开宣读 → 锁死</li></ul>';
+  addFootBtn(foot,'知道了','', closePanel);
+}
+
+function buildPpe(body, foot){
+  body.innerHTML=
+    '<p>至少戴好<strong>医用口罩</strong>与<strong>手套</strong>。未就绪进候诊/诊室会<strong>硬否决并强制回本柜</strong>。</p>'+
+    '<div class="ppe-grid">'+
+      ppeCard('mask','😷','医用口罩','必需')+
+      ppeCard('gloves','🧤','手套','必需')+
+      ppeCard('gown','🥼','隔离衣','建议')+
+    '</div>'+
+    '<div class="tip warn" id="ppeTip">先点选防护装备。</div>'+
+    (S.locked?'<div class="lock-banner show">本例已因未防护进入锁死——可重开本例或回大厅换例。</div>':'');
+  body.querySelectorAll('.ppe-item').forEach(el=>{
+    const k=el.getAttribute('data-k');
+    if(S.ppe[k]) el.classList.add('on');
+    el.onclick=()=>{
+      S.ppe[k]=!S.ppe[k];
+      el.classList.toggle('on', S.ppe[k]);
+      const tip=$('#ppeTip');
+      if(ppeReady()){ tip.className='tip ok'; tip.textContent='口罩+手套已就绪，可去候诊/诊室。'; toast('防护就绪','ok'); }
+      else { tip.className='tip warn'; tip.textContent='还缺必需防护。'; }
+      Tour.refresh(); refreshHud();
     };
-    const row=document.createElement('div'); row.className='row'; row.appendChild(go);
-    body.appendChild(row);
-    refreshExamTip();
-  }
+  });
+  addFootBtn(foot,'防护就绪 · 看向候诊','ok',()=>{
+    if(!ppeReady()){ toast('请先戴口罩和手套','fail'); return; }
+    closePanel();
+    const j=HSD.corridor.hot.find(h=>h.k==='j_wait'); if(j) Pano.lookTo(j.u);
+  });
+  // 陷阱：故意不戴就冲
+  addFootBtn(foot,'不等了 · 冲进诊室','danger',()=>{
+    closePanel();
+    bounceToCorridor('硬否决：跳过防护柜直接进诊');
+  });
+}
+function ppeCard(k,ico,lab,hint){
+  return `<div class="ppe-item" data-k="${k}"><div class="ico">${ico}</div><div class="lab">${lab}</div><div class="d" style="font-size:11px;color:#64748b">${hint}</div></div>`;
+}
 
-  function drawBody(fig, c){
-    /* 坐姿示意：臀坐诊椅/床缘，小腿下垂；热点相对坐姿人形 */
-    const sites = {
-      mouth:{cx:118,cy:48,r:12,label:'口腔'},
-      pharynx:{cx:118,cy:70,r:14,label:'咽'},
-      lung:{cx:108,cy:118,r:24,label:'肺'},
-      heart:{cx:126,cy:112,r:11,label:'心'},
-      lymph:{cx:78,cy:100,r:12,label:'淋巴结'},
-      abdomen:{cx:108,cy:158,r:22,label:'腹'},
-      skin:{cx:148,cy:130,r:13,label:'皮肤'},
-      joint:{cx:58,cy:198,r:14,label:'关节'},
-      neuro:{cx:118,cy:26,r:14,label:'神志'}
+function buildAnxiety(body, foot){
+  body.innerHTML=
+    '<div class="tip ok">景内已在播：人影左右轻晃 · 叫号牌闪烁（关面板也能看见）。</div>'+
+    '<div class="dialog"><p class="who">喇叭</p><p class="say">「发热患者请到分诊台测温！请保持距离。」</p></div>'+
+    '<div class="dialog"><p class="who">家长</p><p class="say">「能不能快点看病？孩子烧好久了……」</p></div>'+
+    '<div class="dialog"><p class="who">你</p><p class="say">先确认自己已过防护柜，再进诊室接诊'+(caseObj()?caseObj().nick:'患者')+'。</p></div>'+
+    '<div class="tip" id="anxTip">镜头将扫向椅区 → 叫号屏 → 诊室门。</div>';
+  WaitFX.start();
+  let step=0;
+  const seq=[0.35,0.55,0.85];
+  const t=setInterval(()=>{
+    if(step>=seq.length){ clearInterval(t); return; }
+    Pano.lookTo(seq[step], 500); step++;
+  }, 600);
+  S.waitAnimDone=true; Tour.refresh();
+  addFootBtn(foot,'去诊室','',()=>{ closePanel(); doJump('j_clinic'); });
+  addFootBtn(foot,'关闭','ghost', closePanel);
+}
+
+function ensureClinicReady(){
+  if(!S.caseId){ toast('请先回大厅选例','fail'); return false; }
+  if(!ppeReady()){ bounceToCorridor('硬否决：未防护在诊室接触'); return false; }
+  if(S.locked && S.vetoes.indexOf('no_ppe')>=0){ toast('本例已锁死，请重开','fail'); return false; }
+  return true;
+}
+
+function buildChief(body, foot){
+  if(!ensureClinicReady()){ body.innerHTML='<p class="tip fail">无法接诊。</p>'; addFootBtn(foot,'关闭','ghost',closePanel); return; }
+  const c=caseObj();
+  S.clinicStep.chief=1; Tour.refresh();
+  body.innerHTML=
+    '<div class="emr"><div><span class="k">患者</span> <span class="v">'+esc(c.nick)+' · '+esc(c.age)+'</span></div>'+
+    '<div><span class="k">生命体征</span> <span class="v">'+esc(c.vitals)+'</span></div></div>'+
+    '<div class="dialog"><p class="who">'+esc(c.nick)+'</p><p class="say">「'+esc(c.chief)+'」</p></div>'+
+    '<div class="gate">下一步用问诊树挖流病史。关键项不问全，诊断分记 0。</div>';
+  addFootBtn(foot,'开始流病问诊','',()=>{ openPanel('hx'); });
+  addFootBtn(foot,'关闭','ghost', closePanel);
+}
+
+function buildHx(body, foot){
+  if(!ensureClinicReady()){ body.innerHTML='<p class="tip fail">已锁死/未防护。</p>'; addFootBtn(foot,'关闭','ghost',closePanel); return; }
+  const c=caseObj();
+  const keys=['onset','pattern','cough','gi','travel','animal','meat','contact','bite','tb','sex','drug','allergy'];
+  body.innerHTML=
+    '<p>点选问题追问。绿色标记为流病关键项。</p>'+
+    '<div class="tip" id="epiProg"></div>'+
+    '<div class="q-list" id="qList"></div>'+
+    '<div class="ans-log" id="ansLog"></div>';
+  const qList=$('#qList');
+  keys.forEach(k=>{
+    const meta=Q_BANK[k];
+    const chip=document.createElement('button'); chip.type='button';
+    chip.className='q-chip'+(meta.epi?' req':'')+(S.asked[k]?' on':'');
+    chip.textContent=(meta.epi?'◎ ':'')+meta.label;
+    chip.onclick=()=>{
+      S.asked[k]=true; chip.classList.add('on'); renderLog(); refreshEpi(); Tour.refresh();
+      if(k==='meat' && c.brucellaTrap) toast('生肉/羊奶史已记录');
     };
-    let svg = '<svg class="body-svg" viewBox="0 0 200 260" xmlns="http://www.w3.org/2000/svg">';
-    /* 头 */
-    svg += '<ellipse cx="118" cy="32" rx="20" ry="24" fill="#fde68a" stroke="#b45309" stroke-width="2"/>';
-    /* 躯干略前倾坐姿 */
-    svg += '<rect x="88" y="58" width="56" height="78" rx="14" fill="#e2e8f0" stroke="#64748b" stroke-width="2"/>';
-    /* 上臂 */
-    svg += '<rect x="66" y="68" width="16" height="58" rx="7" fill="#e2e8f0" stroke="#64748b"/>';
-    svg += '<rect x="150" y="68" width="16" height="58" rx="7" fill="#e2e8f0" stroke="#64748b"/>';
-    /* 大腿水平（坐面） */
-    svg += '<rect x="78" y="136" width="78" height="22" rx="10" fill="#cbd5e1" stroke="#64748b" stroke-width="2"/>';
-    /* 小腿下垂 */
-    svg += '<rect x="78" y="156" width="16" height="58" rx="7" fill="#e2e8f0" stroke="#64748b"/>';
-    svg += '<rect x="128" y="156" width="16" height="58" rx="7" fill="#e2e8f0" stroke="#64748b"/>';
-    Object.keys(c.exam).forEach(k=>{
-      const s=sites[k]; if(!s) return;
-      const done=S.examed[k]?' done':'';
-      svg += '<circle class="site-btn'+done+'" data-site="'+k+'" cx="'+s.cx+'" cy="'+s.cy+'" r="'+s.r+'"></circle>';
-      svg += '<text x="'+s.cx+'" y="'+(s.cy+4)+'" text-anchor="middle" font-size="9" fill="#1e3a5f" pointer-events="none" font-weight="700">'+s.label+'</text>';
-    });
-    svg += '<text x="100" y="248" text-anchor="middle" fill="#64748b" font-size="11">坐诊椅 / 卧诊床 · 点圆点查体</text></svg>';
-    const label=fig.querySelector('.bed-label');
-    const wrap=document.createElement('div');
-    wrap.innerHTML=svg;
-    const svgEl=wrap.firstChild;
-    if(label) fig.insertBefore(svgEl, label);
-    else fig.appendChild(svgEl);
-    fig.querySelectorAll('.site-btn').forEach(el=>{
-      el.addEventListener('click',()=>{
-        if(S.locked) return;
-        if(!ensurePpeOrFail()) return;
-        const k=el.getAttribute('data-site');
-        S.examed[k]=true;
-        el.classList.add('done');
-        refreshFindings();
-        refreshExamTip();
-        toast('已查：'+(c.exam[k].label));
-      });
-    });
+    qList.appendChild(chip);
+  });
+  function renderLog(){
+    const asked=keys.filter(k=>S.asked[k]);
+    $('#ansLog').innerHTML = asked.length ? asked.map(k=>`<div><span class="q">问：${esc(Q_BANK[k].label)}</span><br/>答：${esc(c.answers[k]||'')}</div>`).join('') : '<div style="color:#64748b">回答会出现在这里</div>';
   }
-
-  function refreshFindings(){
-    const c=caseObj();
-    const box=$('findings'); if(!box) return;
-    const keys=Object.keys(c.exam).filter(k=>S.examed[k]);
-    if(!keys.length){ box.innerHTML='<div class="empty">查体发现将显示在这里。</div>'; return; }
-    box.innerHTML=keys.map(k=>{
-      const e=c.exam[k];
-      return '<div class="item"><strong>'+e.label+'</strong><br/>'+e.find+'</div>';
-    }).join('');
+  function refreshEpi(){
+    const need=c.requiredEpi; const n=need.filter(k=>S.asked[k]).length;
+    const tip=$('#epiProg');
+    tip.className='tip '+(n>=need.length?'ok':'warn');
+    tip.textContent='流病关键 '+n+'/'+need.length+'（不问全→诊断分=0）';
+    if(n>=need.length) S.clinicStep.hx=1;
   }
+  renderLog(); refreshEpi();
+  addFootBtn(foot,'去查体','',()=>{ S.clinicStep.hx=1; openPanel('exam'); });
+  addFootBtn(foot,'不问了 · 直接查体','ghost',()=>{ toast('流病史未问全：诊断分将记 0','fail'); openPanel('exam'); });
+}
 
-  function refreshExamTip(){
-    const c=caseObj();
-    const tip=$('examTip'); if(!tip) return;
+function buildExam(body, foot){
+  if(!ensureClinicReady()){ body.innerHTML='<p class="tip fail">已锁死。</p>'; addFootBtn(foot,'关闭','ghost',closePanel); return; }
+  const c=caseObj();
+  body.innerHTML=
+    '<p>患者坐诊椅/卧诊床。点击人形热点揭体征。</p>'+
+    '<div class="body-fig" id="bodyFig"><div class="bed"></div><div class="chair"></div></div>'+
+    '<div class="findings" id="findings"></div>'+
+    '<div class="tip" id="examTip"></div>';
+  drawBody($('#bodyFig'), c);
+  refreshFindings(); refreshExamTip();
+  addFootBtn(foot,'查体完成 · 初筛','',()=>{
     const miss=c.requiredExam.filter(k=>!S.examed[k]);
-    if(!miss.length){ tip.className='tip ok'; tip.textContent='关键查体已齐。'; }
-    else { tip.className='tip warn'; tip.textContent='还缺：'+miss.map(k=>c.exam[k].label).join('、'); }
-  }
+    if(miss.length){ toast('关键部位未查完','fail'); return; }
+    S.clinicStep.exam=1; openPanel('dx');
+  });
+  addFootBtn(foot,'关闭','ghost', closePanel);
+}
 
-  function buildDx(body){
-    if(!ensurePpeOrFail()){ body.innerHTML='<p class="tip fail">已锁死。</p>'; return; }
-    const c=caseObj();
-    const epiOk=epiComplete();
-    body.innerHTML =
-      '<h2>初筛诊断</h2>'+
-      renderStage('clinic')+
-      '<p class="lead">根据问诊+查体选择最合理的初筛方向（教学示意⚠，非确诊）。</p>'+
-      (epiOk?'':'<div class="tip fail">流病史未问全 → 本步诊断分将记 <strong>0</strong>，即使选对方向也不给诊断分。</div>')+
-      '<div class="choice-cards" id="dxCards"></div>'+
-      '<div class="tip" id="dxTip">点选一个方向。</div>';
-    const cards=$('dxCards');
-    c.dxOptions.forEach(opt=>{
-      const lockedBrucella = opt.needMeat && !meatAsked();
-      const el=document.createElement('button');
-      el.type='button';
-      el.className='choice'+(S.dx===opt.id?' on':'')+(lockedBrucella?' dim':'');
-      el.innerHTML='<div class="t">'+opt.label+(lockedBrucella?' 🔒':'')+'</div><div class="d">'+(lockedBrucella?'未问生肉/羊奶等 → 此鉴别不亮':'点击选择')+'</div>';
+function drawBody(fig, c){
+  const sites={mouth:{cx:118,cy:48,r:12,label:'口腔'},pharynx:{cx:118,cy:70,r:14,label:'咽'},lung:{cx:108,cy:118,r:22,label:'肺'},heart:{cx:126,cy:112,r:11,label:'心'},lymph:{cx:78,cy:100,r:12,label:'淋巴结'},abdomen:{cx:108,cy:158,r:20,label:'腹'},skin:{cx:148,cy:130,r:13,label:'皮肤'},joint:{cx:58,cy:198,r:14,label:'关节'},neuro:{cx:118,cy:26,r:14,label:'神志'}};
+  let svg='<svg class="body-svg" viewBox="0 0 200 260" xmlns="http://www.w3.org/2000/svg">';
+  svg+='<ellipse cx="118" cy="32" rx="20" ry="24" fill="#fde68a" stroke="#b45309" stroke-width="2"/>';
+  svg+='<rect x="88" y="58" width="56" height="78" rx="14" fill="#e2e8f0" stroke="#64748b" stroke-width="2"/>';
+  svg+='<rect x="66" y="68" width="16" height="58" rx="7" fill="#e2e8f0" stroke="#64748b"/>';
+  svg+='<rect x="150" y="68" width="16" height="58" rx="7" fill="#e2e8f0" stroke="#64748b"/>';
+  svg+='<rect x="78" y="136" width="78" height="22" rx="10" fill="#cbd5e1" stroke="#64748b" stroke-width="2"/>';
+  svg+='<rect x="78" y="156" width="16" height="58" rx="7" fill="#e2e8f0" stroke="#64748b"/>';
+  svg+='<rect x="128" y="156" width="16" height="58" rx="7" fill="#e2e8f0" stroke="#64748b"/>';
+  Object.keys(c.exam).forEach(k=>{
+    const s=sites[k]; if(!s) return;
+    svg+=`<circle class="site-btn${S.examed[k]?' done':''}" data-site="${k}" cx="${s.cx}" cy="${s.cy}" r="${s.r}"></circle>`;
+    svg+=`<text x="${s.cx}" y="${s.cy+4}" text-anchor="middle" font-size="9" fill="#1e3a5f" pointer-events="none" font-weight="700">${s.label}</text>`;
+  });
+  svg+='</svg>';
+  fig.insertAdjacentHTML('beforeend', svg);
+  fig.querySelectorAll('.site-btn').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const k=el.getAttribute('data-site');
+      S.examed[k]=true; el.classList.add('done');
+      refreshFindings(); refreshExamTip(); toast('已查：'+c.exam[k].label);
+      const miss=c.requiredExam.filter(x=>!S.examed[x]);
+      if(!miss.length) S.clinicStep.exam=1;
+      Tour.refresh();
+    });
+  });
+}
+function refreshFindings(){
+  const c=caseObj(); const box=$('#findings'); if(!box||!c) return;
+  const keys=Object.keys(c.exam).filter(k=>S.examed[k]);
+  box.innerHTML=keys.length?keys.map(k=>`<div class="item"><strong>${esc(c.exam[k].label)}</strong><br/>${esc(c.exam[k].find)}</div>`).join(''):'<div style="color:#64748b">查体发现将显示在这里</div>';
+}
+function refreshExamTip(){
+  const c=caseObj(); const tip=$('#examTip'); if(!tip||!c) return;
+  const miss=c.requiredExam.filter(k=>!S.examed[k]);
+  tip.className='tip '+(miss.length?'warn':'ok');
+  tip.textContent=miss.length?('还缺：'+miss.map(k=>c.exam[k].label).join('、')):'关键查体已齐';
+}
+
+function buildDx(body, foot){
+  if(!ensureClinicReady()){ body.innerHTML='<p class="tip fail">已锁死。</p>'; addFootBtn(foot,'关闭','ghost',closePanel); return; }
+  const c=caseObj(); const epiOk=epiComplete();
+  body.innerHTML=
+    '<p>选择最合理的初筛方向（教学示意⚠）。</p>'+
+    (epiOk?'':'<div class="tip fail">流病史未问全 → 诊断分将记 <strong>0</strong>。</div>')+
+    '<div class="choice-cards" id="dxCards"></div>';
+  const cards=$('#dxCards');
+  c.dxOptions.forEach(opt=>{
+    const lockedBrucella=opt.needMeat && !meatAsked();
+    const el=document.createElement('button'); el.type='button';
+    el.className='choice'+(S.dx===opt.id?' on':'')+(lockedBrucella?' dim':'');
+    el.innerHTML=`<div class="t">${esc(opt.label)}${lockedBrucella?' 🔒':''}</div><div class="d">${lockedBrucella?'未问生肉/羊奶 → 不亮':esc(opt.d)}</div>`;
+    el.onclick=()=>{
+      if(lockedBrucella){ toast('布病陷阱：先问到生肉/羊奶史','fail'); S.soft.push('brucella_guess'); return; }
+      S.dx=opt.id; cards.querySelectorAll('.choice').forEach(x=>x.classList.remove('on')); el.classList.add('on'); Tour.refresh();
+    };
+    cards.appendChild(el);
+  });
+  if(c.brucellaTrap && !meatAsked()){
+    addFootBtn(foot,'不问病史 · 我猜布鲁氏菌病','danger',()=>{
+      addVeto('brucella_blind','硬门槛：布病须问到生肉等才亮——瞎猜不给分');
+      S.dx='brucella_blind';
+    });
+  }
+  addFootBtn(foot,'提交初筛','',()=>{
+    if(!S.dx){ toast('请先选择','fail'); return; }
+    if(S.dx==='brucella_blind'){ toast('瞎猜无效','fail'); return; }
+    const opt=c.dxOptions.find(o=>o.id===S.dx);
+    if(opt && opt.needMeat && !meatAsked()){ toast('布病未合法点亮','fail'); return; }
+    if(c.needEthic) openPanel('ethic');
+    else openPanel('score');
+  });
+  addFootBtn(foot,'关闭','ghost', closePanel);
+}
+
+function buildEthic(body, foot){
+  if(!ensureClinicReady()){ body.innerHTML='<p class="tip fail">已锁死。</p>'; addFootBtn(foot,'关闭','ghost',closePanel); return; }
+  const c=caseObj();
+  if(!c.needEthic){ body.innerHTML='<p class="tip ok">本例无需 HIV 告知关。</p>'; addFootBtn(foot,'去成绩单','',()=>openPanel('score')); return; }
+  body.innerHTML=
+    '<p>'+esc(c.pretestNote)+'</p>'+
+    '<div class="gate">走廊公开宣读 → 硬否决锁死。未完成规范告知 → 不得过关。</div>'+
+    '<h3 style="margin:8px 0 4px;font-size:13px">1. 在哪里告知？</h3><div class="choice-cards" id="eth1"></div>'+
+    '<h3 style="margin:8px 0 4px;font-size:13px">2. 怎么说？</h3><div class="choice-cards" id="eth2"></div>'+
+    '<h3 style="margin:8px 0 4px;font-size:13px">3. 下一步？</h3><div class="choice-cards" id="eth3"></div>'+
+    '<div class="tip" id="ethTip">三项都选对才算完成。</div>';
+  const groups=[
+    {id:'eth1',key:'place',opts:[
+      {id:'private',label:'独立诊室 / 低声私密告知',ok:true,d:'保护隐私'},
+      {id:'hallway',label:'走廊当着家属大声说「你艾滋了」',ok:false,d:'严重泄露隐私'},
+      {id:'wechat',label:'微信群通知单位同事',ok:false,d:'违法违规'}
+    ]},
+    {id:'eth2',key:'words',opts:[
+      {id:'confirm',label:'说明「初筛反应性≠确诊，需确证；会保密并给予支持」',ok:true,d:'准确+支持'},
+      {id:'doom',label:'直接宣判「没救了，回去等吧」',ok:false,d:'恐吓+错误'},
+      {id:'hide',label:'瞒着患者只告诉家属',ok:false,d:'剥夺知情'}
+    ]},
+    {id:'eth3',key:'next',opts:[
+      {id:'confirm_test',label:'安排确证检测+咨询转介，强调保密与随访',ok:true,d:'规范路径'},
+      {id:'force',label:'强迫立刻签字公开病情才能开药',ok:false,d:'胁迫'},
+      {id:'ignore',label:'不告知，直接当普通感冒开药打发',ok:false,d:'未履行告知'}
+    ]}
+  ];
+  groups.forEach(g=>{
+    const box=document.getElementById(g.id);
+    g.opts.forEach(opt=>{
+      const el=document.createElement('button'); el.type='button';
+      el.className='choice'+(S.ethicChoices[g.key]===opt.id?' on':'');
+      el.innerHTML=`<div class="t">${esc(opt.label)}</div><div class="d">${esc(opt.d)}</div>`;
       el.onclick=()=>{
-        if(S.locked) return;
-        if(lockedBrucella){
-          toast('布病陷阱：先问到生肉/羊奶/牲畜相关史，此选项才点亮', true);
-          S.soft.push('brucella_guess_without_meat');
+        S.ethicChoices[g.key]=opt.id;
+        box.querySelectorAll('.choice').forEach(x=>x.classList.remove('on'));
+        el.classList.add('on');
+        if(g.key==='place' && opt.id==='hallway'){
+          addVeto('hiv_privacy','硬否决：走廊公开宣读 HIV 相关结果');
+          hardLock('HIV 告知严重侵犯隐私');
           return;
         }
-        S.dx=opt.id;
-        cards.querySelectorAll('.choice').forEach(x=>x.classList.remove('on'));
-        el.classList.add('on');
-        $('dxTip').className='tip';
-        $('dxTip').textContent='已选：'+opt.label;
+        checkEthic();
       };
-      cards.appendChild(el);
+      box.appendChild(el);
     });
-    if(c.brucellaTrap && !meatAsked()){
-      const trap=document.createElement('button');
-      trap.className='btn ghost'; trap.type='button';
-      trap.textContent='不问病史 · 我猜就是布鲁氏菌病';
-      trap.onclick=()=>{
-        if(S.locked) return;
-        addVeto('brucella_blind', '硬门槛：布病须问到生肉等才亮——瞎猜不给分');
-        S.dx='brucella_blind';
-        toast('瞎猜布病不给分；请回去问生肉/羊奶史', true);
-      };
-      body.appendChild(trap);
-    }
-    const row=document.createElement('div'); row.className='row';
-    const btn=document.createElement('button');
-    btn.className='btn'; btn.type='button'; btn.textContent='提交初筛';
-    btn.onclick=()=>{
-      if(!S.dx){ toast('请先选择初筛方向', true); return; }
-      if(S.dx==='brucella_blind'){ toast('瞎猜无效，请问出生肉史后再选', true); return; }
-      const opt=c.dxOptions.find(o=>o.id===S.dx);
-      if(opt && opt.needMeat && !meatAsked()){ toast('布病选项未合法点亮', true); return; }
-      if(c.needEthic){ S.step='ethic'; paint(); }
-      else { S.step='score'; paint(); }
-    };
-    row.appendChild(btn); body.appendChild(row);
+  });
+  function checkEthic(){
+    const ok=S.ethicChoices.place==='private'&&S.ethicChoices.words==='confirm'&&S.ethicChoices.next==='confirm_test';
+    S.ethicDone=ok; const tip=$('#ethTip');
+    tip.className='tip '+(ok?'ok':'warn');
+    tip.textContent=ok?'伦理关完成。':'尚未完成三项正确告知决策。';
+    Tour.refresh();
   }
+  checkEthic();
+  addFootBtn(foot,'跳过告知 · 出成绩','danger',()=>{
+    S.ethicDone=false; addVeto('hiv_no_ethic','硬门槛：HIV 告知伦理未完成 → 不得过关'); openPanel('score');
+  });
+  addFootBtn(foot,'完成告知 · 出成绩','ok',()=>{
+    if(!S.ethicDone){ toast('伦理三项未全部选对','fail'); return; }
+    openPanel('score');
+  });
+}
 
-  function buildEthic(body){
-    if(!ensurePpeOrFail()){ body.innerHTML='<p class="tip fail">已锁死。</p>'; return; }
-    const c=caseObj();
-    body.innerHTML =
-      '<h2>HIV 相关告知伦理关</h2>'+
-      '<p class="lead">'+c.pretestNote+'</p>'+
-      renderStage('clinic')+
-      '<div class="gate">未完成规范告知 → <strong>不得过关</strong>。选对以下关键决策。</div>'+
-      '<h3>1. 在哪里告知？</h3><div class="choice-cards" id="eth1"></div>'+
-      '<h3>2. 怎么说？</h3><div class="choice-cards" id="eth2"></div>'+
-      '<h3>3. 下一步？</h3><div class="choice-cards" id="eth3"></div>'+
-      '<div class="tip" id="ethTip">三项都选对才算完成伦理关。</div>';
+function standardReplay(){
+  return '标准动作回放：①大厅分诊（体温+流调）→ ②防护柜戴口罩+手套 → ③再进候诊/诊室问全流病史 → ④查体/初筛；HIV 例须私密告知，禁止走廊宣读。';
+}
 
-    const groups = [
-      {id:'eth1', key:'place', opts:[
-        {id:'private', label:'独立诊室 / 低声私密告知', ok:true, d:'保护隐私'},
-        {id:'hallway', label:'走廊当着家属大声说「你艾滋了」', ok:false, d:'严重泄露隐私'},
-        {id:'wechat', label:'微信群通知单位同事', ok:false, d:'违法违规'}
-      ]},
-      {id:'eth2', key:'words', opts:[
-        {id:'confirm', label:'说明「初筛反应性≠确诊，需确证；会保密并给予支持」', ok:true, d:'准确+支持'},
-        {id:'doom', label:'直接宣判「没救了，回去等吧」', ok:false, d:'恐吓+错误'},
-        {id:'hide', label:'瞒着患者只告诉家属', ok:false, d:'剥夺知情'}
-      ]},
-      {id:'eth3', key:'next', opts:[
-        {id:'confirm_test', label:'安排确证检测+咨询转介，强调保密与随访', ok:true, d:'规范路径'},
-        {id:'force', label:'强迫立刻签字公开病情才能开药', ok:false, d:'胁迫'},
-        {id:'ignore', label:'不告知，直接当普通感冒开药打发', ok:false, d:'未履行告知'}
-      ]}
-    ];
+function buildScore(body, foot){
+  const c=caseObj();
+  if(!c){ body.innerHTML='<p>尚未选例。</p>'; addFootBtn(foot,'回大厅','',()=>{ closePanel(); enterScene('hall'); }); return; }
+  const epiOk=epiComplete();
+  const dxOpt=c.dxOptions.find(o=>o.id===S.dx);
+  const dxCorrect=!!(dxOpt&&dxOpt.ok);
+  let dxScore=0;
+  if(epiOk && dxCorrect && S.dx!=='brucella_blind' && S.vetoes.indexOf('brucella_blind')<0) dxScore=40;
+  let ppeScore=(S.ppe.mask&&S.ppe.gloves)?20:0;
+  if(S.vetoes.indexOf('no_ppe')>=0) ppeScore=0;
+  const examNeed=c.requiredExam.length;
+  const examN=c.requiredExam.filter(k=>S.examed[k]).length;
+  let examScore=examNeed?Math.round(20*examN/examNeed):20;
+  let ethicScore=0, ethicPass=true;
+  if(c.needEthic){
+    ethicPass=!!S.ethicDone && S.vetoes.indexOf('hiv_no_ethic')<0 && S.vetoes.indexOf('hiv_privacy')<0;
+    ethicScore=ethicPass?20:0;
+  } else ethicScore=20;
+  let total=ppeScore+examScore+dxScore+ethicScore;
+  if(S.locked || S.vetoes.indexOf('no_ppe')>=0 || S.vetoes.indexOf('hiv_privacy')>=0) total=Math.min(total,0);
+  let pass=total>=70 && dxCorrect && epiOk && ppeScore>0;
+  if(c.needEthic && !ethicPass) pass=false;
+  if(S.vetoes.indexOf('no_ppe')>=0 || S.vetoes.indexOf('hiv_privacy')>=0 || S.vetoes.indexOf('hiv_no_ethic')>=0) pass=false;
+  if(S.locked) pass=false;
+  S.clinicStep.score=1;
+  S.results[c.id]={pass,vetoes:S.vetoes.slice(),total};
+  body.innerHTML=
+    `<div class="tip ${pass?'ok':'fail'}">${pass?'过关':'未过关'} · 总分 <strong>${total}</strong> / 100${S.locked?' · 已硬锁死':''}</div>`+
+    `<div class="score-grid">
+      <div class="score-cell"><div class="k">防护感控</div><div class="v">${ppeScore}</div></div>
+      <div class="score-cell"><div class="k">关键查体</div><div class="v">${examScore}</div></div>
+      <div class="score-cell"><div class="k">初筛诊断${epiOk?'':'（流病未全→0）'}</div><div class="v">${dxScore}</div></div>
+      <div class="score-cell"><div class="k">${c.needEthic?'HIV告知伦理':'职业素养'}</div><div class="v">${ethicScore}</div></div>
+    </div>`+
+    (!pass?`<div class="replay-box"><strong>失败回放</strong><br/>${standardReplay()}</div>`:'')+
+    `<p><strong>暗线</strong>：${esc(c.secretLabel)}</p>`+
+    `<div class="tip ${S.vetoes.length?'fail':'ok'}">否决：${S.vetoes.length?S.vetoes.join(' · '):'无'}</div>`+
+    `<p class="footer-mini">${VERSION} · 示意全景 · 平面备份 infect_fever_clinic_flat_v020.html</p>`;
+  Tour.refresh();
+  addFootBtn(foot,'重开本例','',()=>{
+    const id=c.id; resetCaseMedical(false); S.caseId=id; S.locked=false; S.vetoes=[];
+    // keep triage; require PPE again
+    closePanel(); enterScene('corridor'); toast('本例已重置医学进度，请重新过防护柜');
+  });
+  addFootBtn(foot,'回大厅','ghost',()=>{ closePanel(); enterScene('hall'); });
+}
 
-    groups.forEach(g=>{
-      const box=$(g.id);
-      g.opts.forEach(opt=>{
-        const el=document.createElement('button');
-        el.type='button'; el.className='choice'+(S.ethicChoices[g.key]===opt.id?' on':'');
-        el.innerHTML='<div class="t">'+opt.label+'</div><div class="d">'+opt.d+'</div>';
-        el.onclick=()=>{
-          if(S.locked) return;
-          S.ethicChoices[g.key]=opt.id;
-          box.querySelectorAll('.choice').forEach(x=>x.classList.remove('on'));
-          el.classList.add('on');
-          if(g.key==='place' && opt.id==='hallway'){
-            addVeto('hiv_privacy', '硬否决：走廊公开宣读 HIV 相关结果');
-            hardLock('HIV 告知严重侵犯隐私');
-            return;
-          }
-          checkEthic();
-        };
-        box.appendChild(el);
-      });
-    });
+function buildHelp(body, foot){
+  body.innerHTML=
+    '<ul style="padding-left:18px;margin:0">'+
+    '<li>大厅未过分诊（体温+流调）→ 走廊跳转锁死</li>'+
+    '<li>未戴口罩+手套进候诊/诊室 → 硬否决并强制回防护柜</li>'+
+    '<li>流病史不问全 → 诊断分 0</li>'+
+    '<li>布病须问生肉等才亮；瞎猜不给分</li>'+
+    '<li>HIV 走廊宣读锁死；告知未完成不过关</li>'+
+    '</ul>';
+  addFootBtn(foot,'关闭','ghost', closePanel);
+}
 
-    function checkEthic(){
-      const ok = S.ethicChoices.place==='private' && S.ethicChoices.words==='confirm' && S.ethicChoices.next==='confirm_test';
-      S.ethicDone=ok;
-      const tip=$('ethTip');
-      if(ok){ tip.className='tip ok'; tip.textContent='伦理关完成：私密告知 + 初筛非确诊说明 + 确证/转介。'; }
-      else { tip.className='tip warn'; tip.textContent='尚未完成三项正确告知决策。'; }
-    }
-    checkEthic();
-
-    const skip=document.createElement('button');
-    skip.className='btn danger'; skip.type='button'; skip.textContent='跳过告知 · 直接出成绩';
-    skip.onclick=()=>{
-      if(S.locked) return;
-      S.ethicDone=false;
-      addVeto('hiv_no_ethic', '硬门槛：HIV 告知伦理未完成 → 不得过关');
-      S.step='score'; paint();
-    };
-    const go=document.createElement('button');
-    go.className='btn ok'; go.type='button'; go.textContent='完成告知 · 出成绩单';
-    go.onclick=()=>{
-      if(S.locked) return;
-      if(!S.ethicDone){ toast('伦理三项未全部选对，不能过关', true); return; }
-      S.step='score'; paint();
-    };
-    const row=document.createElement('div'); row.className='row';
-    row.appendChild(skip); row.appendChild(go);
-    body.appendChild(row);
+/* ========== 启动 ========== */
+$('#pClose').onclick=closePanel;
+$('#btnHelp').onclick=()=>openPanel('help');
+$('#btnHome').onclick=()=>{ closePanel(); enterScene('hall'); };
+$('#btnBack').onclick=()=>{
+  const i=SIDX(S.at);
+  if(i<=0){ $('#cover').classList.remove('hide'); }
+  else {
+    const prev=SCN[i-1].k;
+    // going back is always allowed
+    enterScene(prev, {force:true});
   }
+};
+$('#btnStart').onclick=()=>{
+  $('#cover').classList.add('hide');
+  Pano.init();
+  ['hall','corridor','wait','clinic'].forEach(Pano.preload);
+  enterScene('hall', {instant:true});
+};
+$('#btnFlat').onclick=()=>{ window.open('infect_fever_clinic_flat_v020.html','_blank'); };
 
-  function standardReplay(){
-    return '标准动作回放：①分诊后先过防护柜戴口罩+手套 → ②再进诊问全流病史 → ③再查体/初筛；HIV 例须私密告知，禁止走廊宣读。';
-  }
-
-  function buildScore(body){
-    const c=caseObj();
-    const epiOk=epiComplete();
-    const dxOpt=c.dxOptions.find(o=>o.id===S.dx);
-    const dxCorrect = !!(dxOpt && dxOpt.ok);
-    let dxScore = 0;
-    if(epiOk && dxCorrect && S.dx!=='brucella_blind' && S.vetoes.indexOf('brucella_blind')<0){
-      dxScore = 40;
-    }
-    let ppeScore = (S.ppe.mask && S.ppe.gloves) ? 20 : 0;
-    if(S.vetoes.indexOf('no_ppe')>=0) ppeScore = 0;
-    const examNeed=c.requiredExam.length;
-    const examN=c.requiredExam.filter(k=>S.examed[k]).length;
-    let examScore = examNeed? Math.round(20 * examN/examNeed) : 20;
-    let ethicScore = 0;
-    let ethicPass = true;
-    if(c.needEthic){
-      ethicPass = !!S.ethicDone && S.vetoes.indexOf('hiv_no_ethic')<0 && S.vetoes.indexOf('hiv_privacy')<0;
-      ethicScore = ethicPass ? 20 : 0;
-    } else {
-      ethicScore = 20;
-    }
-    let total = ppeScore + examScore + dxScore + ethicScore;
-    if(S.locked || S.vetoes.indexOf('no_ppe')>=0 || S.vetoes.indexOf('hiv_privacy')>=0){
-      total = Math.min(total, 0);
-    }
-    let pass = total>=70 && dxCorrect && epiOk && ppeScore>0;
-    if(c.needEthic && !ethicPass) pass=false;
-    if(S.vetoes.length && (S.vetoes.indexOf('no_ppe')>=0 || S.vetoes.indexOf('hiv_privacy')>=0)) pass=false;
-    if(S.vetoes.indexOf('hiv_no_ethic')>=0) pass=false;
-    if(S.locked) pass=false;
-
-    S.score={total,ppeScore,examScore,dxScore,ethicScore,pass,epiOk,dxCorrect};
-    S.results[c.id]={pass, vetoes:S.vetoes.slice(), total};
-
-    body.innerHTML =
-      '<h2>成绩单 · '+c.nick+'</h2>'+
-      '<div class="tip '+(pass?'ok':'fail')+'">'+(pass?'过关':'未过关')+' · 总分 <strong>'+total+'</strong> / 100'+
-        (S.locked?' · 本例已硬锁死':'')+'</div>'+
-      '<div class="score-grid">'+
-        '<div class="score-cell"><div class="k">防护感控</div><div class="v">'+ppeScore+'</div></div>'+
-        '<div class="score-cell"><div class="k">关键查体</div><div class="v">'+examScore+'</div></div>'+
-        '<div class="score-cell"><div class="k">初筛诊断'+(epiOk?'':'（流病未全→0）')+'</div><div class="v">'+dxScore+'</div></div>'+
-        '<div class="score-cell"><div class="k">'+(c.needEthic?'HIV告知伦理':'职业素养（本例无伦理关）')+'</div><div class="v">'+ethicScore+'</div></div>'+
-      '</div>'+
-      (!pass ? '<div class="replay-box"><strong>失败回放 · 一句标准动作</strong>'+standardReplay()+'</div>' : '')+
-      '<h3>暗线（学习后揭晓）</h3>'+
-      '<div class="case-box">'+c.secretLabel+'</div>'+
-      '<h3>硬否决 / 门槛记录</h3>'+
-      '<div class="tip '+(S.vetoes.length?'fail':'ok')+'">'+(S.vetoes.length?S.vetoes.join(' · '):'本例未触发硬否决')+'</div>'+
-      '<ul style="font-size:13px;color:var(--muted)">'+
-        '<li>未防护接触 / 跳过防护柜进诊 → 当场锁死</li>'+
-        '<li>流病史不问全 → 诊断分=0</li>'+
-        '<li>布病须问生肉等才亮；瞎猜不给分</li>'+
-        '<li>HIV 告知伦理未完成 → 不得过关；走廊宣读 → 锁死</li>'+
-      '</ul>'+
-      '<div class="gate">模块2实验室已开本地：<a href="infect_lab.html" style="color:#0f766e;font-weight:800">infect_lab.html</a>（防护→拭子→疟原虫→HIV→报告）。</div>';
-
-    const again=document.createElement('button');
-    again.className='btn'; again.type='button'; again.textContent='重开本例';
-    again.onclick=()=>startCase(c.id);
-    const hall=document.createElement('button');
-    hall.className='btn ghost'; hall.type='button'; hall.textContent='回大厅';
-    hall.onclick=()=>renderHall();
-    const row=document.createElement('div'); row.className='row';
-    row.appendChild(again); row.appendChild(hall);
-    body.appendChild(row);
-  }
-
-  $('btnHall').onclick=()=>renderHall();
-  $('btnRestart').onclick=()=>{ if(S.caseId) startCase(S.caseId); };
-
-  renderHall();
+// If three fails to load, still allow start with 2D fallback after timeout
+window.addEventListener('load',()=>{
+  // nothing — user clicks start
+});
 })();
 </script>
 </body>
