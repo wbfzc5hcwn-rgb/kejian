@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>ICU 床旁护理虚仿 · 气道氧合与红线 v0.1.0</title>
+<!--
+  v0.1.0 本地成品 · 短开场 + ABCDE + 氧合/气道门槛 + 分支关卡 + 硬否决锁死 + 成绩单标准动作回放
+  硬否决（小绿）：①气道/吸氧未稳就镇静 ②管路滑脱不先气道（先拧机器/先找药）③约束无评估告知就上
+  丙泊酚/肾损：⚠按教材表慎用 / 优先调整其他蓄积药 —— 禁止写成「禁用」
+  病例（乳名不剧透）：阿风·高压报警 / 阿躁·想镇静 / 阿管·管路滑脱 / 阿束·约束陷阱
+  人物锚点：脚踩地 translate(-50%,-100%)，bottom 约 10–16%；禁止悬空
+-->
+<style>
+:root{
+  --bg:#eef2f6; --paper:#fffdf8; --ink:#1a2433; --muted:#5a6a7a;
+  --line:#c9d0d8; --accent:#0f766e; --accent2:#1f6fb2; --soft:#ecfdf5;
+  --red:#c0392b; --red-soft:#fdecea; --ok:#1b7a4a; --ok-soft:#e8f6ee;
+  --warn:#b45309; --warn-soft:#fff7ed; --shadow:0 2px 12px rgba(26,36,51,.1);
+  --violet:#6d28d9; font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);line-height:1.55}
+.wrap{max-width:980px;margin:0 auto;padding:12px 12px 72px}
+.topbar{
+  display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;justify-content:space-between;
+  margin-bottom:12px;padding:12px 14px;background:var(--paper);border:1px solid var(--line);
+  border-radius:14px;box-shadow:var(--shadow);
+}
+.topbar h1{margin:0;font-size:17px;font-weight:800}
+.topbar .sub{color:var(--muted);font-size:12px;margin-top:3px}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill{font-size:11px;border-radius:999px;padding:3px 10px;border:1px solid var(--line);background:#fff;color:var(--muted)}
+.pill.warn{background:var(--warn-soft);border-color:#fdba74;color:var(--warn);font-weight:700}
+.pill.ok{background:var(--ok-soft);border-color:#86efac;color:var(--ok);font-weight:700}
+.pill.red{background:var(--red-soft);border-color:#f5a9a0;color:var(--red);font-weight:700}
+.scene-banner{
+  position:relative;border-radius:14px;overflow:hidden;margin-bottom:12px;
+  background:linear-gradient(135deg:#1e3a5f 0%,#0e7490 55%,#0f766e 100%);
+  color:#fff;min-height:110px;padding:16px 18px;box-shadow:var(--shadow);
+}
+.scene-banner .tag{font-size:11px;opacity:.85;letter-spacing:.04em}
+.scene-banner h2{margin:4px 0 6px;font-size:20px}
+.scene-banner p{margin:0;font-size:13px;opacity:.92;max-width:640px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.card h2{margin:0 0 6px;font-size:16px}
+.card h3{margin:10px 0 6px;font-size:14px}
+.lead{color:var(--muted);font-size:13px;margin:0 0 10px}
+.hidden{display:none!important}
+.station-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.station{
+  border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff;text-align:left;
+  cursor:pointer;min-height:118px;
+}
+.station:hover{border-color:var(--accent);box-shadow:0 0 0 2px rgba(15,118,110,.15)}
+.station .n{font-size:11px;color:var(--muted);font-weight:700}
+.station .t{font-size:16px;font-weight:800;margin:4px 0}
+.station .d{font-size:12px;color:var(--muted);margin:0}
+.station .st{display:inline-block;margin-top:8px;font-size:11px;padding:2px 8px;border-radius:999px;background:#e5e7eb;color:#374151}
+.station.done .st{background:var(--ok-soft);color:var(--ok);font-weight:700}
+.station.fail .st{background:var(--red-soft);color:var(--red);font-weight:700}
+.steps{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.step-dot{font-size:11px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--muted)}
+.step-dot.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.step-dot.done{background:var(--ok-soft);border-color:#86efac;color:var(--ok)}
+.step-dot.fail{background:var(--red-soft);border-color:#f5a9a0;color:var(--red)}
+.case-box{background:#fff;border:1px dashed var(--line);border-radius:12px;padding:12px 14px;font-size:14px}
+.case-box strong{color:var(--accent2)}
+.choice-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin:10px 0}
+.choice{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff;cursor:pointer;text-align:left}
+.choice:hover{border-color:var(--accent)}
+.choice.on{border-color:var(--accent);background:var(--soft);box-shadow:0 0 0 2px rgba(15,118,110,.2)}
+.choice .t{font-weight:800;font-size:14px;margin:0 0 4px}
+.choice .d{font-size:12px;color:var(--muted);margin:0}
+.tip{margin-top:10px;padding:10px 12px;border-radius:10px;font-size:13px;background:#e8f1f8;border:1px solid #bfdbfe;color:#1e3a5f}
+.tip.ok{background:var(--ok-soft);border-color:#86efac;color:#14532d}
+.tip.fail{background:var(--red-soft);border-color:#f5a9a0;color:#7f1d1d}
+.tip.warn{background:var(--warn-soft);border-color:#fdba74;color:#7c2d12}
+.gate{border-left:4px solid var(--warn);padding:8px 12px;background:var(--warn-soft);border-radius:0 10px 10px 0;font-size:13px;margin:8px 0}
+.btn{border:none;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.btn.ok{background:var(--ok)}
+.btn.blue{background:var(--accent2)}
+.btn.danger{background:var(--red)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.scorebar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:10px 12px;background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:12px;font-size:13px}
+.badge{display:inline-block;font-size:11px;padding:2px 7px;border-radius:6px;background:#e5e7eb;color:#374151}
+.badge.red{background:var(--red-soft);color:var(--red)}
+.badge.ok{background:var(--ok-soft);color:var(--ok)}
+.toast{
+  position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(120%);
+  background:#1a2433;color:#fff;padding:10px 16px;border-radius:999px;font-size:13px;
+  font-weight:700;z-index:80;opacity:0;transition:transform .25s,opacity .25s;max-width:92vw;text-align:center;
+}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.fail{background:#7f1d1d}
+.lock-banner{
+  display:none;margin:10px 0;padding:12px;border-radius:12px;background:var(--red-soft);
+  border:1px solid #f5a9a0;color:#7f1d1d;font-weight:700;font-size:14px;
+}
+.lock-banner.show{display:block}
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+@media(max-width:560px){.score-grid{grid-template-columns:1fr}}
+.score-cell{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px}
+.score-cell .k{font-size:11px;color:var(--muted)}
+.score-cell .v{font-size:22px;font-weight:900}
+.footer-note{font-size:11px;color:var(--muted);margin-top:18px;text-align:center}
+.dialog{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0}
+.dialog .who{font-size:11px;color:var(--muted);margin:0 0 4px}
+.dialog .say{font-size:14px;margin:0}
+.stage{
+  position:relative;width:100%;height:240px;border-radius:14px;overflow:hidden;
+  border:1px solid var(--line);margin-bottom:12px;
+  background:linear-gradient(180deg,#bae6fd 0 48%,#e2e8f0 48% 54%,#94a3b8 54% 100%);
+  box-shadow:var(--shadow);
+}
+.stage.icu{
+  background:linear-gradient(180deg:#a5f3fc 0 42%,#e2e8f0 42% 52%,#64748b 52% 100%);
+}
+.stage.bed{
+  background:linear-gradient(180deg,#cffafe 0 40%,#f1f5f9 40% 58%,#94a3b8 58% 100%);
+}
+.stage .floor-line{
+  position:absolute;left:0;right:0;bottom:12%;height:2px;background:rgba(15,23,42,.18);pointer-events:none;
+}
+.stage .prop{
+  position:absolute;transform:translate(-50%,-100%);text-align:center;pointer-events:none;
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.15));
+}
+.stage .prop .box{
+  background:#fff;border:1px solid #64748b;border-radius:8px;padding:6px 8px;font-size:11px;font-weight:800;color:#0f172a;
+  white-space:nowrap;
+}
+.stage .prop .ico{font-size:28px;line-height:1;display:block}
+.stage .fig{
+  position:absolute;transform:translate(-50%,-100%);text-align:center;cursor:default;
+  filter:drop-shadow(0 2px 3px rgba(0,0,0,.2));
+}
+.stage .fig .avatar{
+  width:42px;height:42px;border-radius:50%;margin:0 auto 2px;display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:900;font-size:14px;border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,.2);
+}
+.stage .fig .name{font-size:11px;font-weight:800;background:rgba(255,255,255,.92);padding:1px 6px;border-radius:4px;white-space:nowrap}
+.stage .fig .sub{font-size:10px;color:#334155;background:rgba(255,255,255,.75);padding:0 5px;border-radius:3px;margin-top:1px}
+.stage-caption{font-size:11px;color:var(--muted);margin:0 0 8px}
+.check-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin:10px 0}
+.check-item{
+  border:1px dashed var(--line);border-radius:12px;padding:12px 10px;background:#fff;cursor:pointer;text-align:left;
+}
+.check-item.on{border-style:solid;border-color:var(--ok);background:var(--ok-soft)}
+.check-item .lab{font-size:13px;font-weight:800}
+.check-item .hint{font-size:11px;color:var(--muted);margin-top:3px}
+.replay{
+  background:#0f172a;color:#e2e8f0;border-radius:12px;padding:12px 14px;font-size:13px;margin:8px 0;
+}
+.replay .beat{margin:6px 0;padding-left:8px;border-left:3px solid #22d3ee}
+.replay .beat b{color:#fde68a}
+.emr{
+  background:#0f172a;color:#e2e8f0;border-radius:12px;padding:12px 14px;font-size:13px;
+  font-family:ui-monospace,Menlo,Consolas,monospace;margin:8px 0;
+}
+.emr .k{color:#94a3b8}
+.emr .v{color:#fde68a}
+.emr .alarm{color:#f87171;font-weight:800}
+.warn-box{
+  margin:8px 0;padding:10px 12px;border-radius:10px;background:#fffbeb;border:1px solid #fbbf24;color:#78350f;font-size:13px;
+}
+.warn-box strong{color:#b45309}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div>
+      <h1>ICU 床旁护理虚仿 · 气道氧合与红线 <span class="badge ok">v0.1.0</span></h1>
+      <div class="sub">高职护理 · ABCDE → 氧合/气道门槛 → 报警/镇静/滑脱/约束 · 硬否决锁死 · 本地不挂网</div>
+    </div>
+    <div class="pills">
+      <span class="pill warn">本地样板</span>
+      <span class="pill">先患者后机器</span>
+      <span class="pill">脚踩地站位</span>
+    </div>
+  </div>
+
+  <div id="viewHall">
+    <div class="scene-banner">
+      <div class="tag">ICU 床旁护理 · 气道 / 氧合 / 红线 · v0.1.0</div>
+      <h2>动线：床旁 ABCDE → 气道氧合稳妥 → 再谈镇静与约束</h2>
+      <p>气道/吸氧未稳就镇静、管路滑脱不先气道、约束无评估告知——三条红线当场锁死本例。</p>
+    </div>
+    <div class="card">
+      <h2>ICU 病区动线（人物脚踩地）</h2>
+      <p class="lead">护士站 → 呼吸机旁 → 床头（气道）→ 监护仪。进床先看患者与气道，别一上来拧旋钮或推镇静。</p>
+      <div class="stage icu" id="hallStage" aria-label="ICU 病区动线"></div>
+      <p class="stage-caption">脚锚：护士站 12% / 呼吸机 38% / 你 55% / 床头气道 72% / 监护 90% · bottom≈12–16% · translate(-50%,-100%)</p>
+      <h2>今日床旁</h2>
+      <p class="lead">4 例短情景。乳名不剧透暗线。每例：开场→ABCDE→氧合/气道门槛→分支关卡→成绩单。</p>
+      <div class="station-grid" id="caseGrid"></div>
+      <div class="gate">红线：气道/吸氧未稳就镇静锁死；管路滑脱先气道再机器；约束无评估告知锁死。丙泊酚肾损：⚠按教材表慎用 / 优先调整其他蓄积药（非「禁用」）。</div>
+    </div>
+  </div>
+
+  <div id="viewPlay" class="hidden">
+    <div class="scorebar">
+      <div>
+        <strong id="playTitle">ICU 床旁</strong>
+        <span class="badge" id="playCaseBadge">—</span>
+      </div>
+      <div class="pills">
+        <span class="pill" id="abcdeBadge">ABCDE：未过</span>
+        <span class="pill" id="airwayBadge">气道氧合：未稳</span>
+        <span class="pill" id="branchBadge">分支：—</span>
+        <span class="pill" id="vetoBadge">否决：0</span>
+      </div>
+    </div>
+    <div class="steps" id="stepDots"></div>
+    <div class="lock-banner" id="lockBanner"></div>
+    <div class="card" id="stepCard">
+      <div id="stepBody"></div>
+    </div>
+    <div class="row">
+      <button class="btn ghost" type="button" id="btnHall">回大厅</button>
+      <button class="btn ghost" type="button" id="btnRestart">重开本例</button>
+    </div>
+  </div>
+
+  <p class="footer-note">教学示意 · 非临床操作替代 · 镇静/剂量以本院教材表为准（⚠数值不写死）· 不挂 Pages · 小绿红线 · v0.1.0 · 2026-11-05 Asia/Shanghai</p>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  'use strict';
+  const VERSION = 'v0.1.0';
+  const STEPS = [
+    {id:'intro', label:'开场'},
+    {id:'abcde', label:'ABCDE'},
+    {id:'oxygen', label:'氧合气道'},
+    {id:'branch', label:'分支关卡'},
+    {id:'score', label:'成绩单'}
+  ];
+
+  const LAYOUT = {
+    hall:{
+      station:{left:12, bottom:12, role:'护士站', color:'#64748b', sub:'交班'},
+      vent:{left:38, bottom:14, role:'呼吸机', color:'#0e7490', sub:'先患者'},
+      you:{left:55, bottom:12, role:'你', color:'#0f766e', sub:'床旁护士'},
+      airway:{left:72, bottom:16, role:'床头·气道', color:'#b45309', sub:'必先稳'},
+      mon:{left:90, bottom:15, role:'监护仪', color:'#1e3a5f', sub:'后看机'}
+    },
+    bed:{
+      vent:{left:18, bottom:18, role:'呼吸机', color:'#0e7490', sub:'参数区'},
+      you:{left:32, bottom:12, role:'你', color:'#0f766e', sub:'床旁'},
+      patient:{left:55, bottom:12, role:'患者', color:'#b45309', sub:'卧床'},
+      mon:{left:82, bottom:18, role:'监护', color:'#1e3a5f', sub:'SpO₂/HR'}
+    }
+  };
+
+  const INTRO_BEATS = [
+    {tag:'拍 1 / 4 · 交班', title:'ICU 护士站', say:'夜班交班：「床旁先看人，别一上来拧呼吸机。气道不稳别推镇静。」', stage:'hall'},
+    {tag:'拍 2 / 4 · 走近', title:'床旁走廊', say:'监护报警声隐约传来。老师叮嘱：先患者后机器；滑脱先气道。', stage:'hall'},
+    {tag:'拍 3 / 4 · 床头', title:'床头气道位', say:'吸氧/人工气道是门槛。未稳就镇静 = 硬否决锁死。', stage:'bed'},
+    {tag:'拍 4 / 4 · 床旁', title:'本例床旁', say:'约束须评估与告知。丙泊酚遇肾损：⚠按教材表慎用，优先调整其他蓄积药——不是「禁用」二字了事。', stage:'bed'}
+  ];
+
+  const REPLAY = [
+    {t:'ABCDE', d:'床旁按 A→B→C→D→E 初判，先气道与呼吸，再循环与神志。'},
+    {t:'氧合气道', d:'确认气道通畅、吸氧/通气到位、SpO₂ 可接受后再谈镇静或其他操作。'},
+    {t:'先患者后机器', d:'呼吸机报警：先看患者（胸廓、听诊、痰、管路），再调参数。'},
+    {t:'滑脱', d:'气管导管/关键管路滑脱：先开放气道与通气，再处理机器与补管。'},
+    {t:'约束', d:'约束前评估必要性、替代措施与知情告知；禁止无评估告知直接上约束。'},
+    {t:'丙泊酚·肾损', d:'⚠按教材表慎用；优先评估并调整其他蓄积药。数值不写死，非「禁用」。'}
+  ];
+
+  const CASES = [
+    {
+      id:'afeng', nick:'阿风', age:'58 岁 · 机械通气', blurb:'呼吸机在叫，床旁催着调参数。',
+      secret:'vent_high_pressure', secretLabel:'暗线：呼吸机高压报警 · 先听诊/吸痰/看患者再调参数（先患者后机器）',
+      briefing:'机械通气中。高压报警响。你的角色：床旁责任护士。',
+      branch:'alarm',
+      vitals:{spo2:'91%', rr:'机控示意', note:'高压报警持续'},
+      softHints:['未复听双肺可软扣','未记录报警时段可软扣']
+    },
+    {
+      id:'azao', nick:'阿躁', age:'46 岁 · 躁动', blurb:'患者扯管想坐起来，医生说「先镇静」。',
+      secret:'sedate_after_airway', secretLabel:'暗线：躁动想镇静 · 必须先确认 SpO₂/气道稳妥；未稳就镇静 = 硬否决',
+      briefing:'气管插管患者躁动。旁人催推镇静。先核气道与氧合。',
+      branch:'sedation',
+      vitals:{spo2:'88%↓', rr:'人机对抗示意', note:'SpO₂ 偏低，气道未再确认'},
+      softHints:['未评估疼痛可软扣','未查镇静评分可软扣']
+    },
+    {
+      id:'aguan', nick:'阿管', age:'62 岁 · 管路', blurb:'床头一片忙乱，有人喊「管子」。',
+      secret:'tube_dislodge', secretLabel:'暗线：气管导管/中心静脉滑脱应急 · 正确：先气道/通气再机器',
+      briefing:'疑似气管导管部分滑脱（示意）。有人去拧呼吸机、有人翻药车。',
+      branch:'dislodge',
+      vitals:{spo2:'下降中', rr:'通气不足示意', note:'导管位置可疑'},
+      softHints:['未呼叫协助可软扣','未保护其他管路可软扣']
+    },
+    {
+      id:'ashu', nick:'阿束', age:'70 岁 · 夜间躁动', blurb:'夜班说「直接约束省事」。',
+      secret:'restraint_trap', secretLabel:'暗线：约束陷阱 · 无评估 / 未告知家属就约束 = 硬否决',
+      briefing:'老年患者夜间躁动。约束带就在床尾。评估与告知不可省。',
+      branch:'restraint',
+      vitals:{spo2:'96%', rr:'自主', note:'气道氧合尚可；躁动原因未评估'},
+      softHints:['未定时松解观察可软扣','未记约束起止时间可软扣']
+    }
+  ];
+
+  const S = {
+    caseId:null, step:'intro', introBeat:0,
+    abcdeDone:{}, oxygenOk:false, airwayChecked:false, spo2Ok:false,
+    branchOk:false, propofolNoted:false,
+    assessDone:false, informDone:false, altTried:false,
+    patientFirst:false, suctionOk:false, listenOk:false,
+    locked:false, vetoes:[], soft:[],
+    results:{}, score:null
+  };
+
+  function $(id){ return document.getElementById(id); }
+  function caseObj(){ return CASES.find(c=>c.id===S.caseId); }
+
+  function toast(msg, fail){
+    const el=$('toast');
+    el.textContent=msg;
+    el.className='toast show'+(fail?' fail':'');
+    clearTimeout(toast._t);
+    toast._t=setTimeout(()=>{ el.classList.remove('show'); }, 2800);
+  }
+
+  function softDeduct(code){
+    if(S.soft.indexOf(code)>=0) return;
+    S.soft.push(code);
+    toast('软扣：'+code, false);
+    updateBadges();
+  }
+
+  function addVeto(code, msg){
+    if(S.vetoes.indexOf(code)>=0) return;
+    S.vetoes.push(code);
+    updateBadges();
+    toast(msg || ('硬否决：'+code), true);
+  }
+
+  function hardLock(reason, code){
+    if(code) addVeto(code, reason);
+    else toast(reason, true);
+    S.locked=true;
+    const b=$('lockBanner');
+    b.textContent='⛔ 本例已锁死 · '+reason+'（请重开本例或回大厅）';
+    b.classList.add('show');
+    updateBadges();
+    S.step='score';
+    paint();
+  }
+
+  function abcdeComplete(){
+    return ['A','B','C','D','E'].every(k=>S.abcdeDone[k]);
+  }
+
+  function updateBadges(){
+    const a=$('abcdeBadge');
+    a.textContent='ABCDE：'+(abcdeComplete()?'已过':'未过');
+    a.className='pill '+(abcdeComplete()?'ok':'');
+    const o=$('airwayBadge');
+    o.textContent='气道氧合：'+(S.oxygenOk?'已稳':'未稳');
+    o.className='pill '+(S.oxygenOk?'ok':'');
+    const c=caseObj();
+    const br=$('branchBadge');
+    const map={alarm:'报警',sedation:'镇静',dislodge:'滑脱',restraint:'约束'};
+    br.textContent='分支：'+(c?(map[c.branch]||c.branch):'—');
+    const v=$('vetoBadge');
+    v.textContent='否决：'+S.vetoes.length;
+    v.className='pill '+(S.vetoes.length?'red':'');
+  }
+
+  function fig(parent, item, labelOverride){
+    const d=document.createElement('div');
+    d.className='fig';
+    d.style.left=item.left+'%';
+    d.style.bottom=item.bottom+'%';
+    const av=document.createElement('div');
+    av.className='avatar';
+    av.style.background=item.color;
+    av.textContent=(labelOverride||item.role).slice(0,2);
+    const nm=document.createElement('div');
+    nm.className='name';
+    nm.textContent=labelOverride||item.role;
+    const sub=document.createElement('div');
+    sub.className='sub';
+    sub.textContent=item.sub||'';
+    d.appendChild(av); d.appendChild(nm); d.appendChild(sub);
+    parent.appendChild(d);
+  }
+
+  function prop(parent, left, bottom, ico, text){
+    const d=document.createElement('div');
+    d.className='prop';
+    d.style.left=left+'%'; d.style.bottom=bottom+'%';
+    d.innerHTML='<span class="ico">'+ico+'</span><div class="box">'+text+'</div>';
+    parent.appendChild(d);
+  }
+
+  function drawStage(el, key){
+    el.innerHTML='';
+    el.className='stage '+(key==='bed'?'bed':'icu');
+    const line=document.createElement('div');
+    line.className='floor-line';
+    el.appendChild(line);
+    const L=LAYOUT[key]||LAYOUT.hall;
+    Object.keys(L).forEach(k=>{
+      const it=L[k];
+      if(k==='vent'||k==='mon'||k==='station'||k==='airway'){
+        const ico=k==='vent'?'🫁':(k==='mon'?'📟':(k==='station'?'📋':'🩹'));
+        prop(el, it.left, it.bottom, ico, it.role);
+      } else {
+        fig(el, it);
+      }
+    });
+  }
+
+  function paintHallStage(){ drawStage($('hallStage'), 'hall'); }
+
+  function renderCaseGrid(){
+    const grid=$('caseGrid');
+    grid.innerHTML='';
+    CASES.forEach((c,i)=>{
+      const b=document.createElement('button');
+      b.type='button';
+      b.className='station'+(S.results[c.id]==='pass'?' done':(S.results[c.id]==='fail'?' fail':''));
+      const st=S.results[c.id]==='pass'?'已过关':(S.results[c.id]==='fail'?'已锁死/未过':'待开');
+      b.innerHTML='<div class="n">床旁 '+(i+1)+'</div><div class="t">'+c.nick+'</div><div class="d">'+c.blurb+'</div><span class="st">'+st+'</span>';
+      b.onclick=()=>startCase(c.id);
+      grid.appendChild(b);
+    });
+  }
+
+  function resetState(){
+    S.abcdeDone={}; S.oxygenOk=false; S.airwayChecked=false; S.spo2Ok=false;
+    S.branchOk=false; S.propofolNoted=false;
+    S.assessDone=false; S.informDone=false; S.altTried=false;
+    S.patientFirst=false; S.suctionOk=false; S.listenOk=false;
+    S.locked=false; S.vetoes=[]; S.soft=[];
+    S.score=null; S.introBeat=0; S.step='intro';
+    const b=$('lockBanner');
+    b.classList.remove('show'); b.textContent='';
+  }
+
+  function startCase(id){
+    resetState();
+    S.caseId=id;
+    $('viewHall').classList.add('hidden');
+    $('viewPlay').classList.remove('hidden');
+    const c=caseObj();
+    $('playCaseBadge').textContent=c.nick;
+    $('playTitle').textContent='ICU 床旁 · '+c.nick;
+    updateBadges();
+    paint();
+  }
+
+  function goHall(){
+    $('viewPlay').classList.add('hidden');
+    $('viewHall').classList.remove('hidden');
+    renderCaseGrid();
+  }
+
+  function paintDots(){
+    const box=$('stepDots');
+    box.innerHTML='';
+    const order=STEPS.map(s=>s.id);
+    const cur=order.indexOf(S.step);
+    STEPS.forEach((s,i)=>{
+      const d=document.createElement('span');
+      d.className='step-dot'+(i===cur?' on':(i<cur?' done':''));
+      if(S.locked && s.id!=='score') d.classList.add('fail');
+      d.textContent=s.label;
+      box.appendChild(d);
+    });
+  }
+
+  function paint(){
+    paintDots();
+    updateBadges();
+    const body=$('stepBody');
+    body.innerHTML='';
+    if(S.step==='intro') buildIntro(body);
+    else if(S.step==='abcde') buildAbcde(body);
+    else if(S.step==='oxygen') buildOxygen(body);
+    else if(S.step==='branch') buildBranch(body);
+    else if(S.step==='score') buildScore(body);
+  }
+
+  function buildIntro(body){
+    const c=caseObj();
+    const beat=INTRO_BEATS[S.introBeat]||INTRO_BEATS[0];
+    const stage=document.createElement('div');
+    stage.className='stage';
+    body.appendChild(stage);
+    drawStage(stage, beat.stage==='bed'?'bed':'hall');
+
+    body.insertAdjacentHTML('beforeend',
+      '<div class="dialog"><div class="who">'+beat.tag+'</div><h3 style="margin:0 0 4px">'+beat.title+'</h3><p class="say">'+beat.say+'</p></div>'+
+      '<div class="case-box">本例：<strong>'+c.nick+'</strong> · '+c.age+'<br/>'+c.briefing+'</div>'+
+      '<div class="gate">开场提醒：气道/氧合未稳就镇静、滑脱先拧机器、无评估告知就约束 → 硬否决。</div>'
+    );
+
+    const row=document.createElement('div');
+    row.className='row';
+    const skip=document.createElement('button');
+    skip.type='button'; skip.className='btn danger';
+    skip.textContent='别管气道了 · 先推一管镇静';
+    skip.onclick=()=>{
+      hardLock('气道/吸氧未稳就镇静', 'sedate_before_airway');
+    };
+    const next=document.createElement('button');
+    next.type='button'; next.className='btn';
+    if(S.introBeat < INTRO_BEATS.length-1){
+      next.textContent='下一拍';
+      next.onclick=()=>{ S.introBeat++; paint(); };
+    } else {
+      next.textContent='开始床旁 ABCDE';
+      next.className='btn ok';
+      next.onclick=()=>{ S.step='abcde'; paint(); };
+    }
+    row.appendChild(skip); row.appendChild(next);
+    body.appendChild(row);
+  }
+
+  function buildAbcde(body){
+    const c=caseObj();
+    const stage=document.createElement('div');
+    stage.className='stage bed';
+    body.appendChild(stage);
+    drawStage(stage, 'bed');
+
+    body.insertAdjacentHTML('beforeend',
+      '<h2>床旁 ABCDE 初判</h2>'+
+      '<p class="lead">按序点齐。A/B 未看清就冲去拧机器或推药，后面分支会锁死。</p>'+
+      '<div class="emr">'+
+        '<div><span class="k">床旁</span> <span class="v">'+c.nick+'</span></div>'+
+        '<div><span class="k">SpO₂</span> <span class="v">'+c.vitals.spo2+'</span> · <span class="k">呼吸</span> <span class="v">'+c.vitals.rr+'</span></div>'+
+        '<div><span class="k">备注</span> <span class="alarm">'+c.vitals.note+'</span></div>'+
+      '</div>'+
+      '<div class="check-grid" id="abcdeChecks"></div>'+
+      '<div class="tip warn" id="abcdeTip">点齐 A→E 五项后再进氧合/气道门槛。</div>'
+    );
+
+    const items=[
+      {id:'A', lab:'A 气道', hint:'通畅？插管深度/固定？有无分泌物'},
+      {id:'B', lab:'B 呼吸', hint:'胸廓起伏、听诊、SpO₂、呼吸机是否报警'},
+      {id:'C', lab:'C 循环', hint:'心率/血压/灌注示意（教学）'},
+      {id:'D', lab:'D 神志', hint:'镇静深度/躁动/疼痛线索'},
+      {id:'E', lab:'E 暴露', hint:'管路、皮肤、约束带、环境安全'}
+    ];
+    const box=$('abcdeChecks');
+    items.forEach(it=>{
+      const el=document.createElement('div');
+      el.className='check-item'+(S.abcdeDone[it.id]?' on':'');
+      el.innerHTML='<div class="lab">'+it.lab+'</div><div class="hint">'+it.hint+'</div>';
+      el.onclick=()=>{
+        if(S.locked) return;
+        S.abcdeDone[it.id]=!S.abcdeDone[it.id];
+        el.classList.toggle('on', !!S.abcdeDone[it.id]);
+        if(abcdeComplete()){
+          $('abcdeTip').className='tip ok';
+          $('abcdeTip').textContent='ABCDE 初判完成。进入氧合/气道门槛。';
+        } else {
+          $('abcdeTip').className='tip warn';
+          $('abcdeTip').textContent='仍有未点项。A/B 尤其不能省。';
+        }
+        updateBadges();
+      };
+      box.appendChild(el);
+    });
+
+    const row=document.createElement('div');
+    row.className='row';
+    const rush=document.createElement('button');
+    rush.type='button'; rush.className='btn danger';
+    rush.textContent='ABCDE 没做完 · 先去拧呼吸机';
+    rush.onclick=()=>{
+      softDeduct('跳过完整 ABCDE');
+      toast('先患者后机器：请至少完成 A/B', true);
+    };
+    const go=document.createElement('button');
+    go.type='button'; go.className='btn ok'; go.textContent='ABCDE 完成 · 氧合/气道门槛';
+    go.onclick=()=>{
+      if(!abcdeComplete()){
+        toast('请点齐 ABCDE 五项', true);
+        return;
+      }
+      S.step='oxygen'; paint();
+    };
+    row.appendChild(rush); row.appendChild(go);
+    body.appendChild(row);
+  }
+
+  function buildOxygen(body){
+    const c=caseObj();
+    const stage=document.createElement('div');
+    stage.className='stage bed';
+    body.appendChild(stage);
+    drawStage(stage, 'bed');
+
+    body.insertAdjacentHTML('beforeend',
+      '<h2>氧合 / 气道门槛</h2>'+
+      '<p class="lead">确认气道与吸氧/通气稳妥后，才能进入本例分支。未稳就镇静 = 硬否决。</p>'+
+      '<div class="check-grid" id="oxChecks"></div>'+
+      '<div class="tip warn" id="oxTip">点齐必要确认项。企图未稳推镇静 → 锁死。</div>'+
+      '<div class="warn-box"><strong>⚠ 丙泊酚 · 肾损教学提示：</strong>按教材表<strong>慎用</strong>；优先评估并<strong>调整其他蓄积药</strong>。数值不写死，禁止用「禁用」代替判断。</div>'
+    );
+
+    const items=[
+      {id:'airway', lab:'气道通畅已再确认（插管固定/开放气道）', hint:'门槛核心'},
+      {id:'o2', lab:'吸氧/通气已落实（鼻导管/面罩/机控示意）', hint:'氧合支持到位'},
+      {id:'spo2', lab:'SpO₂ 已读取并口头报告', hint:'数值以床旁监护为准（⚠不写死目标）'},
+      {id:'propofol', lab:'已阅读：丙泊酚遇肾损 → 慎用/调其他蓄积药', hint:'教学⚠，非禁用'}
+    ];
+    const done={};
+    const box=$('oxChecks');
+    items.forEach(it=>{
+      const el=document.createElement('div');
+      el.className='check-item';
+      el.innerHTML='<div class="lab">'+it.lab+'</div><div class="hint">'+it.hint+'</div>';
+      el.onclick=()=>{
+        if(S.locked) return;
+        done[it.id]=!done[it.id];
+        el.classList.toggle('on', !!done[it.id]);
+        S.airwayChecked=!!done.airway;
+        S.spo2Ok=!!done.spo2;
+        S.propofolNoted=!!done.propofol;
+        const need=['airway','o2','spo2'];
+        if(need.every(k=>done[k])){
+          S.oxygenOk=true;
+          $('oxTip').className='tip ok';
+          $('oxTip').textContent='气道/氧合门槛通过。可进入分支关卡。';
+          updateBadges();
+        } else {
+          S.oxygenOk=false;
+          $('oxTip').className='tip warn';
+          $('oxTip').textContent='气道与吸氧/SpO₂ 未齐，不得镇静。';
+          updateBadges();
+        }
+      };
+      box.appendChild(el);
+    });
+
+    const row=document.createElement('div');
+    row.className='row';
+    const sed=document.createElement('button');
+    sed.type='button'; sed.className='btn danger';
+    sed.textContent='氧合还没核 · 先推镇静压住';
+    sed.onclick=()=>{
+      hardLock('气道/吸氧未稳就镇静', 'sedate_before_airway');
+    };
+    const go=document.createElement('button');
+    go.type='button'; go.className='btn ok'; go.textContent='门槛通过 · 进入分支';
+    go.onclick=()=>{
+      if(!S.oxygenOk){
+        hardLock('气道/吸氧未稳就进入操作（等同未稳镇静路径）', 'sedate_before_airway');
+        return;
+      }
+      if(!S.propofolNoted) softDeduct('未阅丙泊酚肾损慎用提示');
+      S.step='branch'; paint();
+    };
+    row.appendChild(sed); row.appendChild(go);
+    body.appendChild(row);
+  }
+
+  function buildBranch(body){
+    const c=caseObj();
+    if(c.branch==='alarm') buildAlarm(body);
+    else if(c.branch==='sedation') buildSedation(body);
+    else if(c.branch==='dislodge') buildDislodge(body);
+    else if(c.branch==='restraint') buildRestraint(body);
+  }
+
+  function buildAlarm(body){
+    body.insertAdjacentHTML('beforeend',
+      '<h2>分支 · 呼吸机高压报警</h2>'+
+      '<p class="lead">先患者后机器：听诊/吸痰/看胸廓与管路，再考虑调参数。</p>'+
+      '<div class="emr"><span class="k">报警</span> <span class="alarm">HIGH PRESSURE</span> · <span class="k">动作</span> <span class="v">选正确优先序</span></div>'+
+      '<div class="choice-cards" id="brChoices"></div>'+
+      '<div class="tip warn" id="brTip">选择你的第一步与关键动作。</div>'
+    );
+    const actions=[
+      {id:'look', t:'先看患者：胸廓、面色、SpO₂，听诊双肺', d:'先患者', ok:'listen'},
+      {id:'suction', t:'评估痰堵/管路打折 → 吸痰或解除梗阻（示意）', d:'处理可逆原因', ok:'suction'},
+      {id:'param_last', t:'确认患者与管路无急症后，再按医嘱/规范调报警相关参数', d:'后调机器', ok:'param'},
+      {id:'machine_first', t:'不管患者，直接把压力上限拧高消音', d:'先机器后患者', soft:'先拧机器消音'},
+      {id:'sedate_now', t:'报警烦人，直接推镇静让他别对抗', d:'未再核气道就镇静', veto:'sedate_before_airway'}
+    ];
+    wireBranchChoices(actions, {
+      need:['listen','suction','param'],
+      doneMsg:'先患者→处理原因→再调参数，路径正确。',
+      finishLabel:'结案 · 出成绩单'
+    });
+  }
+
+  function buildSedation(body){
+    body.insertAdjacentHTML('beforeend',
+      '<h2>分支 · 躁动与镇静阶梯</h2>'+
+      '<p class="lead">镇静前必须气道/氧合已稳（上一步门槛）。选阶梯动作；未稳再推药 = 硬否决。</p>'+
+      '<div class="warn-box"><strong>⚠ 丙泊酚：</strong>遇肾功能不全按教材表<strong>慎用</strong>；优先<strong>调整其他蓄积药</strong>（如长效苯二氮䓬类等，以教材为准）。勿写「禁用」代替评估。</div>'+
+      '<div class="choice-cards" id="brChoices"></div>'+
+      '<div class="tip warn" id="brTip">先非药/镇痛评估，再按医嘱阶梯。</div>'
+    );
+    const actions=[
+      {id:'recheck', t:'再次确认气道固定与 SpO₂ 后再谈镇静', d:'门槛复核', ok:'recheck'},
+      {id:'pain', t:'评估疼痛/人机对抗原因，先镇痛或调整通气舒适（示意）', d:'镇静前阶梯', ok:'pain'},
+      {id:'order', t:'按医嘱选择镇静方案，并注明肾损慎用提示已阅', d:'规范用药路径', ok:'order'},
+      {id:'propofol_ok', t:'口头核对：丙泊酚肾损 → 慎用并优先调其他蓄积药', d:'教学⚠正确表述', ok:'propofol'},
+      {id:'propofol_ban', t:'直接说「肾损禁用丙泊酚」并拒不评估', d:'错误表述（禁止写成禁用）', soft:'丙泊酚写成禁用'},
+      {id:'push_blind', t:'不看 SpO₂、不核气道，推一管先睡着', d:'未稳镇静', veto:'sedate_before_airway'}
+    ];
+    // For sedation branch, oxygen already ok; push_blind still locks as teaching trap
+    wireBranchChoices(actions, {
+      need:['recheck','pain','order','propofol'],
+      doneMsg:'镇静阶梯与丙泊酚慎用表述正确。',
+      finishLabel:'结案 · 出成绩单',
+      onSoftPropofolBan:true
+    });
+  }
+
+  function buildDislodge(body){
+    body.insertAdjacentHTML('beforeend',
+      '<h2>分支 · 管路滑脱应急</h2>'+
+      '<p class="lead">气管导管/关键管路滑脱：先气道与通气，再机器与补管。先拧机器/先找药 = 硬否决。</p>'+
+      '<div class="choice-cards" id="brChoices"></div>'+
+      '<div class="tip warn" id="brTip">第一步必须是气道。</div>'
+    );
+    const actions=[
+      {id:'airway_first', t:'呼叫协助 · 开放/维持气道 · 球囊或当面罩通气（示意）', d:'先气道', ok:'airway'},
+      {id:'oxygenate', t:'确认通气有效、SpO₂ 趋势后再准备重新固定/插管协助', d:'通气优先', ok:'vent'},
+      {id:'then_machine', t:'气道稳住后，再处理呼吸机连接与报警', d:'后机器', ok:'machine'},
+      {id:'knob_first', t:'先冲去拧呼吸机旋钮消报警', d:'不先气道', veto:'dislodge_no_airway'},
+      {id:'drug_first', t:'先翻药车找镇静/急救药，气道稍后', d:'不先气道', veto:'dislodge_no_airway'}
+    ];
+    wireBranchChoices(actions, {
+      need:['airway','vent','machine'],
+      doneMsg:'滑脱应急：先气道/通气，再机器——正确。',
+      finishLabel:'结案 · 出成绩单'
+    });
+  }
+
+  function buildRestraint(body){
+    body.insertAdjacentHTML('beforeend',
+      '<h2>分支 · 约束评估与告知</h2>'+
+      '<p class="lead">约束是最后手段。须评估必要性、尝试替代、知情告知后再实施。无评估告知就上 = 硬否决。</p>'+
+      '<div class="choice-cards" id="brChoices"></div>'+
+      '<div class="tip warn" id="brTip">完成评估→替代→告知，再约束。</div>'
+    );
+    const actions=[
+      {id:'assess', t:'评估躁动原因（疼痛/尿潴留/缺氧/谵妄等）与约束必要性', d:'评估', ok:'assess'},
+      {id:'alt', t:'先试替代：陪伴、镇痛、环境、约束替代措施（示意）', d:'替代', ok:'alt'},
+      {id:'inform', t:'向患者/家属知情告知约束目的、风险与观察要点', d:'告知', ok:'inform'},
+      {id:'apply', t:'评估与告知完成后，按规范实施约束并记录', d:'可实施', ok:'apply'},
+      {id:'strap_now', t:'夜班图省事，不评估不告知，直接上约束带', d:'无评估告知', veto:'restraint_no_consent'}
+    ];
+    wireBranchChoices(actions, {
+      need:['assess','alt','inform','apply'],
+      doneMsg:'约束前评估、替代与告知齐全。',
+      finishLabel:'结案 · 出成绩单'
+    });
+  }
+
+  function wireBranchChoices(actions, cfg){
+    const got={};
+    const box=$('brChoices');
+    actions.forEach(a=>{
+      const el=document.createElement('button');
+      el.type='button'; el.className='choice';
+      el.innerHTML='<div class="t">'+a.t+'</div><div class="d">'+a.d+'</div>';
+      el.onclick=()=>{
+        if(S.locked) return;
+        if(a.veto){
+          const msgMap={
+            sedate_before_airway:'气道/吸氧未稳就镇静',
+            dislodge_no_airway:'管路滑脱不先气道（先拧机器/先找药）',
+            restraint_no_consent:'约束无评估告知就上'
+          };
+          hardLock(msgMap[a.veto]||a.d, a.veto);
+          return;
+        }
+        if(a.soft){
+          softDeduct(a.soft);
+          el.classList.add('on');
+          return;
+        }
+        if(a.ok){
+          got[a.ok]=true;
+          el.classList.add('on');
+          if(a.ok==='listen') S.listenOk=true;
+          if(a.ok==='suction') S.suctionOk=true;
+          if(a.ok==='param'||a.ok==='machine') S.patientFirst=true;
+          if(a.ok==='assess') S.assessDone=true;
+          if(a.ok==='inform') S.informDone=true;
+          if(a.ok==='alt') S.altTried=true;
+          if(a.ok==='propofol') S.propofolNoted=true;
+          if(cfg.need.every(k=>got[k])){
+            S.branchOk=true;
+            $('brTip').className='tip ok';
+            $('brTip').textContent=cfg.doneMsg;
+          }
+        }
+      };
+      box.appendChild(el);
+    });
+
+    const row=document.createElement('div');
+    row.className='row';
+    const go=document.createElement('button');
+    go.type='button'; go.className='btn ok'; go.textContent=cfg.finishLabel;
+    go.onclick=()=>{
+      if(!S.branchOk){
+        toast('请完成分支中的正确关键动作', true);
+        return;
+      }
+      S.step='score'; paint();
+    };
+    row.appendChild(go);
+    $('stepBody').appendChild(row);
+  }
+
+  function calcScore(){
+    let score=100;
+    if(S.vetoes.length) score=Math.min(score, 28);
+    score -= S.vetoes.length*30;
+    score -= S.soft.length*6;
+    if(!abcdeComplete()) score -= 16;
+    if(!S.oxygenOk) score -= 18;
+    if(!S.branchOk) score -= 14;
+    score=Math.max(0, Math.min(100, score));
+    const pass = S.vetoes.length===0 && abcdeComplete() && S.oxygenOk && S.branchOk && score>=60;
+    return {score, pass};
+  }
+
+  function buildScore(body){
+    const c=caseObj();
+    const r=calcScore();
+    S.score=r;
+    S.results[c.id]=r.pass?'pass':'fail';
+
+    body.insertAdjacentHTML('beforeend',
+      '<h2>成绩单 · '+c.nick+' · '+VERSION+'</h2>'+
+      '<div class="'+(r.pass?'tip ok':'tip fail')+'">'+(r.pass
+        ? ('<strong>过关</strong> · '+r.score+' 分')
+        : ('<strong>未过关'+(S.locked?' / 本例已硬锁死':'')+'</strong> · '+r.score+' 分'))+
+      '</div>'+
+      '<div class="score-grid">'+
+        '<div class="score-cell"><div class="k">得分</div><div class="v">'+r.score+'</div></div>'+
+        '<div class="score-cell"><div class="k">硬否决</div><div class="v" style="font-size:14px">'+(S.vetoes.length?S.vetoes.join('、'):'无')+'</div></div>'+
+        '<div class="score-cell"><div class="k">软扣</div><div class="v" style="font-size:14px">'+(S.soft.length?S.soft.join('、'):'无')+'</div></div>'+
+        '<div class="score-cell"><div class="k">气道氧合</div><div class="v" style="font-size:14px">'+(S.oxygenOk?'已稳':'未稳')+'</div></div>'+
+      '</div>'+
+      '<div class="case-box">'+c.secretLabel+'</div>'+
+      '<h3>硬否决记录</h3>'+
+      '<div class="tip '+(S.vetoes.length?'fail':'ok')+'">'+(S.vetoes.length?S.vetoes.map(v=>{
+        const map={
+          sedate_before_airway:'气道/吸氧未稳就镇静',
+          dislodge_no_airway:'管路滑脱不先气道',
+          restraint_no_consent:'约束无评估告知就上'
+        };
+        return map[v]||v;
+      }).join(' · '):'本例未触发硬否决')+'</div>'+
+      '<div class="warn-box"><strong>丙泊酚文案备忘：</strong>按教材表慎用 / 优先调整其他蓄积药 · 非「禁用」· 数值不写死</div>'
+    );
+
+    if(!r.pass || S.locked){
+      const one = S.vetoes[0];
+      const oneMap={
+        sedate_before_airway:'标准动作：先确认气道通畅与吸氧/通气到位、读取 SpO₂，再进入镇静阶梯。',
+        dislodge_no_airway:'标准动作：管路滑脱时先开放气道与通气，再处理呼吸机与药物。',
+        restraint_no_consent:'标准动作：约束前完成必要性评估、替代措施与知情告知，再实施并记录。'
+      };
+      body.insertAdjacentHTML('beforeend',
+        '<h3>一句标准动作回放</h3>'+
+        '<div class="replay"><div class="beat"><b>回放</b> · '+(oneMap[one]||REPLAY[0].d)+'</div></div>'
+      );
+    }
+
+    body.insertAdjacentHTML('beforeend',
+      '<h3>标准流程短回放（可再看）</h3>'+
+      '<div class="replay" id="replayBox"></div>'
+    );
+    const rb=$('replayBox');
+    REPLAY.forEach(b=>{
+      const d=document.createElement('div');
+      d.className='beat';
+      d.innerHTML='<b>'+b.t+'</b> · '+b.d;
+      rb.appendChild(d);
+    });
+
+    const row=document.createElement('div');
+    row.className='row';
+    const again=document.createElement('button');
+    again.type='button'; again.className='btn ghost'; again.textContent='再看一遍回放';
+    again.onclick=()=>{ toast('回放已在上方'); window.scrollTo({top:rb.offsetTop-40,behavior:'smooth'}); };
+    const re=document.createElement('button');
+    re.type='button'; re.className='btn'; re.textContent='重开本例';
+    re.onclick=()=>startCase(c.id);
+    const hall=document.createElement('button');
+    hall.type='button'; hall.className='btn ok'; hall.textContent='回大厅选例';
+    hall.onclick=goHall;
+    row.appendChild(again); row.appendChild(re); row.appendChild(hall);
+    body.appendChild(row);
+  }
+
+  $('btnHall').onclick=goHall;
+  $('btnRestart').onclick=()=>{ if(S.caseId) startCase(S.caseId); };
+
+  paintHallStage();
+  renderCaseGrid();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>儿童急救技能站 · 院前 CPR+AED v1.1.0</title>
+<!--
+  v1.1.0 样板升版 · 技能站4 · 院前 CPR+AED
+  升级：①电影感开场 ②节拍/回弹/中断即时条 ③AED no-shock→立刻续按双结局 ④失败/通关标准回放四句
+  硬否决：不启CPR · 药先于按压 · 串新生儿3:1 · 贴错片 · 除颤未离开 · 长时间空等不按压
+  儿童：单人30:2 / 双人15:2 · 禁3:1 · 剂量/能量全⚠
+-->
+<style>
+:root{
+  --bg:#eef2f6; --paper:#fffdf8; --ink:#1a2433; --muted:#5a6a7a;
+  --line:#c9d0d8; --accent:#c2410c; --accent2:#1f6fb2; --soft:#fff1e6;
+  --red:#c0392b; --red-soft:#fdecea; --ok:#1b7a4a; --ok-soft:#e8f6ee;
+  --warn:#b45309; --warn-soft:#fff7ed; --shadow:0 2px 12px rgba(26,36,51,.1);
+  --teal:#0f766e; font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);line-height:1.55}
+.wrap{max-width:960px;margin:0 auto;padding:12px 12px 72px}
+.topbar{
+  display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;justify-content:space-between;
+  margin-bottom:12px;padding:12px 14px;background:var(--paper);border:1px solid var(--line);
+  border-radius:14px;box-shadow:var(--shadow);
+}
+.topbar h1{margin:0;font-size:17px;font-weight:800}
+.topbar .sub{color:var(--muted);font-size:12px;margin-top:3px}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill{font-size:11px;border-radius:999px;padding:3px 10px;border:1px solid var(--line);background:#fff;color:var(--muted)}
+.pill.warn{background:var(--warn-soft);border-color:#fdba74;color:var(--warn);font-weight:700}
+.pill.ok{background:var(--ok-soft);border-color:#86efac;color:var(--ok);font-weight:700}
+.pill.red{background:var(--red-soft);border-color:#f5a9a0;color:var(--red);font-weight:700}
+.scene-banner{
+  position:relative;border-radius:14px;overflow:hidden;margin-bottom:12px;
+  background:linear-gradient(135deg,#1e3a5f 0%,#0f766e 45%,#c2410c 100%);
+  color:#fff;min-height:120px;padding:16px 18px;box-shadow:var(--shadow);
+}
+.scene-banner .tag{font-size:11px;opacity:.85;letter-spacing:.04em}
+.scene-banner h2{margin:4px 0 6px;font-size:20px}
+.scene-banner p{margin:0;font-size:13px;opacity:.92;max-width:560px}
+.timer-row{display:flex;align-items:center;gap:10px;margin-top:10px}
+.timer-bar{flex:1;height:8px;background:rgba(255,255,255,.25);border-radius:999px;overflow:hidden}
+.timer-fill{height:100%;width:100%;background:#fde68a;transition:width .25s linear}
+.timer-txt{font-size:12px;font-weight:800;min-width:64px;text-align:right}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.card h2{margin:0 0 6px;font-size:16px}
+.card h3{margin:10px 0 6px;font-size:14px}
+.lead{color:var(--muted);font-size:13px;margin:0 0 10px}
+.hidden{display:none!important}
+.station-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.station{
+  border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff;text-align:left;
+  cursor:pointer;min-height:108px;
+}
+.station:hover:not(.locked){border-color:var(--accent);box-shadow:0 0 0 2px rgba(194,65,12,.15)}
+.station.on{border-color:var(--accent);background:var(--soft)}
+.station.locked{opacity:.55;cursor:not-allowed;background:#f3f4f6}
+.station .n{font-size:11px;color:var(--muted);font-weight:700}
+.station .t{font-size:15px;font-weight:800;margin:4px 0}
+.station .d{font-size:12px;color:var(--muted);margin:0}
+.station .st{display:inline-block;margin-top:8px;font-size:11px;padding:2px 8px;border-radius:999px;background:#e5e7eb;color:#374151}
+.station.on .st{background:#ffedd5;color:#9a3412;font-weight:700}
+.station.locked .st{background:#e5e7eb;color:#6b7280}
+.steps{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.step-dot{font-size:11px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--muted)}
+.step-dot.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.step-dot.done{background:var(--ok-soft);border-color:#86efac;color:var(--ok)}
+.step-dot.fail{background:var(--red-soft);border-color:#f5a9a0;color:var(--red)}
+.case-box{background:#fff;border:1px dashed var(--line);border-radius:12px;padding:12px 14px;font-size:14px}
+.case-box strong{color:var(--accent2)}
+.ratio-banner{
+  display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 12px;padding:10px 12px;
+  background:linear-gradient(90deg,#fff7ed,#ecfeff);border:2px solid #fb923c;border-radius:12px;
+}
+.ratio-banner .big{font-size:18px;font-weight:900;color:#9a3412}
+.ratio-banner .note{font-size:12px;color:var(--muted)}
+.choice-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin:10px 0}
+.choice{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff;cursor:pointer;text-align:left}
+.choice:hover{border-color:var(--accent)}
+.choice.on{border-color:var(--accent);background:var(--soft);box-shadow:0 0 0 2px rgba(194,65,12,.2)}
+.choice.locked{pointer-events:none;opacity:.7}
+.choice .t{font-weight:800;font-size:14px;margin:0 0 4px}
+.choice .d{font-size:12px;color:var(--muted);margin:0}
+.tip{margin-top:10px;padding:10px 12px;border-radius:10px;font-size:13px;background:#e8f1f8;border:1px solid #bfdbfe;color:#1e3a5f}
+.tip.ok{background:var(--ok-soft);border-color:#86efac;color:#14532d}
+.tip.fail{background:var(--red-soft);border-color:#f5a9a0;color:#7f1d1d}
+.tip.warn{background:var(--warn-soft);border-color:#fdba74;color:#7c2d12}
+.gate{border-left:4px solid var(--warn);padding:8px 12px;background:var(--warn-soft);border-radius:0 10px 10px 0;font-size:13px;margin:8px 0}
+.btn{border:none;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.btn.ok{background:var(--ok)}
+.btn.blue{background:var(--accent2)}
+.btn.teal{background:var(--teal)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.scorebar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:10px 12px;background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:12px;font-size:13px}
+.badge{display:inline-block;font-size:11px;padding:2px 7px;border-radius:6px;background:#e5e7eb;color:#374151}
+.badge.red{background:var(--red-soft);color:var(--red)}
+.cpr-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;padding:8px 0}
+.cpr-readout{font-size:20px;font-weight:900;color:var(--accent2)}
+.cpr-pad{
+  width:160px;height:160px;border-radius:50%;border:4px solid #ea580c;background:radial-gradient(circle at 35% 30%,#fdba74,#c2410c);
+  color:#fff;font-size:22px;font-weight:900;cursor:pointer;box-shadow:0 8px 24px rgba(194,65,12,.35);
+  user-select:none;-webkit-user-select:none;
+}
+.cpr-pad.pulse{transform:scale(.92);filter:brightness(1.08)}
+.cpr-pad:active{transform:scale(.9)}
+.idle-warn{font-size:12px;color:var(--red);font-weight:700;min-height:18px}
+.meter-wrap{width:min(320px,92%);margin:4px auto 0}
+.meter-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px}
+.meter-track{
+  position:relative;height:18px;border-radius:999px;overflow:hidden;
+  background:linear-gradient(90deg,#fca5a5 0%,#fca5a5 28%,#86efac 35%,#86efac 65%,#fde68a 72%,#fca5a5 100%);
+  border:1px solid var(--line);
+}
+.meter-needle{
+  position:absolute;top:-3px;bottom:-3px;width:4px;margin-left:-2px;background:#1a2433;border-radius:2px;
+  left:50%;transition:left .15s ease-out;
+}
+.meter-zone{text-align:center;font-size:13px;font-weight:800;margin-top:6px;min-height:20px}
+.meter-zone.slow{color:#b91c1c}
+.meter-zone.ok{color:#15803d}
+.meter-zone.fast{color:#b45309}
+.rebound-hint{font-size:12px;color:var(--muted);text-align:center;min-height:16px}
+.pad-board{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+@media(max-width:640px){.pad-board{grid-template-columns:1fr}}
+.body-fig{
+  position:relative;background:#f8fafc;border:1px solid var(--line);border-radius:12px;
+  min-height:220px;padding:12px;
+}
+.body-svg{width:100%;max-width:280px;height:auto;display:block;margin:0 auto}
+.pad-slot{
+  position:absolute;width:48px;height:32px;border:2px dashed #94a3b8;border-radius:8px;
+  background:rgba(148,163,184,.15);display:flex;align-items:center;justify-content:center;
+  font-size:10px;color:#64748b;font-weight:700;
+}
+.pad-slot.ok-zone{border-color:#16a34a;background:rgba(22,163,74,.12);color:#166534}
+.pad-slot.bad-zone{border-color:#dc2626;background:rgba(220,38,38,.1);color:#991b1b}
+.pad-slot.filled{border-style:solid;background:#fb923c;color:#fff;border-color:#c2410c}
+.kit{display:flex;flex-wrap:wrap;gap:8px}
+.kit .chip{
+  border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;
+  font-size:13px;font-weight:700;cursor:grab;
+}
+.kit .chip.used{opacity:.4;pointer-events:none}
+.aed-panel{
+  background:#111827;color:#e5e7eb;border-radius:12px;padding:14px;margin:10px 0;
+  font-family:ui-monospace,Menlo,monospace;font-size:13px;
+}
+.aed-panel .line{margin:4px 0}
+.aed-panel .blink{color:#fbbf24;font-weight:800}
+.clear-big{
+  width:100%;padding:18px;font-size:22px;font-weight:900;border-radius:14px;
+  border:3px solid #fbbf24;background:#111827;color:#fbbf24;cursor:pointer;margin:8px 0;
+}
+.clear-big.on{background:#14532d;border-color:#86efac;color:#bbf7d0}
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+@media(max-width:560px){.score-grid{grid-template-columns:1fr}}
+.score-cell{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px}
+.score-cell .k{font-size:11px;color:var(--muted)}
+.score-cell .v{font-size:22px;font-weight:900}
+.toast{
+  position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(120%);
+  background:#1a2433;color:#fff;padding:10px 16px;border-radius:999px;font-size:13px;
+  font-weight:700;z-index:80;opacity:0;transition:transform .25s,opacity .25s;max-width:90vw;text-align:center;
+}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.fail{background:#7f1d1d}
+.footer-note{font-size:11px;color:var(--muted);margin-top:18px;text-align:center}
+.lock-banner{
+  display:none;margin:10px 0;padding:12px;border-radius:12px;background:var(--red-soft);
+  border:1px solid #f5a9a0;color:#7f1d1d;font-weight:700;font-size:14px;
+}
+.lock-banner.show{display:block}
+/* cinematic intro */
+.cine{
+  position:relative;border-radius:14px;overflow:hidden;min-height:280px;
+  background:linear-gradient(160deg,#0b1220 0%,#1e3a5f 40%,#7c2d12 100%);
+  color:#fff;padding:20px 18px 18px;margin-bottom:8px;
+}
+.cine .beat{font-size:15px;line-height:1.7;min-height:4.5em;opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s}
+.cine .beat.show{opacity:1;transform:none}
+.cine .who{display:inline-block;font-size:11px;letter-spacing:.06em;opacity:.75;margin-bottom:6px}
+.cine .sfx{font-size:12px;opacity:.7;font-style:italic;margin-top:10px}
+.cine-progress{display:flex;gap:6px;margin-top:14px}
+.cine-progress i{flex:1;height:4px;border-radius:999px;background:rgba(255,255,255,.2)}
+.cine-progress i.on{background:#fde68a}
+.cine-progress i.done{background:#86efac}
+/* replay */
+.replay-box{
+  margin-top:12px;padding:14px;border-radius:12px;background:#0f172a;color:#e2e8f0;
+  border:1px solid #334155;min-height:140px;
+}
+.replay-box .rh{font-size:12px;color:#94a3b8;margin-bottom:8px;letter-spacing:.04em}
+.replay-line{
+  font-size:16px;font-weight:800;padding:8px 10px;margin:6px 0;border-radius:8px;
+  background:rgba(255,255,255,.04);border-left:3px solid #475569;opacity:.35;
+  transition:opacity .35s,background .35s,border-color .35s;
+}
+.replay-line.on{opacity:1;background:rgba(251,191,36,.12);border-color:#fbbf24;color:#fde68a}
+.replay-line.done{opacity:1;background:rgba(134,239,172,.1);border-color:#86efac;color:#bbf7d0}
+.replay-timer{font-size:11px;color:#94a3b8;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div>
+      <h1>儿童急救 · 技能站大厅</h1>
+      <div class="sub">院前 → 院中 → 院后 · 站4 CPR+AED 样板 · v1.1.0</div>
+    </div>
+    <div class="pills">
+      <span class="pill warn">剂量/能量 ⚠ 示意</span>
+      <span class="pill">儿童 30:2 / 15:2</span>
+      <span class="pill red">禁串 3:1</span>
+      <span class="pill ok">双结局 shock / no-shock</span>
+    </div>
+  </div>
+
+  <section id="view-hall">
+    <div class="scene-banner">
+      <div class="tag">360 急救大厅 · 技能站入口（示意）</div>
+      <h2>儿童急救技能站</h2>
+      <p>按清水河「能走进去」思路：一章拆成多站小仿真。站4 已升样板：电影感开场 · 节拍手感 · 除颤/不除颤双结局 · 标准回放。</p>
+    </div>
+    <div class="card">
+      <h2>选站</h2>
+      <p class="lead">灰站「即将开放」。站6 已有院中抢救室成品 <code>peds_critical.html</code>。</p>
+      <div class="station-grid" id="stationGrid"></div>
+      <div class="row">
+        <button type="button" class="btn ghost" id="btnOpenCritical">打开院中抢救室（critical）</button>
+        <button type="button" class="btn ghost" id="btnAboutHall">本关说明</button>
+      </div>
+    </div>
+    <div class="card hidden" id="hallAbout">
+      <h2>站4 说明 · v1.1</h2>
+      <ul style="margin:0;padding-left:18px;font-size:13px;color:var(--muted)">
+        <li>情景：学校走廊院前骤停（电影感开场）</li>
+        <li>双结局：AED 建议除颤 → 离开→电击→续按；或 不建议除颤 → 立刻续按</li>
+        <li>硬否决当场锁死 + 可看标准回放四句</li>
+        <li>回放钉死：先按压 · 贴片年龄区 · 离开 · 电击后续按（no-shock 改为「分析后不除颤→立刻续按」）</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="view-play" class="hidden">
+    <div class="scene-banner" id="playBanner">
+      <div class="tag">站4 · 院前 CPR + AED · 学校走廊 · v1.1</div>
+      <h2 id="playTitle">倒地的孩子</h2>
+      <p id="playLead">课间，一名约 8 岁同学突然倒地。你是最先赶到的老师/校医。</p>
+      <div class="timer-row">
+        <div class="timer-bar"><div class="timer-fill" id="timerFill"></div></div>
+        <div class="timer-txt" id="timerTxt">--</div>
+      </div>
+    </div>
+
+    <div class="scorebar">
+      <div>硬否决 <span class="badge" id="vetoBadge">无</span></div>
+      <div>软扣 <span class="badge" id="softBadge">0</span></div>
+      <div>中断累计 <span id="pauseSec">0</span>s</div>
+      <div>本局 AED <span class="badge" id="aedPathBadge">—</span></div>
+      <button type="button" class="btn ghost" id="btnAbortHall" style="padding:5px 10px;font-size:12px">回大厅</button>
+    </div>
+
+    <div class="steps" id="stepDots"></div>
+    <div class="lock-banner" id="lockBanner">⛔ 本例已因硬否决锁死。可看标准回放或重开本站。</div>
+
+    <div class="card" id="stepCard">
+      <div id="stepBody"></div>
+      <div class="row" id="stepNav"></div>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  'use strict';
+  const VER = 'v1.1.0';
+  const STATIONS = [
+    {id:1,t:'开放气道',d:'体位 / 清口 / 看胸起伏',phase:'院前',open:false},
+    {id:2,t:'海姆立克',d:'婴儿拍背胸推 vs 儿童腹冲',phase:'院前',open:false},
+    {id:3,t:'溺水出水',d:'先通气再评估循环',phase:'院前',open:false},
+    {id:4,t:'CPR + AED',d:'电影感 · 节拍 · 双结局 · 回放',phase:'院前',open:true},
+    {id:5,t:'担架转运',d:'移动中少中断按压',phase:'院前→院中',open:false},
+    {id:6,t:'抢救室（院中）',d:'惊厥 / 骤停 / 休克四例',phase:'院中',open:false,link:'peds_critical.html',linkLabel:true},
+    {id:7,t:'监护交接·家长教育',d:'交接班 + 拒土法',phase:'院后',open:false}
+  ];
+
+  const STEPS = [
+    {id:'intro',lab:'开场'},
+    {id:'recog',lab:'①识别启动'},
+    {id:'ratio',lab:'②比例'},
+    {id:'cpr',lab:'③节拍CPR'},
+    {id:'aedpad',lab:'④贴片'},
+    {id:'shock',lab:'⑤分析/除颤'},
+    {id:'resume',lab:'⑥续按/ROSC'},
+    {id:'score',lab:'成绩单'}
+  ];
+
+  /* 标准回放四句（shock）与 no-shock 变体 —— 文案钉死 */
+  const REPLAY_SHOCK = [
+    '① 先按压',
+    '② 贴片年龄区',
+    '③ 离开',
+    '④ 电击后续按'
+  ];
+  const REPLAY_NOSHOCK = [
+    '① 先按压',
+    '② 贴片年龄区',
+    '③ 分析后不除颤→立刻续按'
+  ];
+
+  const S = {
+    step:'intro', locked:false, veto:[], soft:[],
+    recog:null, ratio:null, padMode:null, pads:[], cleared:false, shocked:false,
+    noShockOk:false, resume:null, handoff:null,
+    metro:[], metroOk:false, cprActive:false, lastPress:0, pauseAcc:0, idleVeto:false,
+    timerLeft:0, timerTotal:180, timerId:null, timedOut:false,
+    aedOn:false, analyzing:false, shockAdvised:true,
+    cineIdx:0, forcePath:null /* 'shock'|'noshock'|null */,
+    replayTimer:null
+  };
+
+  function $(id){ return document.getElementById(id); }
+  function toast(msg, fail){
+    const t=$('toast'); t.textContent=msg; t.className='toast show'+(fail?' fail':'');
+    clearTimeout(toast._tm); toast._tm=setTimeout(()=>t.classList.remove('show'),3200);
+  }
+  function addVeto(code){
+    if(!S.veto.includes(code)) S.veto.push(code);
+    updateBadges();
+    S.locked=true;
+    $('lockBanner').classList.add('show');
+    toast('⛔ 硬否决（挂科）：'+code, true);
+  }
+  function addSoft(code){
+    if(S.locked) return;
+    if(!S.soft.includes(code)) S.soft.push(code);
+    updateBadges();
+  }
+  function updateBadges(){
+    const vb=$('vetoBadge');
+    if(S.veto.length){ vb.textContent=S.veto.join(' / '); vb.className='badge red'; }
+    else { vb.textContent='无'; vb.className='badge'; }
+    const sb=$('softBadge'); sb.textContent=String(S.soft.length); sb.className=S.soft.length?'badge red':'badge';
+    $('pauseSec').textContent=String(Math.round(S.pauseAcc));
+    const ab=$('aedPathBadge');
+    if(S.step==='intro'||S.step==='recog'||S.step==='ratio'||S.step==='cpr'||S.step==='aedpad'){
+      ab.textContent='分析前未定'; ab.className='badge';
+    } else if(S.shockAdvised){
+      ab.textContent='建议除颤'; ab.className='badge';
+    } else {
+      ab.textContent='不建议除颤'; ab.className='badge';
+    }
+  }
+
+  function renderHall(){
+    const g=$('stationGrid'); g.innerHTML='';
+    STATIONS.forEach(st=>{
+      const b=document.createElement('button');
+      b.type='button';
+      const canLink=!!st.link;
+      b.className='station'+(st.open?' on':(canLink?' on':' locked'));
+      const stLab=st.open?'可玩':(canLink?'打开院中成品':'即将开放');
+      b.innerHTML='<div class="n">站'+st.id+' · '+st.phase+'</div><div class="t">'+st.t+'</div><p class="d">'+st.d+'</p><span class="st">'+stLab+'</span>';
+      b.onclick=()=>{
+        if(st.open) startPlay(null);
+        else if(st.link){ location.href=st.link; }
+        else toast('站'+st.id+' 即将开放');
+      };
+      g.appendChild(b);
+    });
+  }
+
+  function goHall(){
+    clearTimer(); stopCprWatch(); clearReplayTimer();
+    $('view-play').classList.add('hidden');
+    $('view-hall').classList.remove('hidden');
+  }
+  function startPlay(forcePath){
+    resetState();
+    S.forcePath = forcePath || null;
+    $('view-hall').classList.add('hidden');
+    $('view-play').classList.remove('hidden');
+    showStep('intro');
+  }
+  function resetState(){
+    clearReplayTimer();
+    Object.assign(S,{
+      step:'intro', locked:false, veto:[], soft:[],
+      recog:null, ratio:null, padMode:null, pads:[], cleared:false, shocked:false,
+      noShockOk:false, resume:null, handoff:null,
+      metro:[], metroOk:false, cprActive:false, lastPress:0, pauseAcc:0, idleVeto:false,
+      timerLeft:0, timedOut:false, aedOn:false, analyzing:false, shockAdvised:true,
+      cineIdx:0, forcePath:null, replayTimer:null
+    });
+    $('lockBanner').classList.remove('show');
+    updateBadges();
+    clearTimer(); stopCprWatch();
+  }
+
+  function clearTimer(){ if(S.timerId){ clearInterval(S.timerId); S.timerId=null; } }
+  function startTimer(sec){
+    clearTimer();
+    S.timerTotal=sec; S.timerLeft=sec; S.timedOut=false;
+    paintTimer();
+    S.timerId=setInterval(()=>{
+      S.timerLeft--;
+      if(S.timerLeft<=0){
+        S.timerLeft=0; paintTimer(); clearTimer();
+        if(!S.timedOut){ S.timedOut=true; addSoft('决策超时'); toast('⏱ 超时软扣 · 请尽快完成正确动作'); }
+      } else paintTimer();
+    },1000);
+  }
+  function paintTimer(){
+    const p=S.timerTotal? Math.max(0,S.timerLeft/S.timerTotal*100):0;
+    $('timerFill').style.width=p+'%';
+    $('timerTxt').textContent=S.timerLeft+'s';
+  }
+
+  let cprWatchId=null;
+  function startCprWatch(){
+    stopCprWatch();
+    S.cprActive=true; S.lastPress=performance.now();
+    cprWatchId=setInterval(()=>{
+      if(!S.cprActive || S.locked || S.analyzing) return;
+      const idle=(performance.now()-S.lastPress)/1000;
+      const el=$('idleWarn');
+      if(el){
+        if(idle>4){ el.textContent='⚠ 中断偏久（'+idle.toFixed(0)+'s）· 尽快恢复按压'; S.pauseAcc+=0.5; updateBadges(); }
+        else el.textContent='';
+      }
+      if(idle>12 && !S.idleVeto){
+        S.idleVeto=true;
+        addVeto('长时间空等不按压');
+        if(el) el.textContent='⛔ 长时间不按压 · 硬否决';
+        setTimeout(()=>{ if(S.locked && S.step!=='score') showStep('score'); },900);
+      }
+    },500);
+  }
+  function stopCprWatch(){ if(cprWatchId){ clearInterval(cprWatchId); cprWatchId=null; } S.cprActive=false; }
+  function clearReplayTimer(){
+    if(S.replayTimer){ clearTimeout(S.replayTimer); S.replayTimer=null; }
+  }
+
+  function paintDots(){
+    const box=$('stepDots'); box.innerHTML='';
+    const idx=STEPS.findIndex(s=>s.id===S.step);
+    STEPS.forEach((s,i)=>{
+      const d=document.createElement('span');
+      d.className='step-dot'+(i===idx?' on':(i<idx?' done':''))+(S.locked && i===idx?' fail':'');
+      d.textContent=s.lab; box.appendChild(d);
+    });
+  }
+
+  function choiceHtml(list, field, onPick){
+    const wrap=document.createElement('div'); wrap.className='choice-cards';
+    list.forEach(ch=>{
+      const b=document.createElement('button'); b.type='button'; b.className='choice'+(S[field]===ch.id?' on':'');
+      if(S.locked) b.classList.add('locked');
+      b.innerHTML='<p class="t">'+ch.t+'</p><p class="d">'+ch.d+'</p>';
+      b.onclick=()=>{
+        if(S.locked) return;
+        wrap.querySelectorAll('.choice').forEach(x=>x.classList.remove('on'));
+        b.classList.add('on');
+        onPick(ch);
+      };
+      wrap.appendChild(b);
+    });
+    return wrap;
+  }
+
+  function nav(nextLabel, nextFn, extraBtns){
+    const nav=$('stepNav'); nav.innerHTML='';
+    (extraBtns||[]).forEach(x=>nav.appendChild(x));
+    if(nextLabel){
+      const b=document.createElement('button'); b.type='button'; b.className='btn'; b.id='btnNext';
+      b.textContent=nextLabel; b.disabled=true; b.onclick=nextFn; nav.appendChild(b);
+      return b;
+    }
+    return null;
+  }
+
+  function showStep(id){
+    S.step=id; paintDots(); updateBadges();
+    const body=$('stepBody'); body.innerHTML='';
+    $('stepNav').innerHTML='';
+    if(id==='intro') buildIntro(body);
+    else if(id==='recog') buildRecog(body);
+    else if(id==='ratio') buildRatio(body);
+    else if(id==='cpr') buildCpr(body);
+    else if(id==='aedpad') buildPads(body);
+    else if(id==='shock') buildShock(body);
+    else if(id==='resume') buildResume(body);
+    else if(id==='score') buildScore(body);
+  }
+
+  /* —— ① 电影感开场 —— */
+  function buildIntro(body){
+    const beats = [
+      {who:'课间 · 三楼走廊', text:'铃声刚过。一个篮球滚到墙角——小杰（约 8 岁）突然软倒，后脑磕在地砖上。', sfx:'「咚——」'},
+      {who:'同学甲 / 乙', text:'「小杰！小杰！！」有人蹲下去拍脸，有人往后退。走廊里一片乱。', sfx:'脚步声、喊声'},
+      {who:'你', text:'你是最先赶到的老师/校医。拍肩无反应，胸廓看不见正常起伏。', sfx:'急救柜在走廊尽头 · 约 30 秒'},
+      {who:'目标', text:'少说教、多动手：高质量 CPR + 正确用 AED，直到 ROSC 或救护车交接。', sfx:'儿童 单人 30:2 · 双人 15:2 · 禁 3:1'}
+    ];
+    S.cineIdx = 0;
+    body.innerHTML =
+      '<div class="cine" id="cineBox">'+
+      '<div class="who" id="cineWho"></div>'+
+      '<div class="beat" id="cineBeat"></div>'+
+      '<div class="sfx" id="cineSfx"></div>'+
+      '<div class="cine-progress" id="cineProg"></div>'+
+      '</div>'+
+      '<div class="ratio-banner"><span class="big">儿童 CPR</span><span class="note">未建高级气道：单人 <strong>30:2</strong> · 双人 <strong>15:2</strong> · <strong>不是</strong>新生儿 3:1</span></div>'+
+      '<div class="gate" style="font-size:12px">⚠ 肾上腺素剂量、AED 能量均为教学示意。本关含 shock / no-shock 双结局。</div>';
+
+    const prog=$('cineProg');
+    beats.forEach((_,i)=>{ const d=document.createElement('i'); if(i===0) d.className='on'; prog.appendChild(d); });
+
+    function paintCine(){
+      const b=beats[S.cineIdx];
+      const el=$('cineBeat');
+      el.classList.remove('show');
+      $('cineWho').textContent=b.who;
+      $('cineSfx').textContent=b.sfx;
+      el.textContent=b.text;
+      void el.offsetWidth; el.classList.add('show');
+      [...prog.children].forEach((x,i)=>{
+        x.className = i<S.cineIdx ? 'done' : (i===S.cineIdx ? 'on' : '');
+      });
+      const n=$('btnNext');
+      if(!n) return;
+      if(S.cineIdx < beats.length-1){
+        n.disabled=false; n.textContent='……';
+        n.onclick=()=>{ S.cineIdx++; paintCine(); };
+      } else {
+        n.disabled=false; n.textContent='冲上前 · 开始抢救';
+        n.onclick=()=>{ startTimer(180); showStep('recog'); };
+      }
+    }
+    nav('……',()=>{});
+    paintCine();
+
+    /* 自测快捷：长按说明区可选强制路径（隐藏在开场末也可从成绩单进） */
+  }
+
+  function buildRecog(body){
+    body.innerHTML='<h2>① 识别与启动</h2><p class="lead">无反应、无正常呼吸。你的第一步？</p><div id="recogBox"></div><div class="tip" id="recogTip">先高质量按压，再谈药。</div>';
+    const choices=[
+      {id:'cpr_aed',t:'立即高质量 CPR，同时让人取 AED / 确认已呼叫',d:'✓ 先按压 + 早 AED'},
+      {id:'drug_first',t:'先冲到医务室找肾上腺素，暂不按压',d:'✗ 否决 · 药先于按压'},
+      {id:'no_cpr',t:'再观察一会儿，说不定自己醒',d:'✗ 否决 · 不启 CPR'},
+      {id:'vent_only',t:'只做吹气，完全不按压',d:'✗ 否决 · 未启动胸外按压'}
+    ];
+    const box=$('recogBox');
+    box.appendChild(choiceHtml(choices,'recog',ch=>{
+      S.recog=ch.id;
+      const tip=$('recogTip');
+      if(ch.id==='cpr_aed'){ tip.className='tip ok'; tip.textContent='✓ 正确：识别骤停 → 立即 CPR，并行取 AED。'; }
+      else if(ch.id==='drug_first'){ tip.className='tip fail'; tip.textContent='⛔ 药先于按压'; addVeto('药先于按压'); }
+      else if(ch.id==='no_cpr'){ tip.className='tip fail'; tip.textContent='⛔ 不启 CPR'; addVeto('不启CPR'); }
+      else { tip.className='tip fail'; tip.textContent='⛔ 只吹气不按压 ≈ 不启有效 CPR'; addVeto('不启CPR'); }
+      const n=$('btnNext'); if(n) n.disabled=false;
+      if(S.locked){ setTimeout(()=>showStep('score'),900); }
+    }));
+    nav('下一步：比例',()=>{ if(!S.recog||S.locked) return; showStep('ratio'); });
+  }
+
+  function buildRatio(body){
+    body.innerHTML=
+      '<h2>② 按压通气比</h2>'+
+      '<div class="ratio-banner"><span class="big">醒目标注</span><span class="note">儿童（非新生儿）：单人 30:2 · 双人 15:2。新生儿章才是 3:1——禁止串戏。</span></div>'+
+      '<p class="lead">此刻只有你一人开始按压，应选？</p><div id="ratioBox"></div><div class="tip" id="ratioTip">选对比例再进入节拍器。</div>';
+    const choices=[
+      {id:'r30',t:'单人 30:2（儿童）',d:'✓ 单人正确'},
+      {id:'r15',t:'双人 15:2（儿童）——但我是单人',d:'⚠ 双人比例；单人应为 30:2'},
+      {id:'r31',t:'一律 3:1（当成新生儿）',d:'✗ 否决 · 串新生儿比例'},
+      {id:'rOnlyComp',t:'一直狂按、从不给通气也不叫人',d:'⚠ 应结合通气/求助；本关记软扣'}
+    ];
+    $('ratioBox').appendChild(choiceHtml(choices,'ratio',ch=>{
+      S.ratio=ch.id;
+      const tip=$('ratioTip');
+      if(ch.id==='r30'){ tip.className='tip ok'; tip.textContent='✓ 单人儿童 30:2。'; }
+      else if(ch.id==='r31'){ tip.className='tip fail'; tip.textContent='⛔ 串用新生儿 3:1'; addVeto('串新生儿3:1'); }
+      else if(ch.id==='r15'){ tip.className='tip warn'; tip.textContent='双人 15:2 本身对，但你现在是单人 → 软扣，建议改 30:2。'; addSoft('单人误用15:2'); S.ratio='r30'; }
+      else { tip.className='tip warn'; tip.textContent='应尽快通气并呼救；记软扣。请改选 30:2。'; addSoft('忽视通气/呼救'); }
+      const n=$('btnNext'); if(n) n.disabled=!(S.ratio==='r30'||S.locked);
+      if(S.locked) setTimeout(()=>showStep('score'),900);
+    }));
+    nav('进入 CPR 节拍',()=>{ if(S.ratio!=='r30'||S.locked) return; showStep('cpr'); });
+  }
+
+  /* —— ② 节拍手感：对/慢/快 + 回弹/中断条 —— */
+  function buildCpr(body){
+    body.innerHTML=
+      '<h2>③ CPR 节拍器</h2>'+
+      '<p class="lead">在圆垫上连续点按。目标约 <strong>100～120 次/分</strong>。充分<strong>回弹</strong>、少中断。深度约胸廓前后径 1/3（儿童约 5 cm 示意⚠）。</p>'+
+      '<div class="cpr-wrap">'+
+      '<div class="cpr-readout" id="cprReadout">频率：— 次/分</div>'+
+      '<div class="meter-wrap">'+
+      '<div class="meter-labels"><span>慢</span><span>100</span><span>120</span><span>快</span></div>'+
+      '<div class="meter-track"><div class="meter-needle" id="meterNeedle"></div></div>'+
+      '<div class="meter-zone" id="meterZone">等待节拍…</div>'+
+      '<div class="rebound-hint" id="reboundHint">提示：按完让胸壁充分回弹，不要趴在胸口上</div>'+
+      '</div>'+
+      '<button type="button" class="cpr-pad" id="cprPad">按压</button>'+
+      '<div class="idle-warn" id="idleWarn"></div>'+
+      '<p class="lead" style="text-align:center">儿童 · 单人 30:2 · 非新生儿 3:1</p></div>'+
+      '<div class="tip" id="cprTip">先点满约 8 下并落在 100～120，AED 随即到达。</div>';
+    startCprWatch();
+    const pad=$('cprPad');
+    let lastIntervalHint=0;
+    pad.addEventListener('click',()=>{
+      if(S.locked) return;
+      const now=performance.now();
+      const gap = S.metro.length ? (now - S.metro[S.metro.length-1]) : 0;
+      S.lastPress=now;
+      S.metro.push(now);
+      if(S.metro.length>12) S.metro.shift();
+      pad.classList.remove('pulse'); void pad.offsetWidth; pad.classList.add('pulse');
+
+      /* 回弹提示：点按间隔过短像「压着不放」 */
+      const rh=$('reboundHint');
+      if(gap>0 && gap<280){
+        rh.textContent='⚠ 回弹不足示意：两次太贴，让胸壁起来再按';
+        rh.style.color='#b45309';
+        if(now-lastIntervalHint>1500){ addSoft('回弹不足示意'); lastIntervalHint=now; }
+      } else {
+        rh.textContent='✓ 注意充分回弹 · 不要趴在胸口上';
+        rh.style.color='#15803d';
+      }
+
+      const tip=$('cprTip'); const readout=$('cprReadout');
+      const needle=$('meterNeedle'); const zone=$('meterZone');
+      if(S.metro.length>=6){
+        const dt=(S.metro[S.metro.length-1]-S.metro[0])/(S.metro.length-1);
+        const bpm=Math.round(60000/dt);
+        readout.textContent='频率：'+bpm+' 次/分';
+        /* map bpm 60..160 → 0%..100% ; green band ~100-120 ≈ 35%-65% */
+        const pct=Math.max(0,Math.min(100, (bpm-60)/(160-60)*100));
+        needle.style.left=pct+'%';
+        if(bpm>=95 && bpm<=125){
+          S.metroOk=true;
+          zone.className='meter-zone ok'; zone.textContent='节拍合格 · '+bpm+' 次/分';
+          tip.className='tip ok'; tip.textContent='节拍合格（'+bpm+' 次/分）。AED 已送到——继续下一步贴片。少中断！';
+          const n=$('btnNext'); if(n) n.disabled=false;
+        } else if(bpm<95){
+          zone.className='meter-zone slow'; zone.textContent='偏慢 · 加快到 100～120';
+          tip.className='tip warn'; tip.textContent='偏慢（'+bpm+'）· 加快到 100～120';
+          addSoft('节拍偏慢');
+        } else {
+          zone.className='meter-zone fast'; zone.textContent='偏快 · 略放慢到 100～120';
+          tip.className='tip warn'; tip.textContent='偏快（'+bpm+'）· 略放慢到 100～120';
+          addSoft('节拍偏快');
+        }
+      } else {
+        readout.textContent='已点 '+S.metro.length+' 下 · 继续';
+        needle.style.left='50%';
+      }
+    });
+    const next=nav('AED 到达 · 去贴片',()=>{
+      if(!S.metroOk||S.locked) return;
+      stopCprWatch();
+      showStep('aedpad');
+    });
+    if(S.locked){ next.disabled=false; next.textContent='查看成绩单 / 标准回放'; next.onclick=()=>showStep('score'); }
+  }
+
+  function buildPads(body){
+    body.innerHTML=
+      '<h2>④ AED 开机与贴片</h2>'+
+      '<p class="lead">儿童优先用<strong>儿童贴片/儿童钥匙</strong>。若<strong>仅有成人片</strong>：前后位或避免两片重叠（示意⚠）。贴错年龄区/叠片 = 否决。</p>'+
+      '<div class="aed-panel" id="aedPanel"><div class="line">AED：待机</div><div class="line">请先开机</div></div>'+
+      '<div class="row"><button type="button" class="btn teal" id="btnAedOn">开机</button></div>'+
+      '<h3>选择贴片策略</h3><div id="padModeBox"></div>'+
+      '<div class="pad-board">'+
+      '<div class="body-fig" id="bodyFig">'+
+      '<svg class="body-svg" viewBox="0 0 200 260" aria-hidden="true">'+
+      '<ellipse cx="100" cy="36" rx="28" ry="32" fill="#fecaca"/>'+
+      '<rect x="70" y="70" width="60" height="90" rx="16" fill="#fecaca"/>'+
+      '<rect x="40" y="80" width="28" height="70" rx="10" fill="#fecaca"/>'+
+      '<rect x="132" y="80" width="28" height="70" rx="10" fill="#fecaca"/>'+
+      '<rect x="78" y="160" width="18" height="70" rx="8" fill="#fecaca"/>'+
+      '<rect x="104" y="160" width="18" height="70" rx="8" fill="#fecaca"/>'+
+      '</svg>'+
+      '<div class="pad-slot ok-zone" data-slot="apex" style="left:58%;top:42%">心尖区</div>'+
+      '<div class="pad-slot ok-zone" data-slot="sternum" style="left:22%;top:28%">胸骨右上</div>'+
+      '<div class="pad-slot bad-zone" data-slot="overlap" style="left:40%;top:36%">叠在一起</div>'+
+      '<div class="pad-slot ok-zone" data-slot="back" style="left:40%;top:72%">后背（成人片备选）</div>'+
+      '</div>'+
+      '<div><div class="kit" id="padKit"></div><p class="lead" style="margin-top:8px">先选策略，再点击身体上的正确区域放置。</p>'+
+      '<div class="tip" id="padTip">尚未贴片。</div></div></div>';
+
+    const modes=[
+      {id:'child_pads',t:'使用儿童贴片：前侧位（右上胸 + 心尖）',d:'✓ 童片优先'},
+      {id:'adult_ap',t:'仅有成人片：前后位（前胸 + 后背），避免重叠',d:'✓ 仅成人片时的正确示意⚠'},
+      {id:'adult_overlap',t:'有成人片就两片叠在胸口中间',d:'✗ 否决 · 贴错/重叠'},
+      {id:'adult_as_child_wrong',t:'不管年龄把成人片贴在婴儿位置乱贴',d:'✗ 否决 · 贴错年龄区'}
+    ];
+    $('padModeBox').appendChild(choiceHtml(modes,'padMode',ch=>{
+      if(S.locked) return;
+      S.padMode=ch.id; S.pads=[];
+      document.querySelectorAll('.pad-slot').forEach(s=>s.classList.remove('filled'));
+      const tip=$('padTip');
+      if(ch.id==='adult_overlap' || ch.id==='adult_as_child_wrong'){
+        tip.className='tip fail'; tip.textContent='⛔ '+ch.d; addVeto('贴错片');
+        setTimeout(()=>showStep('score'),900); return;
+      }
+      tip.className='tip'; tip.textContent=ch.id==='child_pads'?'请点击「胸骨右上」与「心尖区」放置童片。':'请点击「心尖区/前胸」与「后背」放置成人片（前后位⚠）。';
+      buildKit();
+      checkPadDone();
+    }));
+
+    function buildKit(){
+      const kit=$('padKit'); kit.innerHTML='';
+      const label=S.padMode==='child_pads'?'儿童贴片':'成人贴片⚠';
+      ['A','B'].forEach((name)=>{
+        const c=document.createElement('button'); c.type='button'; c.className='chip'; c.textContent=label+' '+name;
+        c.onclick=()=>{ toast('再点击身体上的正确区域放置 '+name); S._holding=name; c.classList.add('used'); };
+        kit.appendChild(c);
+      });
+    }
+
+    document.querySelectorAll('.pad-slot').forEach(slot=>{
+      slot.onclick=()=>{
+        if(S.locked || !S.padMode || S.padMode==='adult_overlap' || S.padMode==='adult_as_child_wrong') return;
+        if(!S.aedOn){ toast('先开机'); return; }
+        const need = S.padMode==='child_pads' ? ['sternum','apex'] : ['apex','back'];
+        const key=slot.getAttribute('data-slot');
+        if(key==='overlap'){ addVeto('贴错片'); $('padTip').className='tip fail'; $('padTip').textContent='⛔ 禁止重叠粘贴'; setTimeout(()=>showStep('score'),800); return; }
+        if(!need.includes(key)){ addSoft('贴片位置偏差'); toast('位置不合适，换正确区'); return; }
+        if(S.pads.includes(key)) return;
+        S.pads.push(key); slot.classList.add('filled'); slot.textContent='已贴';
+        checkPadDone();
+      };
+    });
+
+    $('btnAedOn').onclick=()=>{
+      if(S.locked) return;
+      S.aedOn=true;
+      $('aedPanel').innerHTML='<div class="line blink">AED：已开机</div><div class="line">请粘贴电极片</div><div class="line">粘贴后将自动分析</div>';
+      toast('AED 已开机');
+      checkPadDone();
+    };
+
+    function checkPadDone(){
+      const need = S.padMode==='child_pads' ? ['sternum','apex'] : (S.padMode==='adult_ap'?['apex','back']:[]);
+      const ok = S.aedOn && need.length && need.every(k=>S.pads.includes(k));
+      const tip=$('padTip');
+      if(ok){ tip.className='tip ok'; tip.textContent='✓ 贴片正确。下一步：分析心律（分析时暂停按压）。'; }
+      const n=$('btnNext'); if(n) n.disabled=!ok;
+    }
+
+    nav('开始分析',()=>{
+      if(S.locked) return;
+      const need = S.padMode==='child_pads' ? ['sternum','apex'] : ['apex','back'];
+      if(!S.aedOn || !need.every(k=>S.pads.includes(k))) return;
+      showStep('shock');
+    });
+  }
+
+  /* —— ③ shock / no-shock 双结局 —— */
+  function buildShock(body){
+    S.analyzing=true; stopCprWatch();
+    /* 决定本局路径：强制 > 随机 */
+    if(S.forcePath==='shock') S.shockAdvised=true;
+    else if(S.forcePath==='noshock') S.shockAdvised=false;
+    else S.shockAdvised = Math.random() < 0.5;
+    updateBadges();
+
+    body.innerHTML=
+      '<h2>⑤ 分析与除颤 / 不除颤</h2>'+
+      '<p class="lead">分析时暂停按压。结果可能是<strong>建议除颤</strong>或<strong>不建议除颤</strong>——后者也必须立刻续按，不能干等。</p>'+
+      '<div class="aed-panel" id="shockPanel"><div class="line blink">正在分析，请勿接触伤者…</div></div>'+
+      '<div id="shockChoices"></div><div class="tip" id="shockTip">等待分析结束…</div>';
+
+    const next=nav(S.shockAdvised?'进入续按 / ROSC':'进入续按（无电击）',()=>{
+      if(S.locked) return;
+      if(S.shockAdvised && !S.shocked) return;
+      if(!S.shockAdvised && !S.noShockOk) return;
+      S.analyzing=false; showStep('resume');
+    });
+
+    setTimeout(()=>{
+      if(S.locked) return;
+      const box=$('shockChoices');
+      if(S.shockAdvised){
+        $('shockPanel').innerHTML='<div class="line blink">建议除颤</div><div class="line">能量⚠以设备/指南为准</div><div class="line">请确认全员离开后按电击</div>';
+        const choices=[
+          {id:'clear_shock',t:'大声喊「离开！」确认无人接触 → 电击',d:'✓'},
+          {id:'shock_no_clear',t:'直接按电击，顾不上喊离开',d:'✗ 否决 · 除颤未离开'},
+          {id:'drug_instead',t:'不除颤，先停下来推肾上腺素',d:'✗ 否决 · 药先于/打断正确除颤流程'},
+          {id:'keep_touch',t:'边按压边除颤（手不离开胸壁）',d:'✗ 否决 · 除颤时仍接触'}
+        ];
+        box.appendChild(choiceHtml(choices,'cleared',ch=>{
+          const tip=$('shockTip');
+          if(ch.id==='clear_shock'){
+            S.cleared=true; S.shocked=true;
+            tip.className='tip ok'; tip.textContent='✓ 已清场并除颤。立刻恢复高质量 CPR，不要停着看监护！';
+            $('shockPanel').innerHTML='<div class="line">已除颤</div><div class="line blink">立即继续胸外按压</div>';
+            if(next) next.disabled=false;
+          } else if(ch.id==='shock_no_clear' || ch.id==='keep_touch'){
+            tip.className='tip fail'; tip.textContent='⛔ 除颤未确认离开'; addVeto('除颤未离开');
+            setTimeout(()=>showStep('score'),900);
+          } else {
+            tip.className='tip fail'; tip.textContent='⛔ 药打断除颤/按压优先流程'; addVeto('药先于按压');
+            setTimeout(()=>showStep('score'),900);
+          }
+        }));
+        const clearBtn=document.createElement('button');
+        clearBtn.type='button'; clearBtn.className='clear-big'; clearBtn.textContent='离开！！！ CLEAR';
+        clearBtn.onclick=()=>{ clearBtn.classList.add('on'); clearBtn.textContent='已确认离开'; toast('全员离开 · 可以电击'); };
+        box.appendChild(clearBtn);
+      } else {
+        $('shockPanel').innerHTML='<div class="line blink">不建议除颤</div><div class="line">未检测到需电击心律（示意）</div><div class="line">请立即继续胸外按压</div>';
+        const tip=$('shockTip');
+        tip.className='tip warn'; tip.textContent='AED 未建议电击 ≠ 可以停手。正确动作：立刻续按。';
+        const choices=[
+          {id:'noshock_cpr',t:'立刻恢复高质量 CPR（约 2 分钟后再分析）',d:'✓ 不除颤 → 立刻续按'},
+          {id:'noshock_wait',t:'愣着等下一次语音提示，先不按',d:'✗ 否决 · 空等不按压'},
+          {id:'noshock_force',t:'不管提示，强行按电击键',d:'✗ 软/错 · 不遵从分析；本关记软扣并要求改选'},
+          {id:'noshock_drug',t:'先停下来慢慢推肾上腺素',d:'✗ 否决 · 药先于按压'}
+        ];
+        box.appendChild(choiceHtml(choices,'noShockOk',ch=>{
+          const tip2=$('shockTip');
+          if(ch.id==='noshock_cpr'){
+            S.noShockOk=true; S.shocked=false; S.cleared=false;
+            tip2.className='tip ok'; tip2.textContent='✓ 正确：分析后不除颤 → 立刻续按。不是每次都要电击。';
+            $('shockPanel').innerHTML='<div class="line">不建议除颤</div><div class="line blink">立即继续胸外按压</div>';
+            if(next){ next.disabled=false; next.textContent='进入续按（无电击）'; }
+          } else if(ch.id==='noshock_wait'){
+            tip2.className='tip fail'; tip2.textContent='⛔ 长时间空等不按压'; addVeto('长时间空等不按压');
+            setTimeout(()=>showStep('score'),900);
+          } else if(ch.id==='noshock_drug'){
+            tip2.className='tip fail'; tip2.textContent='⛔ 药先于按压'; addVeto('药先于按压');
+            setTimeout(()=>showStep('score'),900);
+          } else {
+            tip2.className='tip warn'; tip2.textContent='不要强行电击。请改选「立刻续按」。'; addSoft('强行电击');
+            S.noShockOk=false;
+            if(next) next.disabled=true;
+          }
+        }));
+      }
+    },900);
+  }
+
+  function buildResume(body){
+    startCprWatch();
+    const isShock = !!S.shocked;
+    body.innerHTML=
+      '<h2>⑥ '+(isShock?'电击后续按':'不除颤后续按')+' → ROSC / 交接</h2>'+
+      '<p class="lead">'+(isShock?'除颤后立即继续 CPR 约 2 分钟再分析（示意）。':'AED 未建议除颤后仍立即继续 CPR 约 2 分钟再分析（示意）。')+'出现循环征象后交接救护车。</p>'+
+      '<div class="cpr-wrap"><button type="button" class="cpr-pad" id="cprPad2" style="width:120px;height:120px;font-size:16px">续按</button><div class="idle-warn" id="idleWarn"></div></div>'+
+      '<div id="resumeBox"></div><div class="tip" id="resumeTip">先点几下续按，再选交接。</div>';
+    let hits=0;
+    $('cprPad2').onclick=()=>{
+      if(S.locked) return;
+      S.lastPress=performance.now(); hits++;
+      if(hits>=4){ $('resumeTip').className='tip ok'; $('resumeTip').textContent='续按已启动。选择 ROSC 后交接。'; }
+    };
+    const choices=[
+      {id:'rosc_hand',t:'出现循环征象 → 维持气道/通气氧合 → 交接救护车并说明曾 CPR'+(isShock?'/除颤':'/分析未除颤'),d:'✓ ROSC / 交接'},
+      {id:'stop_watch',t:(isShock?'除颤':'分析')+'后停手围观监护仪，不再按压',d:'✗ 否决 · 长时间中断/空等'},
+      {id:'hide',t:'交接时隐瞒曾无反应/急救经过',d:'✗ 否决 · 沟通'},
+      {id:'drug_pause',t:'为了慢慢推药，停止按压很久',d:'✗ 否决 · 药导致长时间中断'}
+    ];
+    $('resumeBox').appendChild(choiceHtml(choices,'resume',ch=>{
+      S.resume=ch.id;
+      const tip=$('resumeTip');
+      if(ch.id==='rosc_hand'){ tip.className='tip ok'; tip.textContent='✓ 主路径完成：ROSC 级结局 + 救护车交接。'; S.handoff='ok'; }
+      else if(ch.id==='stop_watch' || ch.id==='drug_pause'){ tip.className='tip fail'; tip.textContent='⛔ 长时间中断'; addVeto('长时间空等不按压'); }
+      else { tip.className='tip fail'; tip.textContent='⛔ 隐瞒病情'; addVeto('交接隐瞒'); }
+      const n=$('btnNext'); if(n) n.disabled=false;
+      if(S.locked) setTimeout(()=>showStep('score'),900);
+    }));
+    nav('出成绩单',()=>{ stopCprWatch(); clearTimer(); showStep('score'); });
+    const n=$('btnNext'); if(n) n.disabled=true;
+  }
+
+  function computeScore(){
+    let score=100;
+    if(S.veto.length) score=Math.min(score,35);
+    score -= S.veto.length*26;
+    score -= S.soft.length*5;
+    if(S.timedOut) score -= 5;
+    if(S.recog!=='cpr_aed') score -= 18;
+    if(S.ratio!=='r30') score -= 12;
+    if(!S.metroOk) score -= 12;
+    if(!(S.padMode==='child_pads'||S.padMode==='adult_ap')) score -= 14;
+
+    const shockPathOk = S.shockAdvised && S.shocked && S.cleared;
+    const noShockPathOk = !S.shockAdvised && S.noShockOk;
+    if(!(shockPathOk || noShockPathOk)) score -= 14;
+    if(S.resume!=='rosc_hand') score -= 10;
+    if(S.pauseAcc>8) score -= 6;
+    score=Math.max(0,Math.min(100,score));
+
+    const core = S.recog==='cpr_aed' && S.ratio==='r30' && S.metroOk &&
+      (S.padMode==='child_pads'||S.padMode==='adult_ap') &&
+      (shockPathOk || noShockPathOk) && S.resume==='rosc_hand';
+    const pass = S.veto.length===0 && core && score>=60;
+    return {score, pass, core, shockPathOk, noShockPathOk};
+  }
+
+  /* —— ④ 标准回放（约 10 秒） —— */
+  function mountReplay(container, autoStart){
+    /* 本局若已判定为 no-shock，用三句变体；否则钉死四句（含中途挂科教学） */
+    const use = (!S.shockAdvised) ? REPLAY_NOSHOCK : REPLAY_SHOCK;
+    const box=document.createElement('div');
+    box.className='replay-box';
+    box.innerHTML='<div class="rh">标准动作回放 · 约 10 秒 · '+(use===REPLAY_NOSHOCK?'no-shock 路径':'shock 路径')+'</div><div id="replayLines"></div><div class="replay-timer" id="replayTimer">准备…</div>';
+    container.appendChild(box);
+    const rl=$('replayLines');
+    use.forEach((txt)=>{
+      const d=document.createElement('div'); d.className='replay-line'; d.textContent=txt; rl.appendChild(d);
+    });
+    function run(){
+      clearReplayTimer();
+      const nodes=[...rl.querySelectorAll('.replay-line')];
+      nodes.forEach(n=>{ n.className='replay-line'; });
+      const totalMs = 10000;
+      const slot = totalMs / nodes.length;
+      let i=0;
+      $('replayTimer').textContent='回放中…';
+      function tick(){
+        if(i>0) nodes[i-1].classList.remove('on');
+        if(i>0) nodes[i-1].classList.add('done');
+        if(i>=nodes.length){
+          $('replayTimer').textContent='回放结束 · 记住这些钉子';
+          return;
+        }
+        nodes[i].classList.add('on');
+        i++;
+        S.replayTimer=setTimeout(tick, slot);
+      }
+      tick();
+    }
+    if(autoStart) setTimeout(run, 200);
+    return run;
+  }
+
+  function buildScore(body){
+    stopCprWatch(); clearTimer();
+    const r=computeScore();
+    const pathLab = !S.shockAdvised ? 'no-shock（不除颤→立刻续按）' : 'shock（离开→电击→续按）';
+    body.innerHTML=
+      '<h2>成绩单 · 站4 CPR+AED · '+VER+'</h2>'+
+      '<div id="finalBox" class="tip"></div>'+
+      '<div class="score-grid" id="scoreGrid"></div>'+
+      '<div id="replayMount"></div>'+
+      '<h3>要点</h3><ul style="font-size:13px;color:var(--muted)" id="pts"></ul>';
+    const box=$('finalBox');
+    if(r.pass){
+      box.className='tip ok';
+      box.innerHTML='<strong>过关</strong> · '+r.score+' 分 · 本局路径：'+pathLab+
+        '<div style="margin-top:6px">先按压、贴片年龄区、'+(S.shockAdvised?'离开、电击后续按':'分析后不除颤→立刻续按')+'——跑通到 ROSC/交接。</div>';
+    } else {
+      box.className='tip fail';
+      box.innerHTML='<strong>未过关 / 挂科提示</strong> · '+r.score+' 分 · 本局路径：'+pathLab+
+        '<br>硬否决：'+(S.veto.join('、')||'无')+
+        '<br>软扣：'+(S.soft.join('、')||'无')+
+        '<div style="margin-top:6px">下方标准回放请看完。硬否决已当场锁死本例。</div>';
+    }
+    $('scoreGrid').innerHTML=
+      '<div class="score-cell"><div class="k">得分</div><div class="v">'+r.score+'</div></div>'+
+      '<div class="score-cell"><div class="k">硬否决</div><div class="v" style="font-size:14px">'+(S.veto.join('、')||'无')+'</div></div>'+
+      '<div class="score-cell"><div class="k">软扣</div><div class="v" style="font-size:14px">'+(S.soft.length||'无')+'</div></div>'+
+      '<div class="score-cell"><div class="k">AED 结局</div><div class="v" style="font-size:14px">'+(S.shockAdvised?'建议除颤':'不建议除颤')+'</div></div>';
+    $('pts').innerHTML=[
+      '识别无反应无正常呼吸 → 立即 CPR + 取 AED',
+      '儿童单人 30:2、双人 15:2；禁止新生儿 3:1',
+      '节拍约 100～120；少中断；充分回弹',
+      '童片优先；仅成人片时前后位/勿重叠⚠',
+      '分析后：建议除颤 → 喊「离开」→ 电击 → 立即续按；不建议除颤 → 立刻续按',
+      '剂量/能量一律⚠以教材指南为准'
+    ].map(x=>'<li>'+x+'</li>').join('');
+
+    const rerun = mountReplay($('replayMount'), true);
+
+    const again=document.createElement('button'); again.type='button'; again.className='btn'; again.textContent='重开本站（随机结局）';
+    again.onclick=()=>startPlay(null);
+    const againShock=document.createElement('button'); againShock.type='button'; againShock.className='btn blue'; againShock.textContent='重开 · 强制除颤结局';
+    againShock.onclick=()=>startPlay('shock');
+    const againNo=document.createElement('button'); againNo.type='button'; againNo.className='btn teal'; againNo.textContent='重开 · 强制不除颤结局';
+    againNo.onclick=()=>startPlay('noshock');
+    const replayBtn=document.createElement('button'); replayBtn.type='button'; replayBtn.className='btn ghost'; replayBtn.textContent='再看一遍标准回放';
+    replayBtn.onclick=()=>rerun();
+    const hall=document.createElement('button'); hall.type='button'; hall.className='btn ghost'; hall.textContent='回大厅';
+    hall.onclick=goHall;
+    const navEl=$('stepNav'); navEl.innerHTML='';
+    navEl.appendChild(again); navEl.appendChild(againShock); navEl.appendChild(againNo);
+    navEl.appendChild(replayBtn); navEl.appendChild(hall);
+  }
+
+  // wire hall
+  $('btnOpenCritical').onclick=()=>{ location.href='peds_critical.html'; };
+  $('btnAboutHall').onclick=()=>$('hallAbout').classList.toggle('hidden');
+  $('btnAbortHall').onclick=()=>{ if(confirm('确定返回大厅？当前进度将清空。')) goHall(); };
+
+  renderHall();
+  console.log('peds_cpr_aed', VER);
+})();
+</script>
+<p class="footer-note">儿童急救技能站 · 院前 CPR+AED · 本地 v1.1.0 样板 · 教学示意非临床指引 · 不挂 Pages</p>
+</body>
+</html>
